@@ -1,7 +1,8 @@
 ({
   access: 'public',
   method: async ({ key }) => {
-    const result = await lib.redis.get(key);
+	  console.log({db});
+    const result = await db.redis.get(key);
     return { result };
   },
 });

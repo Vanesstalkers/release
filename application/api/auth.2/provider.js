@@ -4,30 +4,39 @@
     return metarhia.metautil.generateToken(secret, characters, length);
   },
 
-  saveSession(token, data) {
-    db.pg.update('Session', { data: JSON.stringify(data) }, { token });
+  async saveSession(token, data) {
+    //db.redis.set(token, JSON.stringify(data));
+    const session = await db.mongo.findOneAndUpdate('session', { token }, { $set: { data } }, { returnDocument: "after" });
   },
 
-  startSession(token, data, fields = {}) {
-    const record = { token, data: JSON.stringify(data), ...fields };
-    db.pg.insert('Session', record);
+  async startSession(token, data, fields = {}) {
+    //db.redis.set(token, JSON.stringify(record));
+    const session = await db.mongo.insertOne('session', { token, data, ...fields });
+    return session;
   },
 
   async restoreSession(token) {
-    const record = await db.pg.row('Session', ['data'], { token });
-    if (record && record.data) return record.data;
+    // const record = await db.redis.get(token);
+    // if(record) return JSON.parse(record);
+    const session = await db.mongo.findOne('session', { token });
+    if (session && session.data) {
+      return session;
+    }
     return null;
   },
 
   deleteSession(token) {
-    db.pg.delete('Session', { token });
+    db.mongo.remove('session', { token });
   },
 
   async registerUser(login, password) {
-    return db.pg.insert('Account', { login, password });
+    return await db.mongo.insertOne('user', { login, password });
   },
 
-  async getUser(login) {
-    return db.pg.row('Account', { login });
+  async getUser({ _id, login }) {
+    const search = {};
+    if (_id) search._id = db.mongo.ObjectID(_id);
+    if (login) search.login = login;
+    return await db.mongo.findOne('user', search);
   },
 });
