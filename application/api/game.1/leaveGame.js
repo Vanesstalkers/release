@@ -1,9 +1,6 @@
 ({
   access: 'public',
   method: async ({ gameId }) => {
-    const session = domain.db.data.session.get(context.client);
-    const user = domain.db.data.user[session.userId];
-
     // if(context.game !== gameId)
     //   return { result: 'error', msg: 'Игрок не может совершить это действие, так как не участвует в игре' };
 

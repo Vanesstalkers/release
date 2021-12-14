@@ -81,7 +81,6 @@
     }
   },
   send({ client, data, event }) {
-    const subscriber = domain.db.getSubscriber(client);
     client.emit('db/updated', data);
     if (typeof event === 'function') event({ client });
   },
@@ -121,7 +120,7 @@
   },
   broadcast({ room: roomName, client: singleClient, data, event }) {
     const room = domain.db.getRoom(roomName);
-    for (const [client, access] of room) {
+    for (const [client] of room) {
       if (!singleClient || singleClient === client) {
         client.emit('db/updated', data);
         if (typeof event === 'function') event({ client });
@@ -152,7 +151,7 @@
   },
   updateSubscriberRooms({ client, accessType }) {
     const subscriber = domain.db.getSubscriber(client);
-    for (const [roomName, access] of subscriber) {
+    for (const [roomName] of subscriber) {
       domain.db.unsubscribe({ roomName, client, accessType });
     }
     if (!subscriber.size) domain.db.subscribers.delete(client);

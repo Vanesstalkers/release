@@ -15,7 +15,7 @@
     }
   },
   broadcast({ event, data }) {
-    for (const [client, access] of this.subscribers) {
+    for (const [client] of this.subscribers) {
       client.emit('lobby/event', { event, data });
 
       switch (event) {

@@ -43,7 +43,7 @@
     }
 
     //console.log("domain.db.getRoom('game-'+gameId)", domain.db.getRoom('game-'+gameId));
-    for (const [client, access] of domain.db.getRoom('game-' + gameId)) {
+    for (const [client] of domain.db.getRoom('game-' + gameId)) {
       try {
         client.emit('db/updated', { game: { [gameId]: game } });
       } catch (e) {

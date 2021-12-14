@@ -1,6 +1,6 @@
 ({
   access: 'public',
-  method: async ({}) => {
+  method: async () => {
     domain.db.updateSubscriberRooms({
       client: context.client,
       accessType: 'lobby',

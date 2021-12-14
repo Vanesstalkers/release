@@ -1,12 +1,12 @@
 ({
   access: 'public',
-  method: async ({ col, query, options }) => {
+  method: async () => {
     await db.mongo.fillGameData();
 
     domain.db.rooms.forEach((room, name) => {
       if (name.includes('game-')) {
         const gameId = name.split('-')[1];
-        for (const [client, access] of room) {
+        for (const [client] of room) {
           client.emit('db/updated', {
             game: { [gameId]: domain.db.data.game[gameId] },
           });

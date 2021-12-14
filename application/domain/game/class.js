@@ -418,7 +418,7 @@
     fromJSON(data) {
 
       this.addTime = data.addTime;
-      this.config = data.config;
+      this.settings = data.settings;
       this.round = data.round;
 
       if (data.playerList?.length) data.playerList.forEach(item => this.addPlayer(item));

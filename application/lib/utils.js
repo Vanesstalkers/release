@@ -35,8 +35,8 @@
       return item;
     } // null, undefined values check
 
-    let types = [Number, String, Boolean],
-      result;
+    const types = [Number, String, Boolean];
+    let result;
 
     // normalizing primitives if someone did new String('aaa'), or new Number('444');
     types.forEach((type) => {
@@ -54,7 +54,7 @@
     if (typeof result === 'undefined') {
       if (Object.prototype.toString.call(item) === '[object Array]') {
         result = [];
-        item.forEach((child, index, array) => {
+        item.forEach((child, index) => {
           result[index] = lib.utils.clone(child);
         });
       } else if (typeof item === 'object') {
@@ -73,14 +73,15 @@
             }
           }
         } else {
-          // depending what you would like here,
+          /* // depending what you would like here,
           // just keep the reference, or create new object
-          if (false && item.constructor) {
+          if (item.constructor) {
             // would not advice to do that, reason? Read below
             result = new item.constructor();
           } else {
             result = item;
-          }
+          } */
+          result = item;
         }
       } else {
         result = item;
@@ -88,27 +89,6 @@
     }
 
     return result;
-  },
-
-  dataSearch(data, query, type) {
-    // универсальный поиск по массиву объектов
-
-    return Object.values(data || {})[type]((item) => {
-      const queryKeys = Object.keys(query).filter(
-        (key) => query[key] != undefined
-      );
-
-      return (
-        queryKeys.filter(
-          (key) =>
-            (item._meta?.[key] || item[key]) != undefined &&
-            (key == '_id' ?
-              (item._meta?.[key] || item[key]).toString() ===
-                query[key].toString() :
-              (item._meta?.[key] || item[key]) === query[key])
-        ).length == queryKeys.length
-      );
-    });
   },
 
   isObjectID(value) {
@@ -140,16 +120,18 @@
 
   unflatten(data) {
     const result = {};
-    for (var i in data) {
-      var keys = i.split('.');
-      keys.reduce((r, e, j) => (
-        r[e] ||
+    for (const i in data) {
+      const keys = i.split('.');
+      keys.reduce(
+        (r, e, j) =>
+          r[e] ||
           (r[e] = isNaN(Number(keys[j + 1])) ?
-            keys.length - 1 == j ?
+            keys.length - 1 === j ?
               data[i] :
               {} :
-            [])
-      ), result);
+            []),
+        result
+      );
     }
     return result;
   },
@@ -158,7 +140,7 @@
     return arrayOfObjects.reduce((result, item) => {
       for (const key in item) {
         if (
-          item.hasOwnProperty(key) &&
+          item[key] &&
           (allowProps.length === 0 || allowProps.includes(key))
         ) {
           result[key] = (result[key] || 0) + item[key];
@@ -181,7 +163,7 @@
       const tmpObjectPropValue =
         //!sourceObjectIsArray && // для массивов не придумал ничего лучше, чем обновлять их целиком
         !lib.utils.isObjectID(value) &&
-        value != null &&
+        value !== null &&
         typeof value === 'object' ?
           lib.utils.addDeepProxyChangesWatcher(value, [...path, key], storage)
             .proxy :
@@ -194,12 +176,12 @@
     return {
       storage,
       proxy: new Proxy(tmpObject, {
-        set(target, name, value, receiver) {
+        set(target, name, value) {
           console.log('set', { target, name, value, path });
           if (
             !Array.isArray(target) && // для массивов не придумал ничего лучше, чем обновлять их целиком
             !lib.utils.isObjectID(value) &&
-            value != null &&
+            value !== null &&
             typeof value === 'object'
           ) {
             target[name] = lib.utils.addDeepProxyChangesWatcher(
@@ -264,7 +246,8 @@
                     по факту в store уже лежит ссылка на target, который и так обновился,
                     но формально (например, если в store начнет храниться копия) мы должны обновить его вручную
                 */
-        // storage[findParentKey] = target; - так лучше не делать, потому что при множественном вложении подставится некорректный target
+        // storage[findParentKey] = target; - так лучше не делать*
+        // (* при множественном вложении подставится некорректный target)
       } else {
         storage[currentKey] = value;
       }

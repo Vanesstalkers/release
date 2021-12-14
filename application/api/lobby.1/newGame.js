@@ -2,7 +2,6 @@
   access: 'public',
   method: async () => {
     async function newGame() {
-
       const Game = domain.game.class();
       const game = new Game().fromJSON(domain.game.exampleJSON);
 

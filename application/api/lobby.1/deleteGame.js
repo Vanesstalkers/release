@@ -3,7 +3,7 @@
   method: async ({ gameId }) => {
     const deleteOne = await db.mongo.deleteOne('game', { _id: gameId });
     console.log('deleteOne', deleteOne);
-    if (deleteOne == 'ok') {
+    if (deleteOne === 'ok') {
       delete domain.db.data.game[gameId];
       delete domain.db.forms.lobby.__game[gameId];
       domain.db.broadcast({

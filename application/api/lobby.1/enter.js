@@ -1,6 +1,6 @@
 ({
   access: 'public',
-  method: async ({}) => {
+  method: async () => {
     domain.db.subscribe({
       name: 'lobby',
       client: context.client,
