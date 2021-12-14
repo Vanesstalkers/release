@@ -1,6 +1,4 @@
 ({
   access: 'public',
-  method: async () => {
-    return context;
-  },
+  method: async () => context,
 });

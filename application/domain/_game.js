@@ -2,7 +2,7 @@
   constructor() {
     console.log('class Game');
   }
-})
+});
 
 /* ({
   list: new Map(),

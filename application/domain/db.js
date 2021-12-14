@@ -17,7 +17,7 @@
   },
   dataAccessFilters: {
     game: {
-      'lobby': data => {
+      lobby: (data) => {
         const result = {
           _id: data._id,
           playerList: data.playerList,
@@ -25,21 +25,31 @@
         };
         return result;
       },
-      'game': (data, client) => {
+      game: (data, client) => {
         const session = domain.db.data.session.get(client);
         const user = domain.db.data.user[session.userId];
 
-        const playerList = data.playerList.filter(player => player._id.toString() !== user.player.toString());
-        playerList.forEach( player => {
-          player.deckList.forEach( deck => {
-            deck.itemList = new Array(deck.itemList.length).fill({_id: '???'});
+        const playerList = data.playerList.filter(
+          (player) => player._id.toString() !== user.player.toString()
+        );
+        playerList.forEach((player) => {
+          player.deckList.forEach((deck) => {
+            deck.itemList = new Array(deck.itemList.length).fill({
+              _id: '???',
+            });
           });
         });
 
-        console.log('dataAccessFilters game->game', {data, client, session, user, playerList});
+        console.log('dataAccessFilters game->game', {
+          data,
+          client,
+          session,
+          user,
+          playerList,
+        });
         return data;
-      }
-    }
+      },
+    },
   },
 
   subscribe({ name, client, type }) {
@@ -75,43 +85,46 @@
     client.emit('db/updated', data);
     if (typeof event === 'function') event({ client });
   },
-  broadcastData(data, {client: singleClient} = {}) {
+  broadcastData(data, { client: singleClient } = {}) {
     const clients = new Map();
     for (const col of Object.keys(data)) {
       for (const id of Object.keys(data[col])) {
         const room = domain.db.getRoom([col, id].join('-'));
         for (const [client, access] of room) {
-          if(!singleClient || singleClient === client){
-            if(!clients.has(client)) clients.set(client, new Set());
-            clients.get(client).add({col, id, access});
+          if (!singleClient || singleClient === client) {
+            if (!clients.has(client)) clients.set(client, new Set());
+            clients.get(client).add({ col, id, access });
           }
         }
       }
     }
-    clients.forEach((items, client)=>{
+    clients.forEach((items, client) => {
       const sendData = {};
-      for(const item of items){
-        if(!sendData[item.col]) sendData[item.col] = {};
+      for (const item of items) {
+        if (!sendData[item.col]) sendData[item.col] = {};
         sendData[item.col][item.id] = data[item.col][item.id];
-        if(item.access.size){
-          for(const access of item.access){
+        if (item.access.size) {
+          for (const access of item.access) {
             const filter = domain.db.dataAccessFilters[item.col]?.[access];
-            if(filter){
-              sendData[item.col][item.id] = filter( JSON.parse(JSON.stringify(data[item.col][item.id])), client );
+            if (filter) {
+              sendData[item.col][item.id] = filter(
+                JSON.parse(JSON.stringify(data[item.col][item.id])),
+                client
+              );
             }
           }
         }
       }
-      console.log({items, client, sendData});
+      console.log({ items, client, sendData });
       client.emit('db/updated', sendData);
     });
   },
   broadcast({ room: roomName, client: singleClient, data, event }) {
     const room = domain.db.getRoom(roomName);
     for (const [client, access] of room) {
-      if(!singleClient || singleClient === client){
+      if (!singleClient || singleClient === client) {
         client.emit('db/updated', data);
-        if(typeof event === 'function') event({ client });
+        if (typeof event === 'function') event({ client });
       }
     }
   },

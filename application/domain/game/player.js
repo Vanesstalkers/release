@@ -2,4 +2,4 @@
   constructor() {
     console.log('class Player');
   }
-})
+});

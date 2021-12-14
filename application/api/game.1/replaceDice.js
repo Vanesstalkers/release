@@ -1,9 +1,10 @@
 ({
   access: 'public',
   method: async ({ gameId, diceCode, zoneCode }) => {
-
     const Game = domain.game.class();
-    const game = new Game({ _id: gameId }).fromJSON(await db.mongo.findOne('game', gameId));
+    const game = new Game({ _id: gameId }).fromJSON(
+      await db.mongo.findOne('game', gameId)
+    );
 
     const dice = game.getObjectById(diceCode);
     const zone = game.getObjectById(zoneCode);
@@ -19,10 +20,14 @@
 
     const $set = { ...game };
     delete $set._id;
-    await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
+    await db.mongo.updateOne(
+      'game',
+      { _id: db.mongo.ObjectID(gameId) },
+      { $set }
+    );
 
     domain.db.broadcastData({
-      'game': { [gameId]: game },
+      game: { [gameId]: game },
     });
 
     return { status: 'ok' };

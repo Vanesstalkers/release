@@ -1,12 +1,13 @@
 ({
   access: 'public',
   method: async ({ gameId }) => {
+    if (context.game) return { result: 'error', msg: 'Уже участвует в игре' };
 
-    if(context.game)
-      return { result: 'error', msg: 'Уже участвует в игре' };
+    const { playerId } = await domain.game.joinGame({
+      gameId,
+      userId: context.userId,
+    });
 
-    const { playerId } = await domain.game.joinGame({gameId: gameId, userId: context.userId});
-  
     context.game = gameId.toString();
     context.player = playerId.toString();
 

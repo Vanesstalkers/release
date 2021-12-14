@@ -16,16 +16,20 @@
   },
   broadcast({ event, data }) {
     for (const [client, access] of this.subscribers) {
-      client.emit(`lobby/event`, { event, data });
+      client.emit('lobby/event', { event, data });
 
       switch (event) {
-        case 'userJoin':
-          domain.db.subscribe({ name: 'user-' + data._id, client, type: 'lobby' });
-          client.emit('db/updated', { 'user': { [data._id]: data } });
-          break;
-        case 'userLeave':
-          domain.db.unsubscribe({ name: 'user-' + data._id, client });
-          break;
+      case 'userJoin':
+        domain.db.subscribe({
+          name: 'user-' + data._id,
+          client,
+          type: 'lobby',
+        });
+        client.emit('db/updated', { user: { [data._id]: data } });
+        break;
+      case 'userLeave':
+        domain.db.unsubscribe({ name: 'user-' + data._id, client });
+        break;
       }
     }
   },

@@ -6,12 +6,21 @@
 
   async saveSession(token, data) {
     //db.redis.set(token, JSON.stringify(data));
-    const session = await db.mongo.findOneAndUpdate('session', { token }, { $set: { data } }, { returnDocument: "after" });
+    await db.mongo.findOneAndUpdate(
+      'session',
+      { token },
+      { $set: { data } },
+      { returnDocument: 'after' }
+    );
   },
 
   async startSession(token, data, fields = {}) {
     //db.redis.set(token, JSON.stringify(record));
-    const session = await db.mongo.insertOne('session', { token, data, ...fields });
+    const session = await db.mongo.insertOne('session', {
+      token,
+      data,
+      ...fields,
+    });
     return session;
   },
 

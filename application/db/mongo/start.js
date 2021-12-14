@@ -3,7 +3,11 @@ async () => {
     console.debug('Connect to mongo');
   }
 
-  db.mongo.afterStart = [async () => { console.log('db.mongo.afterStart') }];
+  db.mongo.afterStart = [
+    async () => {
+      console.log('db.mongo.afterStart');
+    },
+  ];
 
   const client = new npm.mongodb.MongoClient(config.mongo.url, {
     // useUnifiedTopology: true
@@ -14,7 +18,7 @@ async () => {
 
   if (application.worker.id === 'W1') {
     db.mongo.fillGameData();
-    db.mongo.afterStart.forEach(fn => fn());
+    db.mongo.afterStart.forEach((fn) => fn());
   }
 
   // const client = npm.redis.createClient();

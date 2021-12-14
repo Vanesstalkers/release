@@ -1,4 +1,4 @@
 ({
-    list: new Map(),
-    gameRooms: new Map(),
+  list: new Map(),
+  gameRooms: new Map(),
 });

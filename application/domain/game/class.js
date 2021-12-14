@@ -149,14 +149,28 @@
     constructor(data, { parent }) {
       super(data, { parent });
 
-      if (Math.random() > 0.5) data.reverse();
-      this.side1 = data[0];
-      this.side2 = data[1];
+      if(data.sideList){
 
-      this.sideList = [
+        this.side1 = data.side1;
+        this.side2 = data.side2;
+
+        this.sideList = [
+          new DiceSide(data.sideList[0], { parent: this }), 
+          new DiceSide(data.sideList[1], { parent: this }),
+        ];
+      }else{
+
+        if (Math.random() > 0.5) data.reverse();
+        this.side1 = data[0];
+        this.side2 = data[1];
+
+        this.sideList = [
+          new DiceSide({_code: 1, value: data[0]}, { parent: this }), 
         new DiceSide({_code: 1, value: data[0]}, { parent: this }), 
-        new DiceSide({_code: 2, value: data[1]}, { parent: this }),
-      ];
+          new DiceSide({_code: 1, value: data[0]}, { parent: this }), 
+          new DiceSide({_code: 2, value: data[1]}, { parent: this }),
+        ];
+      }
     }
     customObjectCode({ codeTemplate, replacementFragment }, data) {
       return codeTemplate.replace(replacementFragment, ''+data[0]+data[1]);
@@ -221,10 +235,24 @@
       this.vertical = data.vertical;
       this.links = data.links;
 
-      this.sideList = [
+      if(data.sideList){
+
+        this.side1 = data.side1;
+        this.side2 = data.side2;
+
+        this.sideList = [
+          new ZoneSide(data.sideList[0], { parent: this }), 
+          new ZoneSide(data.sideList[1], { parent: this }),
+        ];
+      }else{
+
+        this.sideList = [
+          new ZoneSide({_code: 1, value: data[0]}, { parent: this }), 
         new ZoneSide({_code: 1, value: data[0]}, { parent: this }), 
-        new ZoneSide({_code: 2, value: data[1]}, { parent: this }),
-      ];
+          new ZoneSide({_code: 1, value: data[0]}, { parent: this }), 
+          new ZoneSide({_code: 2, value: data[1]}, { parent: this }),
+        ];
+      }
     }
     customObjectCode() { return this.default_customObjectCode(...arguments) } // иначе подставится метод из Deck
 
