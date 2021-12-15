@@ -13,47 +13,42 @@
       console.log(JSON.stringify(game, '', 2));
       //console.log(JSON.stringify(game.getObjectByCode('Plane[1]'), '', 2));
 
-      const Plane2 = game.getObjectByCode('Plane[2]');
-      if(Plane2){
-        game.linkPlanes({
-          joinPort: Plane2.getObjectByCode('Port[1]'),
-          targetPort: game.getObjectByCode('Plane[1]').getObjectByCode('Port[1]'),
-        });
-        game.linkPlanes({
-          joinPort: game.getObjectByCode('Plane[3]').getObjectByCode('Port[2]'),
-          targetPort: Plane2.getObjectByCode('Port[4]'),
-        });
-      }
+      game.linkPlanes({
+        joinPort: game.getObjectByCode('Plane[2]').getObjectByCode('Port[1]'),
+        targetPort: game.getObjectByCode('Plane[1]').getObjectByCode('Port[1]'),
+      });
+      game.linkPlanes({
+        joinPort: game.getObjectByCode('Plane[3]').getObjectByCode('Port[2]'),
+        targetPort: game.getObjectByCode('Plane[2]').getObjectByCode('Port[4]'),
+      });
 
       game = new Game().fromJSON(JSON.parse(JSON.stringify(game)));
 
       const deck = game.getObjectByCode('Deck[domino]');
-      const playerHand = game
-        .getObjectByCode('Player[1]')
-        .getObjectByCode('Deck[domino]');
+      const playerHand = game.getObjectByCode('Player[1]').getObjectByCode('Deck[domino]');
       const dice = deck.getObjectByCode('Dice[55]');
       dice.moveToTarget(playerHand);
       deck.getRandomItem().moveToTarget(playerHand);
 
       const movableItem = playerHand.getObjectById(dice._id);
-      const zone = game.getObjectByCode('Plane[1]').getObjectByCode('Zone[1]');
+      const zone = game.getObjectByCode('Plane[1]').getObjectByCode('Zone[2]');
       movableItem.moveToTarget(zone);
+
+      deck.getObjectByCode('Dice[44]').moveToTarget(
+        game.getObjectByCode('Plane[2]').getObjectByCode('Zone[1]')
+      );
 
       // deck
       //   .getObjectByCode('Dice[45]')
       //   .moveToTarget(game.getObjectByCode('Plane[1]Zone[4]'));
 
-      game = new Game().fromJSON(JSON.parse(JSON.stringify(game)));
+      // game = new Game().fromJSON(JSON.parse(JSON.stringify(game)));
 
-      const checkIsAvailableDice = deck.getObjectByCode('Dice[45]');
-
-      // game.getObjects({className: 'Zone'}).forEach(obj => {
-      //   const a = obj.checkIsAvailable(checkIsAvailableDice);
-      //   if( a ){
-      //     console.log('checkIsAvailable=', a, obj.code);
-      //   }
-      // });
-      console.log('getAvailableZones', game.getZonesAvailability(checkIsAvailableDice));
+      // const dice = deck.getObjectByCode('Dice[11]');
+      // dice.moveToTarget( game.getObjectByCode('Plane[2]').getObjectByCode('Zone[1]') );
+      // dice.moveToTarget( deck );
+      // //deck.getObjectByCode('Dice[22]').moveToTarget( game.getObjectByCode('Plane[3]').getObjectByCode('Zone[3]') );
+      // console.log( game.getZonesAvailability( deck.getObjectByCode('Dice[22]') ) );
 
       game = new Game().fromJSON(JSON.parse(JSON.stringify(game)));
       if (insertIntoDB) {
