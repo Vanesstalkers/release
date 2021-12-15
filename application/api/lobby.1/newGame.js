@@ -5,14 +5,17 @@
       const Game = domain.game.class();
       const game = new Game().fromJSON(domain.game.exampleJSON);
 
-      game.linkPlanes({
-        joinPort: game.getObjectByCode('Plane[2]').getObjectByCode('Port[1]'),
-        targetPort: game.getObjectByCode('Plane[1]').getObjectByCode('Port[1]'),
-      });
-      game.linkPlanes({
-        joinPort: game.getObjectByCode('Plane[3]').getObjectByCode('Port[2]'),
-        targetPort: game.getObjectByCode('Plane[2]').getObjectByCode('Port[4]'),
-      });
+      const Plane2 = game.getObjectByCode('Plane[2]');
+      if(Plane2){
+        game.linkPlanes({
+          joinPort: Plane2.getObjectByCode('Port[1]'),
+          targetPort: game.getObjectByCode('Plane[1]').getObjectByCode('Port[1]'),
+        });
+        game.linkPlanes({
+          joinPort: game.getObjectByCode('Plane[3]').getObjectByCode('Port[2]'),
+          targetPort: Plane2.getObjectByCode('Port[4]'),
+        });
+      }
 
       const insertOne = await db.mongo.insertOne('game', game);
       game._id = insertOne._id;

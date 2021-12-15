@@ -15,7 +15,10 @@
 
       this.setParent(parent);
       this.addToParentsObjectStorage();
-      if (parent) this.setGame(parent.getGame());
+      if (parent){
+        const game = parent.getGame();
+        this.setGame(game);
+      }
 
       const customObjectCode = Object.getPrototypeOf(this).customObjectCode;
       if (data.code) {
@@ -69,8 +72,13 @@
     getCodeTemplate(_code) {
       return '' + this.getCodePrefix() + _code + this.getCodeSuffix();
     }
-    getObjects() {
-      return this.#_objects;
+    getObjects(filter) {
+      let result = Object.values(this.#_objects);
+      if(filter){
+        if(filter.className) result = result.filter(obj => obj.constructor.name === filter.className);
+        if(filter.directParent) result = result.filter(obj => obj.getParent() === filter.directParent);
+      }
+      return result;
     }
     setParent(parent) {
       if (parent) {
@@ -446,6 +454,16 @@
     }
     linkPlanes(data) {
       domain.game.linkPlanes(data);
+    }
+    getZonesAvailability(dice){
+      const result = new Map();
+      this.getObjects({className: 'Plane', directParent: this}).forEach(plane => {
+        plane.getObjects({className: 'Zone'}).forEach(zone => {
+          const isAvailableStatus = zone.checkIsAvailable(dice);
+          result.set(zone, isAvailableStatus);
+        });
+      });
+      return result;
     }
   }
 }
