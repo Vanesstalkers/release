@@ -1,5 +1,5 @@
-async ({ joinPort, targetPort }) => {
-  const ROTATIONS = joinPort.constructor.ROTATIONS;
+({ joinPort, targetPort }) => {
+  const DIRECTIONS = joinPort.constructor.DIRECTIONS;
 
   const joinPlane = joinPort.getParent();
   const targetPlane = targetPort.getParent();
@@ -21,7 +21,7 @@ async ({ joinPort, targetPort }) => {
   joinPlane.top += targetLinkPoint.top - joinLinkPoint.top;
   joinPlane.left += targetLinkPoint.left - joinLinkPoint.left;
 
-  console.log({ joinPort, targetPort, joinPlane, targetPlane });
+  // console.log({ joinPort, targetPort, joinPlane, targetPlane });
 
   function getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }) {
     let targetDirectWithRotate = targetPort.getDirect();
@@ -29,14 +29,14 @@ async ({ joinPort, targetPort }) => {
     const targetPlaneRotation = targetPort.getParent().getCurrentRotation();
 
     for (let i = 0; i < targetPlaneRotation; i++) {
-      targetDirectWithRotate = ROTATIONS[targetDirectWithRotate].nextDirection;
+      targetDirectWithRotate = DIRECTIONS[targetDirectWithRotate].nextDirection;
     }
     let resultRotation = 0;
     while (
-      ROTATIONS[joinDirectWithRotate].oppositeDirection !==
+      DIRECTIONS[joinDirectWithRotate].oppositeDirection !==
       targetDirectWithRotate
     ) {
-      joinDirectWithRotate = ROTATIONS[joinDirectWithRotate].nextDirection;
+      joinDirectWithRotate = DIRECTIONS[joinDirectWithRotate].nextDirection;
       resultRotation++;
     }
     return resultRotation;
@@ -92,6 +92,6 @@ async ({ joinPort, targetPort }) => {
       return { top: -left, left: top };
     }
   }
-
-  return { result: 'success' };
+  
+  return { result: 'success', targetLinkPoint, joinLinkPoint };
 };

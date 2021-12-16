@@ -15,7 +15,7 @@
 
       this.setParent(parent);
       this.addToParentsObjectStorage();
-      if (parent){
+      if (parent) {
         const game = parent.getGame();
         this.setGame(game);
       }
@@ -74,9 +74,9 @@
     }
     getObjects(filter) {
       let result = Object.values(this.#_objects);
-      if(filter){
-        if(filter.className) result = result.filter(obj => obj.constructor.name === filter.className);
-        if(filter.directParent) result = result.filter(obj => obj.getParent() === filter.directParent);
+      if (filter) {
+        if (filter.className) result = result.filter(obj => obj.constructor.name === filter.className);
+        if (filter.directParent) result = result.filter(obj => obj.getParent() === filter.directParent);
       }
       return result;
     }
@@ -190,16 +190,16 @@
       const moveResult = target.addItem(this);
       if (moveResult) {
         this.updateParent(target);
-      }else{
+      } else {
         currentParent.addItem(this);
       }
       return moveResult;
     }
-    rotate(rotation){
-      if(rotation){
+    rotate(rotation) {
+      if (rotation) {
         this.rotation = true;
-      }else{
-        if(this.rotation) delete this.rotation;
+      } else {
+        if (this.rotation) delete this.rotation;
       }
     }
   }
@@ -328,22 +328,22 @@
       const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
       const expectedValues1 = this.sideList[1].expectedValues;
       const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
-
+      
       if (!sizeOfExpectedValues0 && !sizeOfExpectedValues1) return true; // соседние zone свободны
       if (
-        (!sizeOfExpectedValues0 || 
-          (expectedValues0[dice.sideList[0].value] && sizeOfExpectedValues0 === 1 ))
+        (!sizeOfExpectedValues0 ||
+          (expectedValues0[dice.sideList[0].value] && sizeOfExpectedValues0 === 1))
         &&
-        (!sizeOfExpectedValues1 || 
+        (!sizeOfExpectedValues1 ||
           (expectedValues1[dice.sideList[1].value] && sizeOfExpectedValues1 === 1))
-        ) return true;
+      ) return true;
       if (
-        (!sizeOfExpectedValues0 || 
+        (!sizeOfExpectedValues0 ||
           (expectedValues0[dice.sideList[1].value] && sizeOfExpectedValues0 === 1))
         &&
-        (!sizeOfExpectedValues1 || 
+        (!sizeOfExpectedValues1 ||
           (expectedValues1[dice.sideList[0].value] && sizeOfExpectedValues1 === 1))
-        ) return 'rotate';
+      ) return 'rotate';
 
       return false;
     }
@@ -364,18 +364,30 @@
       this.expectedValues = {};
       this.links.forEach(linkCode => {
         const link = this.getGame().getObjectByCode(linkCode);
-        if(link.value !== undefined) this.expectedValues[link.value] = true;
+        if (link.value !== undefined) this.expectedValues[link.value] = true;
       });
     }
   }
 
   class Port extends GameObject {
 
-    static ROTATIONS = {
-      top: { oppositeDirection: "bottom", nextDirection: "right" },
-      right: { oppositeDirection: "left", nextDirection: "bottom" },
-      bottom: { oppositeDirection: "top", nextDirection: "left" },
-      left: { oppositeDirection: "right", nextDirection: "top" },
+    static DIRECTIONS = {
+      top: {
+        oppositeDirection: "bottom", nextDirection: "right",
+        bridge: { vertical: true }
+      },
+      right: {
+        oppositeDirection: "left", nextDirection: "bottom",
+        bridge: {}
+      },
+      bottom: {
+        oppositeDirection: "top", nextDirection: "left",
+        bridge: { vertical: true }
+      },
+      left: {
+        oppositeDirection: "right", nextDirection: "top",
+        bridge: {}
+      },
     }
 
     width = 73;
@@ -396,7 +408,7 @@
   }
 
   class Bridge extends GameObject {
-    
+
     zoneList = [];
     width = 0;
     height = 0;
@@ -406,6 +418,7 @@
 
       this.left = data.left;
       this.top = data.top;
+      this.rotation = data.rotation || 0;
     }
   }
 
@@ -489,25 +502,30 @@
       return newActivePlayer;
     }
     linkPlanes({ joinPort, targetPort }) {
-      const {targetLinkPoint, joinLinkPoint} = domain.game.linkPlanes({ joinPort, targetPort });
-      console.log({targetLinkPoint, joinLinkPoint});
+      const { targetLinkPoint, joinLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
+      const DIRECTIONS = joinPort.constructor.DIRECTIONS;
+      console.log({ targetLinkPoint, joinLinkPoint, vertical: '?', portDirect: DIRECTIONS[targetPort.getDirect()] });
 
       const joinPlane = joinPort.getParent();
       const targetPlane = targetPort.getParent();
 
       // zoneLinks может быть несколько (links[...])
       const bridgeData = {
-        _code: joinPlane.code+'-'+targetPlane.code,
+        _code: joinPlane.code + '-' + targetPlane.code,
         left: targetLinkPoint.left,
         top: targetLinkPoint.top,
+        rotation: targetPlane.rotation,
         zoneLinks: {
           'Zone[1]': {
-            'ZoneSide[1]': [joinPlane.code+joinPort.links[0]],
-            'ZoneSide[2]': [targetPlane.code+targetPort.links[0]],
+            'ZoneSide[1]': [joinPlane.code + joinPort.links[0]],
+            'ZoneSide[2]': [targetPlane.code + targetPort.links[0]],
           }
         },
         zoneList: [
-          { _code: 1, left: 0, top: 0, itemType: 'any' },
+          {
+            _code: 1, left: 0, top: 0, itemType: 'any',
+            vertical: DIRECTIONS[targetPort.getDirect()].bridge.vertical
+          },
         ],
       }
 
@@ -518,7 +536,7 @@
       const bridge = new Bridge(data, { parent: this });
       this.bridgeList.push(bridge);
 
-      
+
       if (data.zoneList?.length) {
         data.zoneList.forEach(item => {
           bridge.zoneList.push(new Zone(item, { parent: bridge }));
@@ -540,17 +558,17 @@
         });
       }
     }
-    getZonesAvailability(dice){
+    getZonesAvailability(dice) {
       const result = new Map();
       dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
-      this.getObjects({className: 'Plane', directParent: this}).forEach(plane => {
-        plane.getObjects({className: 'Zone'}).forEach(zone => {
+      this.getObjects({ className: 'Plane', directParent: this }).forEach(plane => {
+        plane.getObjects({ className: 'Zone' }).forEach(zone => {
           const isAvailableStatus = zone.checkIsAvailable(dice);
           result.set(zone, isAvailableStatus);
         });
       });
-      this.getObjects({className: 'Bridge', directParent: this}).forEach(plane => {
-        plane.getObjects({className: 'Zone'}).forEach(zone => {
+      this.getObjects({ className: 'Bridge', directParent: this }).forEach(plane => {
+        plane.getObjects({ className: 'Zone' }).forEach(zone => {
           const isAvailableStatus = zone.checkIsAvailable(dice);
           result.set(zone, isAvailableStatus);
         });
