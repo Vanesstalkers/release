@@ -11,19 +11,17 @@
     {
       _code: 1,
       active: true,
-      deckList: [{ type: 'domino', itemType: 'any' }],
-      planeList: [
-        {
-          _code: 11,
-          zoneList: [
-            { _code: 666, left: 130, top: 7, itemType: 'any', s: 'bash' },
-          ],
-        },
+      deckList: [
+        { type: 'domino', itemType: 'any' },
+        { type: 'plane'}
       ],
     },
     {
       _code: 2,
-      deckList: [{ type: 'domino', itemType: 'any' }],
+      deckList: [
+        { type: 'domino', itemType: 'any' },
+        { type: 'plane'}
+      ],
     },
   ],
   deckList: [

@@ -116,12 +116,13 @@
   }
 
   const hasDeck = Base => class extends Base {
-
-    addDeck(data, { deckClass = Deck, deckListName = 'deckList' } = {}) {
+    addDeck(data, { deckClass = Deck, deckListName = 'deckList', deckItemClass = Dice } = {}) {
 
       if (!this[deckListName]) this[deckListName] = [];
       const deck = new deckClass(data, { parent: this });
       this[deckListName].push(deck);
+
+      deck.setItemClass(deckItemClass);
 
       if (data.itemList?.length) {
         data.itemList.forEach(item => deck.addItem(item));
@@ -137,27 +138,6 @@
       const plane = new Plane(data, { parent: this });
       this.planeList.push(plane);
 
-      if (data.portList?.length) data.portList.forEach(item => plane.addPort(item));
-      if (data.zoneList?.length) {
-        data.zoneList.forEach(item => {
-          plane.zoneList.push(new Zone(item, { parent: plane }));
-        });
-      }
-      if (data.zoneLinks) {
-        Object.entries(data.zoneLinks).forEach(([zoneCode, sideList]) => {
-          Object.entries(sideList).forEach(([sideCode, links]) => {
-            links.forEach(link => {
-              const [linkZoneCode, linkSideCode] = link.split('.');
-              const zone = plane.getObjectByCode(zoneCode);
-              const side = zone.getObjectByCode(sideCode);
-              const linkZone = plane.getObjectByCode(linkZoneCode);
-              const linkSide = linkZone.getObjectByCode(linkSideCode);
-              side.addLink(linkSide.code);
-              linkSide.addLink(side.code);
-            });
-          });
-        });
-      }
     }
   }
 
@@ -220,6 +200,7 @@
   class Deck extends GameObject {
 
     itemList = [];
+    #itemClass;
 
     constructor(data, { parent }) {
       super(data, { parent });
@@ -231,8 +212,11 @@
       return codeTemplate.replace(replacementFragment, data.type);
     }
 
+    setItemClass(itemClass) {
+      this.#itemClass = itemClass;
+    }
     getItemClass() {
-      return this.type == 'domino' ? Dice : Card;
+      return this.#itemClass;
     }
     addItem(item) {
       const itemClass = this.getItemClass();
@@ -328,8 +312,14 @@
       const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
       const expectedValues1 = this.sideList[1].expectedValues;
       const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
-      
-      if (!sizeOfExpectedValues0 && !sizeOfExpectedValues1) return true; // соседние zone свободны
+
+      if (this.getParent().constructor.name === 'Bridge' &&
+        (!sizeOfExpectedValues0 || !sizeOfExpectedValues1))
+        return false; // для bridge-zone должны быть заполнены соседние zone
+
+      if (!sizeOfExpectedValues0 && !sizeOfExpectedValues1)
+        return true; // соседние zone свободны
+
       if (
         (!sizeOfExpectedValues0 ||
           (expectedValues0[dice.sideList[0].value] && sizeOfExpectedValues0 === 1))
@@ -374,7 +364,7 @@
     static DIRECTIONS = {
       top: {
         oppositeDirection: "bottom", nextDirection: "right",
-        bridge: { vertical: true }
+        bridge: { vertical: true, reverse: true }
       },
       right: {
         oppositeDirection: "left", nextDirection: "bottom",
@@ -386,7 +376,7 @@
       },
       left: {
         oppositeDirection: "right", nextDirection: "top",
-        bridge: {}
+        bridge: { reverse: true }
       },
     }
 
@@ -437,6 +427,28 @@
       this.rotation = data.rotation || 0;
       if (data.width) this.width = data.width;
       if (data.height) this.height = data.height;
+
+      if (data.portList?.length) data.portList.forEach(item => this.addPort(item));
+      if (data.zoneList?.length) {
+        data.zoneList.forEach(item => {
+          this.zoneList.push(new Zone(item, { parent: this }));
+        });
+      }
+      if (data.zoneLinks) {
+        Object.entries(data.zoneLinks).forEach(([zoneCode, sideList]) => {
+          Object.entries(sideList).forEach(([sideCode, links]) => {
+            links.forEach(link => {
+              const [linkZoneCode, linkSideCode] = link.split('.');
+              const zone = this.getObjectByCode(zoneCode);
+              const side = zone.getObjectByCode(sideCode);
+              const linkZone = this.getObjectByCode(linkZoneCode);
+              const linkSide = linkZone.getObjectByCode(linkSideCode);
+              side.addLink(linkSide.code);
+              linkSide.addLink(side.code);
+            });
+          });
+        });
+      }
     }
 
     addPort(data) {
@@ -478,8 +490,14 @@
       this.round = data.round;
 
       if (data.playerList?.length) data.playerList.forEach(item => this.addPlayer(item));
+      // !!! надо перевести на Deck (по аналогии с Player)
+      // if (data.planeList?.length) data.planeList.forEach(item => this.addDeck(item, {
+      //   deckListName: 'planeList', deckItemClass: Plane,
+      // }));
       if (data.planeList?.length) data.planeList.forEach(item => this.addPlane(item));
-      if (data.deckList?.length) data.deckList.forEach(item => this.addDeck(item));
+      if (data.deckList?.length) data.deckList.forEach(item => this.addDeck(item, {
+        deckItemClass: item.type === 'domino' ? Dice : Card
+      }));
       if (data.bridgeList?.length) data.bridgeList.forEach(item => this.addBridge(item));
 
       return this;
@@ -489,8 +507,9 @@
       const player = new Player(data, { parent: this });
       this.playerList.push(player);
 
-      if (data.planeList?.length) data.planeList.forEach(item => player.addPlane(item));
-      if (data.deckList?.length) data.deckList.forEach(item => player.addDeck(item));
+      if (data.deckList?.length) data.deckList.forEach(item => player.addDeck(item, {
+        deckItemClass: item.type === 'domino' ? Dice : (item.type === 'plane' ? Plane : Card)
+      }));
     }
     changeActivePlayer() {
 
@@ -504,27 +523,33 @@
     linkPlanes({ joinPort, targetPort }) {
       const { targetLinkPoint, joinLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
       const DIRECTIONS = joinPort.constructor.DIRECTIONS;
-      console.log({ targetLinkPoint, joinLinkPoint, vertical: '?', portDirect: DIRECTIONS[targetPort.getDirect()] });
+      const targetPortDirect = DIRECTIONS[targetPort.getDirect()];
+      console.log({ targetLinkPoint, joinLinkPoint, vertical: '?', portDirect: targetPortDirect });
 
       const joinPlane = joinPort.getParent();
       const targetPlane = targetPort.getParent();
+      const joinPlaneZoneLink = [joinPlane.code + joinPort.links[0]];
+      const targetPlaneZoneLink = [targetPlane.code + targetPort.links[0]];
 
-      // zoneLinks может быть несколько (links[...])
+      // !!! zoneLinks может быть несколько (links[...]) - пока что не актуально (нет таких Plane)
+
+      const reverseLinks = targetPortDirect.bridge.reverse;
+      const bridgeZoneLinks = {
+        'Zone[1]': {
+          [reverseLinks ? 'ZoneSide[2]' : 'ZoneSide[1]']: targetPlaneZoneLink,
+          [reverseLinks ? 'ZoneSide[1]' : 'ZoneSide[2]']: joinPlaneZoneLink,
+        }
+      }
       const bridgeData = {
         _code: joinPlane.code + '-' + targetPlane.code,
         left: targetLinkPoint.left,
         top: targetLinkPoint.top,
         rotation: targetPlane.rotation,
-        zoneLinks: {
-          'Zone[1]': {
-            'ZoneSide[1]': [joinPlane.code + joinPort.links[0]],
-            'ZoneSide[2]': [targetPlane.code + targetPort.links[0]],
-          }
-        },
+        zoneLinks: bridgeZoneLinks,
         zoneList: [
           {
             _code: 1, left: 0, top: 0, itemType: 'any',
-            vertical: DIRECTIONS[targetPort.getDirect()].bridge.vertical
+            vertical: targetPortDirect.bridge.vertical
           },
         ],
       }
