@@ -181,53 +181,53 @@
         },
       ],
     },
-    // {
-    //   _code: 3,
-    //   zoneLinks: {
-    //     'Zone[2]': {
-    //       'ZoneSide[1]': [],
-    //       'ZoneSide[2]': ['Zone[1].ZoneSide[2]', 'Zone[3].ZoneSide[1]'],
-    //     },
-    //   },
-    //   zoneList: [
-    //     { _code: 1, left: 50, top: 170, itemType: 'any', s: 'css' },
-    //     {
-    //       _code: 2,
-    //       left: 215,
-    //       top: 100,
-    //       vertical: 1,
-    //       itemType: 'any',
-    //       s: 'html',
-    //     },
-    //     { _code: 3, left: 310, top: 170, itemType: 'any', s: 'js' },
-    //   ],
-    //   portList: [
-    //     {
-    //       _code: 1,
-    //       left: 30,
-    //       top: 70,
-    //       direct: { left: true },
-    //       links: ['Zone[1].ZoneSide[1]'],
-    //       t: 'any',
-    //     },
-    //     {
-    //       _code: 2,
-    //       left: 215,
-    //       top: 20,
-    //       direct: { top: true },
-    //       links: ['Zone[2].ZoneSide[1]'],
-    //       t: 'any',
-    //     },
-    //     {
-    //       _code: 3,
-    //       left: 430,
-    //       top: 70,
-    //       direct: { right: true },
-    //       links: ['Zone[3].ZoneSide[2]'],
-    //       t: 'any',
-    //     },
-    //   ],
-    // },
+    {
+      _code: 3,
+      zoneLinks: {
+        'Zone[2]': {
+          'ZoneSide[1]': [],
+          'ZoneSide[2]': ['Zone[1].ZoneSide[2]', 'Zone[3].ZoneSide[1]'],
+        },
+      },
+      zoneList: [
+        { _code: 1, left: 50, top: 170, itemType: 'any', s: 'css' },
+        {
+          _code: 2,
+          left: 215,
+          top: 100,
+          vertical: 1,
+          itemType: 'any',
+          s: 'html',
+        },
+        { _code: 3, left: 310, top: 170, itemType: 'any', s: 'js' },
+      ],
+      portList: [
+        {
+          _code: 1,
+          left: 30,
+          top: 70,
+          direct: { left: true },
+          links: ['Zone[1].ZoneSide[1]'],
+          t: 'any',
+        },
+        {
+          _code: 2,
+          left: 215,
+          top: 20,
+          direct: { top: true },
+          links: ['Zone[2].ZoneSide[1]'],
+          t: 'any',
+        },
+        {
+          _code: 3,
+          left: 430,
+          top: 70,
+          direct: { right: true },
+          links: ['Zone[3].ZoneSide[2]'],
+          t: 'any',
+        },
+      ],
+    },
     // {
     //   _code: 4,
     //   zoneLinks: {

@@ -138,6 +138,7 @@
       const plane = new Plane(data, { parent: this });
       this.planeList.push(plane);
 
+      return plane;
     }
   }
 
@@ -390,10 +391,38 @@
       this.top = data.top;
       this.direct = data.direct;
       this.links = data.links;
+      this.linkedBridge = data.linkedBridge;
     }
 
     getDirect() {
       return Object.entries(this.direct).find(([direct, value]) => value)[0];
+    }
+    updateDirect(newDirect) {
+
+      const directKeys = Object.keys(this.direct);
+
+      if (newDirect) {
+        if (this.direct[newDirect] !== undefined) {
+          
+          for (const direct of directKeys)this.direct[direct] = false;
+          this.direct[newDirect] = true;
+          
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+
+        let usedDirectionIndex = 0;
+        for (let i = 0; i < directKeys.length; i++) {
+          if (this.direct[directKeys[i]]) usedDirectionIndex = i;
+          this.direct[directKeys[i]] = false;
+        }
+        const newDirectionIndex = (usedDirectionIndex + 1) % directKeys.length;
+        this.direct[directKeys[newDirectionIndex]] = true;
+
+        return directKeys[newDirectionIndex];
+      }
     }
   }
 
@@ -461,6 +490,38 @@
     getCurrentRotation() {
       return this.rotation;
     }
+    getPosition() {
+      switch (this.getCurrentRotation()) {
+        case 0:
+          return {
+            left: this.left,
+            right: this.left + this.width,
+            top: this.top,
+            bottom: this.top + this.height,
+          }
+        case 1:
+          return {
+            left: this.left - this.height,
+            right: this.left,
+            top: this.top,
+            bottom: this.top + this.width,
+          }
+        case 2:
+          return {
+            left: this.left - this.width,
+            right: this.left,
+            top: this.top - this.height,
+            bottom: this.top,
+          }
+        case 3:
+          return {
+            left: this.left,
+            right: this.left + this.height,
+            top: this.top - this.width,
+            bottom: this.top,
+          };
+      }
+    }
   }
 
   class Player extends hasPlane(hasDeck(GameObject)) {
@@ -520,11 +581,13 @@
 
       return newActivePlayer;
     }
-    linkPlanes({ joinPort, targetPort }) {
-      const { targetLinkPoint, joinLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
+    linkPlanes({ joinPort, targetPort, fake }) {
+      const { targetLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
+
+      if (fake) return;
+
       const DIRECTIONS = joinPort.constructor.DIRECTIONS;
       const targetPortDirect = DIRECTIONS[targetPort.getDirect()];
-      console.log({ targetLinkPoint, joinLinkPoint, vertical: '?', portDirect: targetPortDirect });
 
       const joinPlane = joinPort.getParent();
       const targetPlane = targetPort.getParent();
@@ -554,13 +617,37 @@
         ],
       }
 
-      this.addBridge(bridgeData);
+      const bridgeCode = this.addBridge(bridgeData);
+      joinPort.linkedBridge = bridgeCode;
+      targetPort.linkedBridge = bridgeCode;
+    }
+    checkPlaneCollysion(checkPlane) {
+      const planePosition = checkPlane.getPosition();
+
+      function checkCollysion(pos1, pos2) {
+        return !(
+          (pos1.bottom < pos2.top) ||
+          (pos1.top > pos2.bottom) ||
+          (pos1.right < pos2.left) ||
+          (pos1.left > pos2.right)
+        );
+      }
+
+      const collysionList = [];
+      this.getObjects({ className: 'Plane', directParent: this }).forEach(plane => {
+        if (plane !== checkPlane) {
+          if (checkCollysion(planePosition, plane.getPosition())) {
+            collysionList.push(plane.code);
+          }
+        }
+      });
+
+      return { collysionList, planePosition };
     }
     addBridge(data) {
 
       const bridge = new Bridge(data, { parent: this });
       this.bridgeList.push(bridge);
-
 
       if (data.zoneList?.length) {
         data.zoneList.forEach(item => {
@@ -582,6 +669,8 @@
           });
         });
       }
+
+      return bridge.code;
     }
     getZonesAvailability(dice) {
       const result = new Map();

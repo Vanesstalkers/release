@@ -10,18 +10,11 @@
   });
 
   const targetLinkPoint = getLinkPointCoordinates(targetPort);
-  // console.log("targetLinkPoint=", targetLinkPoint);
   const joinLinkPoint = getLinkPointCoordinates(joinPort);
-  // console.log("joinLinkPoint=", joinLinkPoint);
-  // console.log('sum=', {
-  //     top: targetLinkPoint.top - joinLinkPoint.top,
-  //     left: targetLinkPoint.left - joinLinkPoint.left,
-  // });
+
   // // сдвигаем plane на значение разницы позиций между потенциальными точками стыковки
   joinPlane.top += targetLinkPoint.top - joinLinkPoint.top;
   joinPlane.left += targetLinkPoint.left - joinLinkPoint.left;
-
-  // console.log({ joinPort, targetPort, joinPlane, targetPlane });
 
   function getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }) {
     let targetDirectWithRotate = targetPort.getDirect();
