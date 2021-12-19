@@ -8,13 +8,18 @@
     );
 
     const joinPort = game.getObjectById(joinPortId);
+    const joinPlane = joinPort.getParent();
     const targetPort = game.getObjectById(targetPortId);
+
+    // тут нужна проверка getAvailablePortsToJoinPlane
+
     joinPort.updateDirect(joinPortDirect);
     targetPort.updateDirect(targetPortDirect);
     game.linkPlanes({ joinPort, targetPort });
-
-    // !!! тут надо удалить plane у старого родителя
-    game.addPlane(joinPort.getParent());
+    
+    joinPlane.getParent().removeItem(joinPlane);
+    joinPlane.getParent().deleteFromObjectStorage(joinPlane);
+    game.addPlane( joinPlane );
 
     const $set = { ...game };
     delete $set._id;

@@ -7,9 +7,12 @@
     );
 
     const dice = game.getObjectById(diceId);
+    const currentZone = dice.getParent();
     const updatedData = {zone: {}};
     game.getZonesAvailability(dice).forEach((status, zone)=>{
-      updatedData.zone[zone._id] = {available: status};
+      if(zone != currentZone){
+        updatedData.zone[zone._id] = {available: status};
+      }
     });
     
     context.client.emit('db/smartUpdated', updatedData);

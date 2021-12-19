@@ -146,8 +146,6 @@
     constructor(data, { parent }) {
       super(data, { parent });
 
-      this.rotate(data.rotation);
-
       if (data.sideList) {
         this.sideList = [
           new DiceSide(data.sideList[0], { parent: this }),
@@ -175,13 +173,6 @@
         currentParent.addItem(this);
       }
       return moveResult;
-    }
-    rotate(rotation) {
-      if (rotation) {
-        this.rotation = true;
-      } else {
-        if (this.rotation) delete this.rotation;
-      }
     }
   }
   class DiceSide extends GameObject {
@@ -276,25 +267,22 @@
 
       const available = this.checkIsAvailable(item);
       if (available) {
-        const itemSideList = [...item.sideList];
-        item.rotate(false);
-        if (available === 'rotate') {
-          itemSideList.reverse();
-          item.rotate(true);
-        }
-
-        this.sideList.forEach((side, sideIndex) => {
-          const itemSide = itemSideList[sideIndex];
-          side.value = itemSide.value;
-          side.links.forEach(linkCode => {
-            this.getGame().getObjectByCode(linkCode).updateExpectedValues();
-          });
-        });
-
+        if (available === 'rotate') item.sideList.reverse();
         this.itemList.push(item);
+        this.updateValues();
       }
 
       return available;
+    }
+    updateValues(){
+      const item = this.itemList[0];
+      this.sideList.forEach((side, sideIndex) => {
+        const itemSide = item.sideList[sideIndex];
+        side.value = itemSide.value;
+        side.links.forEach(linkCode => {
+          this.getGame().getObjectByCode(linkCode).updateExpectedValues();
+        });
+      });
     }
     removeItem(itemToRemove) {
       this.sideList.forEach(side => {
@@ -307,6 +295,7 @@
       this.itemList = this.itemList.filter(item => item != itemToRemove);
     }
     checkIsAvailable(dice) {
+
       if (this.itemList.length) return false; // zone уже занята
 
       const expectedValues0 = this.sideList[0].expectedValues;
@@ -336,6 +325,16 @@
           (expectedValues1[dice.sideList[0].value] && sizeOfExpectedValues1 === 1))
       ) return 'rotate';
 
+      return false;
+    }
+    checkItemCanBeRotated() {
+      const expectedValues0 = this.sideList[0].expectedValues;
+      const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
+      const expectedValues1 = this.sideList[1].expectedValues;
+      const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
+
+      if (this.getParent().constructor.name === 'Bridge') return false;
+      if (!sizeOfExpectedValues0 && !sizeOfExpectedValues1) return true;
       return false;
     }
   }
@@ -403,10 +402,10 @@
 
       if (newDirect) {
         if (this.direct[newDirect] !== undefined) {
-          
-          for (const direct of directKeys)this.direct[direct] = false;
+
+          for (const direct of directKeys) this.direct[direct] = false;
           this.direct[newDirect] = true;
-          
+
           return true;
         } else {
           return false;
@@ -644,6 +643,34 @@
 
       return { collysionList, planePosition };
     }
+    getAvailablePortsToJoinPlane ({joinPort}) {
+      const availablePorts = [];
+      
+      const joinPlane = joinPort.getParent();
+      this.getObjects({ className: 'Plane', directParent: this }).forEach(plane => {
+        if(plane === joinPlane) return;
+        plane.getObjects({ className: 'Port' }).forEach(port => {
+          if (!port.linkedBridge) {
+            Object.keys(port.direct).forEach(portDirect => {
+              port.updateDirect(portDirect);
+              this.linkPlanes({ joinPort: joinPort, targetPort: port, fake: true });
+              const checkPlaneCollysion = this.checkPlaneCollysion(joinPlane);
+              if (checkPlaneCollysion.collysionList.length === 0) {
+                availablePorts.push({
+                  joinPortId: joinPort._id,
+                  joinPortDirect: joinPort.getDirect(),
+                  targetPortId: port._id,
+                  targetPortDirect: portDirect,
+                  position: checkPlaneCollysion.planePosition,
+                })
+              }
+            });
+          }
+        });
+      });
+      return availablePorts;
+    }
+
     addBridge(data) {
 
       const bridge = new Bridge(data, { parent: this });

@@ -1,14 +1,19 @@
 ({
   access: 'public',
-  method: async ({ gameId, diceId, zoneId }) => {
+  method: async ({ gameId, diceId, zoneCode }) => {
     const Game = domain.game.class();
     const game = new Game({ _id: gameId }).fromJSON(
       await db.mongo.findOne('game', gameId)
     );
 
     const dice = game.getObjectById(diceId);
-    const zone = game.getObjectById(zoneId);
-    dice.moveToTarget(zone);
+    const zone = dice.getParent();
+    const checkItemCanBeRotated = zone.checkItemCanBeRotated();
+
+    if(checkItemCanBeRotated){
+      dice.sideList.reverse();
+      zone.updateValues();
+    }
 
     const $set = { ...game };
     delete $set._id;
