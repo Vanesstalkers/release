@@ -40,13 +40,13 @@
           });
         });
 
-        console.log('dataAccessFilters game->game', {
-          data,
-          client,
-          session,
-          user,
-          playerList,
-        });
+        // console.log('dataAccessFilters game->game', {
+        //   data,
+        //   client,
+        //   session,
+        //   user,
+        //   playerList,
+        // });
         return data;
       },
     },
@@ -114,7 +114,7 @@
           }
         }
       }
-      console.log({ items, client, sendData });
+      //console.log({ items, client, sendData });
       client.emit('db/updated', sendData);
     });
   },

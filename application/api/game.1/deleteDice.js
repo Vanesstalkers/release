@@ -8,12 +8,9 @@
 
     const dice = game.getObjectById(diceId);
     const zone = dice.getParent();
-    const checkItemCanBeRotated = zone.checkItemCanBeRotated();
 
-    if(checkItemCanBeRotated){
-      dice.sideList.reverse();
-      zone.updateValues();
-    }
+    dice.deleted = true;
+    zone.updateValues();
 
     const $set = { ...game };
     delete $set._id;

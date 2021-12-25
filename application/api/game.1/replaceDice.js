@@ -8,7 +8,23 @@
 
     const dice = game.getObjectById(diceId);
     const zone = game.getObjectById(zoneId);
+
+    const deletedDices = game.getDeletedDices();
+    const replacedDice = deletedDices.find(dice => dice.getParent() == zone);
+    const remainDeletedDices = deletedDices.filter(dice => dice != replacedDice);
+    if (!replacedDice && remainDeletedDices.length)
+      return { result: 'error', msg: 'Добавлять новые костяшки можно только взамен временно удаленных' };
+
     dice.moveToTarget(zone);
+
+    const notReplacesDeletedDices = deletedDices.filter(dice => !dice.getParent().getNotDeletedItem());
+    if(notReplacesDeletedDices.length === 0){ // все удаленные dice заменены
+      const deck = game.getObjectByCode('Deck[domino]');
+      deletedDices.forEach(dice => {
+        dice.deleted = undefined;
+        dice.moveToTarget(deck); // возвращаем удаленные dice в deck
+      })
+    }
 
     const $set = { ...game };
     delete $set._id;

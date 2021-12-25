@@ -146,6 +146,8 @@
     constructor(data, { parent }) {
       super(data, { parent });
 
+      this.deleted = data.deleted;
+
       if (data.sideList) {
         this.sideList = [
           new DiceSide(data.sideList[0], { parent: this }),
@@ -274,29 +276,32 @@
 
       return available;
     }
-    updateValues(){
-      const item = this.itemList[0];
+    updateValues() {
+      const item = this.getNotDeletedItem();
       this.sideList.forEach((side, sideIndex) => {
-        const itemSide = item.sideList[sideIndex];
-        side.value = itemSide.value;
+        if (item) {
+          const itemSide = item.sideList[sideIndex];
+          side.value = itemSide.value;
+        } else {
+          side.value = undefined;
+        }
         side.links.forEach(linkCode => {
           this.getGame().getObjectByCode(linkCode).updateExpectedValues();
         });
       });
     }
     removeItem(itemToRemove) {
-      this.sideList.forEach(side => {
-        delete side.value;
-        side.links.forEach(linkCode => {
-          this.getGame().getObjectByCode(linkCode).updateExpectedValues();
-        });
-      });
-
       this.itemList = this.itemList.filter(item => item != itemToRemove);
+      this.updateValues();
     }
-    checkIsAvailable(dice) {
+    getNotDeletedItem() {
+      return this.itemList.find(item => !item.deleted);
+    }
+    checkIsAvailable(dice, {skipPlacedItem} = {}) {
 
-      if (this.itemList.length) return false; // zone уже занята
+      if (!skipPlacedItem && this.getNotDeletedItem()) return false; // zone уже занята
+
+      // !!! запретить добавление в zone, которые не на игровом поле (а в руке игрока, например)
 
       const expectedValues0 = this.sideList[0].expectedValues;
       const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
@@ -643,12 +648,12 @@
 
       return { collysionList, planePosition };
     }
-    getAvailablePortsToJoinPlane ({joinPort}) {
+    getAvailablePortsToJoinPlane({ joinPort }) {
       const availablePorts = [];
-      
+
       const joinPlane = joinPort.getParent();
       this.getObjects({ className: 'Plane', directParent: this }).forEach(plane => {
-        if(plane === joinPlane) return;
+        if (plane === joinPlane) return;
         plane.getObjects({ className: 'Port' }).forEach(port => {
           if (!port.linkedBridge) {
             Object.keys(port.direct).forEach(portDirect => {
@@ -702,19 +707,21 @@
     getZonesAvailability(dice) {
       const result = new Map();
       dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
-      this.getObjects({ className: 'Plane', directParent: this }).forEach(plane => {
-        plane.getObjects({ className: 'Zone' }).forEach(zone => {
-          const isAvailableStatus = zone.checkIsAvailable(dice);
-          result.set(zone, isAvailableStatus);
-        });
-      });
-      this.getObjects({ className: 'Bridge', directParent: this }).forEach(plane => {
-        plane.getObjects({ className: 'Zone' }).forEach(zone => {
-          const isAvailableStatus = zone.checkIsAvailable(dice);
-          result.set(zone, isAvailableStatus);
-        });
+      this.getObjects({ className: 'Zone' }).forEach(zone => {
+        const isAvailableStatus = zone.checkIsAvailable(dice);
+        result.set(zone, isAvailableStatus);
       });
       dice.getParent().addItem(dice); // * восстанавливаем состояние
+      return result;
+    }
+
+    getDeletedDices() {
+      let result = [];
+      this.getObjects({ className: 'Zone' }).forEach(zone => {
+        result = result.concat(
+          zone.getObjects({ className: 'Dice' }).filter(dice => dice.deleted)
+        );
+      });
       return result;
     }
   }
