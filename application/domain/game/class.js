@@ -72,18 +72,16 @@
     getCodeTemplate(_code) {
       return '' + this.getCodePrefix() + _code + this.getCodeSuffix();
     }
-    getObjects(filter) {
+    getObjects({className, directParent} = {}) {
       let result = Object.values(this.#_objects);
-      if (filter) {
-        if (filter.className) result = result.filter(obj => obj.constructor.name === filter.className);
-        if (filter.directParent) result = result.filter(obj => obj.getParent() === filter.directParent);
-      }
+      if (className) result = result.filter(obj => obj.constructor.name === className);
+      if (directParent) result = result.filter(obj => obj.getParent() === directParent);
       return result;
     }
     setParent(parent) {
       if (parent) {
         this.#parent = parent;
-        this.#parentList = (parent.getParentList() || []).concat(parent);
+        this.#parentList = [parent].concat(parent.getParentList() || []); // самый дальний родитель в конце массива
       }
     }
     setFakeParent(parent) {
@@ -99,6 +97,12 @@
     }
     getParentList() {
       return this.#parentList;
+    }
+    findParent({ className } = {}) {
+      return this.#parentList.find(parent => {
+        if (className && parent.constructor.name !== className) return false;
+        return true;
+      });
     }
     getAllLinks() {
       return {
@@ -297,18 +301,18 @@
     getNotDeletedItem() {
       return this.itemList.find(item => !item.deleted);
     }
-    checkIsAvailable(dice, {skipPlacedItem} = {}) {
+    checkIsAvailable(dice, { skipPlacedItem } = {}) {
 
       if (!skipPlacedItem && this.getNotDeletedItem()) return false; // zone уже занята
-
-      // !!! запретить добавление в zone, которые не на игровом поле (а в руке игрока, например)
+      
+      if(this.findParent({className: 'Player'}) !== undefined) return false; // это plane в руке player
 
       const expectedValues0 = this.sideList[0].expectedValues;
       const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
       const expectedValues1 = this.sideList[1].expectedValues;
       const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
 
-      if (this.getParent().constructor.name === 'Bridge' &&
+      if (this.findParent({className: 'Bridge'}) !== undefined &&
         (!sizeOfExpectedValues0 || !sizeOfExpectedValues1))
         return false; // для bridge-zone должны быть заполнены соседние zone
 
