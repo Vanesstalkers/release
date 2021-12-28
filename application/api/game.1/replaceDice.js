@@ -6,6 +6,8 @@
       await db.mongo.findOne('game', gameId)
     );
 
+    game.callEventHandlers({handler: 'replaceDice'});
+
     const dice = game.getObjectById(diceId);
     const zone = game.getObjectById(zoneId);
 

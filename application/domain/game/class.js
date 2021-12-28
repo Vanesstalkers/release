@@ -72,7 +72,7 @@
     getCodeTemplate(_code) {
       return '' + this.getCodePrefix() + _code + this.getCodeSuffix();
     }
-    getObjects({className, directParent} = {}) {
+    getObjects({ className, directParent } = {}) {
       let result = Object.values(this.#_objects);
       if (className) result = result.filter(obj => obj.constructor.name === className);
       if (directParent) result = result.filter(obj => obj.getParent() === directParent);
@@ -190,8 +190,42 @@
   }
 
   class Card extends GameObject {
+
+    #events;
+
     constructor(data, { parent }) {
       super(data, { parent });
+
+      this.name = data.name;
+      this.#events = domain.cardEvent[this.name];
+    }
+    moveToTarget(target) {
+      const currentParent = this.getParent();
+      currentParent.removeItem(this); // сначала удаляем
+      const moveResult = target.addItem(this);
+      if (moveResult) {
+        this.updateParent(target);
+      } else {
+        currentParent.addItem(this);
+      }
+      return moveResult;
+    }
+    getSelfConfig() {
+      return {
+        handlers: Object.keys(this.#events.handlers),
+      };
+    }
+    needAutoPlay() {
+      return this.#events?.config?.autoPlay;
+    }
+    play() {
+      const config = this.getSelfConfig();
+      (config.handlers || []).forEach(handler => this.getGame().addEventHandler({ handler, source: this }));
+      this.#events.init();
+    }
+    callHandler({ handler }) {
+      if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');
+      this.#events.handlers[handler]();
     }
   }
 
@@ -204,10 +238,12 @@
       super(data, { parent });
 
       this.type = data.type;
+      this.subtype = data.subtype;
       this.itemType = data.itemType;
     }
     customObjectCode({ codeTemplate, replacementFragment }, data) {
-      return codeTemplate.replace(replacementFragment, data.type);
+      const replaceString = [data.type, data.subtype].filter(item => item).join('_');
+      return codeTemplate.replace(replacementFragment, replaceString);
     }
 
     setItemClass(itemClass) {
@@ -304,15 +340,15 @@
     checkIsAvailable(dice, { skipPlacedItem } = {}) {
 
       if (!skipPlacedItem && this.getNotDeletedItem()) return false; // zone уже занята
-      
-      if(this.findParent({className: 'Player'}) !== undefined) return false; // это plane в руке player
+
+      if (this.findParent({ className: 'Player' }) !== undefined) return false; // это plane в руке player
 
       const expectedValues0 = this.sideList[0].expectedValues;
       const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
       const expectedValues1 = this.sideList[1].expectedValues;
       const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
 
-      if (this.findParent({className: 'Bridge'}) !== undefined &&
+      if (this.findParent({ className: 'Bridge' }) !== undefined &&
         (!sizeOfExpectedValues0 || !sizeOfExpectedValues1))
         return false; // для bridge-zone должны быть заполнены соседние zone
 
@@ -557,6 +593,10 @@
       this.addTime = data.addTime;
       this.settings = data.settings;
       this.round = data.round;
+      this.eventHandlers = data.eventHandlers || {
+        endRound: [],
+        replaceDice: [],
+      };
 
       if (data.playerList?.length) data.playerList.forEach(item => this.addPlayer(item));
       // !!! надо перевести на Deck (по аналогии с Player)
@@ -727,6 +767,19 @@
         );
       });
       return result;
+    }
+
+    addEventHandler({ handler, source }) {
+      if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
+      this.eventHandlers[handler].push(source._id);
+    }
+    callEventHandlers({ handler }) {
+      if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
+      for (const sourceId of this.eventHandlers[handler]) {
+        const source = this.getObjectById(sourceId);
+        source.callHandler({ handler });
+      }
+      this.eventHandlers[handler] = [];
     }
   }
 }

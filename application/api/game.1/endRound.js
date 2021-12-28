@@ -4,8 +4,8 @@
 
     const user = await db.mongo.findOne('user', context.userId);
 
-    if(user.game.toString() !== gameId)
-      return { result: 'error', msg: 'Игрок не может совершить это действие, так как не участвует в игре' };
+    if (user.game.toString() !== gameId)
+      return new Error('Игрок не может совершить это действие, так как не участвует в игре.');
 
     const Game = domain.game.class();
     const game = new Game({ _id: gameId }).fromJSON(
@@ -13,22 +13,24 @@
     );
     // const game = domain.db.data.game[gameId];
     // const {proxy: game, storage} = lib.utils.addDeepProxyChangesWatcher( domain.db.data.game[gameId] );
-    
+
+    game.callEventHandlers({handler: 'endRound'});
+
     // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
     const prevPlayer = game.playerList.find(player => player.active);
     const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
     // player которому передают ход
-    const activePlayer = game.changeActivePlayer(); 
+    const activePlayer = game.changeActivePlayer();
     const playerHand = activePlayer.getObjectByCode('Deck[domino]');
 
     // !!! не забыть раскомментировать
-    // if(user.player.toString() !== activePlayer._id.toString())
-    //   return { result: 'error', msg: 'Игрок не может совершить это действие, так как сейчас не его ход' };
+    // if (user.player.toString() !== prevPlayer._id.toString())
+    //   return new Error('Игрок не может совершить это действие, так как сейчас не его ход.');
 
     // если есть временно удаленные dice, то восстанавливаем состояние до их удаления
     game.getDeletedDices().forEach(dice => {
       const zone = dice.getParent();
-      
+
       // уже успели заменить один из удаленных dice - возвращаем его в руку player закончившего ход
       // (!!! если появятся новые источники размещения dice в zone, то этот код нужно переписать)
       const alreadyPlacedDice = zone.getNotDeletedItem();
@@ -42,7 +44,7 @@
           const linkedZone = linkedSide.getParent();
           const linkedDice = linkedZone.getNotDeletedItem();
 
-          const checkIsAvailable = !linkedDice || linkedZone.checkIsAvailable(linkedDice, {skipPlacedItem: true});
+          const checkIsAvailable = !linkedDice || linkedZone.checkIsAvailable(linkedDice, { skipPlacedItem: true });
           if (checkIsAvailable === 'rotate') { // linkedDice был повернут после удаления dice
             linkedDice.sideList.reverse();
             linkedZone.updateValues();
@@ -50,10 +52,22 @@
         });
       });
     });
-    
+
     const deck = game.getObjectByCode('Deck[domino]');
     const item = deck.getRandomItem();
     if (item) item.moveToTarget(playerHand);
+
+    const cardDeck = game.getObjectByCode('Deck[card]');
+    const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
+    const cardDeckActive = game.getObjectByCode('Deck[card_active]');
+    const card = cardDeck.getRandomItem();
+    cardDeckActive.getObjects({ className: 'Card' }).forEach(card => {
+      card.moveToTarget(cardDeckDrop);
+    });
+    if (card) {
+      card.moveToTarget(cardDeckActive);
+      if (card.needAutoPlay()) card.play();
+    }
 
     game.round++;
 

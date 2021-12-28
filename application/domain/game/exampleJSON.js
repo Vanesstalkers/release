@@ -13,14 +13,14 @@
       active: true,
       deckList: [
         { type: 'domino', itemType: 'any' },
-        { type: 'plane'}
+        { type: 'plane' }
       ],
     },
     {
       _code: 2,
       deckList: [
         { type: 'domino', itemType: 'any' },
-        { type: 'plane'}
+        { type: 'plane' }
       ],
     },
   ],
@@ -45,22 +45,35 @@
         // {name: 'pilot', playOneTime: true},
         // {name: 'req_tax', playOneTime: true},
         // {name: 'req_legal', playOneTime: true},
-        { name: 'teamlead', autoPlay: false },
-        { name: 'flowstate', autoPlay: false },
-        { name: 'teamlead', autoPlay: false },
-        { name: 'flowstate', autoPlay: false },
-        { name: 'teamlead', autoPlay: false },
-        { name: 'flowstate', autoPlay: false },
-        { name: 'teamlead', autoPlay: false },
-        { name: 'flowstate', autoPlay: false },
+        // { name: 'teamlead', autoPlay: false },
+        // { name: 'flowstate', autoPlay: false },
+        // { name: 'teamlead', autoPlay: false },
+        // { name: 'flowstate', autoPlay: false },
+        // { name: 'teamlead', autoPlay: false },
+        // { name: 'flowstate', autoPlay: false },
+        // { name: 'teamlead', autoPlay: false },
+        // { name: 'flowstate', autoPlay: false },
         // {name: 'crutch', autoPlay: false},
         // {name: 'crutch', autoPlay: false},
         // {name: 'crutch', autoPlay: false},
-        // {name: 'coffee'},
-        // {name: 'weekend'},
-        // {name: 'rain'},
-        // {name: 'disease'},
+
+        { name: 'coffee' },
+        { name: 'weekend' },
+        { name: 'rain' },
+        { name: 'disease' },
+        { name: 'teamlead' },
+        { name: 'flowstate' },
       ],
+    },
+    {
+      type: 'card',
+      subtype: 'active',
+      itemType: 'event',
+    },
+    {
+      type: 'card',
+      subtype: 'drop',
+      itemType: 'event',
     },
   ],
   planeList: [
