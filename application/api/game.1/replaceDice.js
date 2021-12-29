@@ -1,12 +1,22 @@
 ({
   access: 'public',
   method: async ({ gameId, diceId, zoneId }) => {
+
+    const user = await db.mongo.findOne('user', context.userId);
+
+    if (user.game.toString() !== gameId)
+      return new Error('Игрок не может совершить это действие, так как не участвует в игре.');
+
     const Game = domain.game.class();
     const game = new Game({ _id: gameId }).fromJSON(
       await db.mongo.findOne('game', gameId)
     );
 
-    game.callEventHandlers({handler: 'replaceDice'});
+    // !!! не забыть раскомментировать
+    // if (user.player.toString() !== game.getActivePlayer()._id.toString())
+    //   return new Error('Игрок не может совершить это действие, так как сейчас не его ход.');
+
+    game.callEventHandlers({ handler: 'replaceDice' });
 
     const dice = game.getObjectById(diceId);
     const zone = game.getObjectById(zoneId);
@@ -20,7 +30,7 @@
     dice.moveToTarget(zone);
 
     const notReplacesDeletedDices = deletedDices.filter(dice => !dice.getParent().getNotDeletedItem());
-    if(notReplacesDeletedDices.length === 0){ // все удаленные dice заменены
+    if (notReplacesDeletedDices.length === 0) { // все удаленные dice заменены
       const deck = game.getObjectByCode('Deck[domino]');
       deletedDices.forEach(dice => {
         dice.deleted = undefined;

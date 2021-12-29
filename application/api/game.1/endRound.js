@@ -14,10 +14,13 @@
     // const game = domain.db.data.game[gameId];
     // const {proxy: game, storage} = lib.utils.addDeepProxyChangesWatcher( domain.db.data.game[gameId] );
 
+    if (game.activeEvent)
+      return new Error(game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.');
+
     game.callEventHandlers({handler: 'endRound'});
 
     // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
-    const prevPlayer = game.playerList.find(player => player.active);
+    const prevPlayer = game.getActivePlayer();
     const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
     // player которому передают ход
     const activePlayer = game.changeActivePlayer();

@@ -7,6 +7,9 @@
     );
 
     const dice = game.getObjectById(diceId);
+
+    if(!dice) return false;
+
     const currentZone = dice.getParent();
     const updatedData = {zone: {}};
     game.getZonesAvailability(dice).forEach((status, zone)=>{

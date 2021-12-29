@@ -2,12 +2,11 @@
   config: {
     autoPlay: true
   },
-  init: () => {
-    console.log("weekend init: async ()=>{");
-  },
   handlers: {
-    endRound: () => {
-      console.log("weekend endRound: async ()=>{");
+    endRound: function () {
+      const game = this.getGame();
+      const player = game.getActivePlayer();
+      player.eventData.extraTurn = true;
     },
   }
 });

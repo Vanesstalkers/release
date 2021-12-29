@@ -221,11 +221,11 @@
     play() {
       const config = this.getSelfConfig();
       (config.handlers || []).forEach(handler => this.getGame().addEventHandler({ handler, source: this }));
-      this.#events.init();
+      if(this.#events.init) this.#events.init.call(this);
     }
-    callHandler({ handler }) {
+    callHandler({ handler, data }) {
       if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');
-      this.#events.handlers[handler]();
+      this.#events.handlers[handler].call(this, data);
     }
   }
 
@@ -573,6 +573,7 @@
       super(data, { parent });
 
       this.active = data.active;
+      this.eventData = data.eventData || {};
     }
   }
 
@@ -596,7 +597,9 @@
       this.eventHandlers = data.eventHandlers || {
         endRound: [],
         replaceDice: [],
+        eventTrigger: [],
       };
+      this.activeEvent = data.activeEvent;
 
       if (data.playerList?.length) data.playerList.forEach(item => this.addPlayer(item));
       // !!! надо перевести на Deck (по аналогии с Player)
@@ -620,11 +623,30 @@
         deckItemClass: item.type === 'domino' ? Dice : (item.type === 'plane' ? Plane : Card)
       }));
     }
+    getActivePlayer() {
+      return this.playerList.find(player => player.active);
+    }
     changeActivePlayer() {
 
-      const activePlayerIndex = this.playerList.findIndex(player => player.active);
-      this.playerList[activePlayerIndex].active = false;
-      const newActivePlayer = this.playerList[(activePlayerIndex + 1) % this.playerList.length];
+      const activePlayer = this.getActivePlayer();
+      if(activePlayer.eventData.extraTurn){
+        delete activePlayer.eventData.extraTurn;
+        if(target.eventData.skipTurn){
+          delete target.eventData.skipTurn
+        }else{
+          return activePlayer;
+        }
+      }
+      
+      let activePlayerIndex = this.playerList.findIndex(player => player === activePlayer);
+      let newActivePlayer = this.playerList[(activePlayerIndex + 1) % this.playerList.length];
+      while(newActivePlayer.eventData.skipTurn){
+        delete newActivePlayer.eventData.skipTurn;
+        activePlayerIndex++;
+        newActivePlayer = this.playerList[(activePlayerIndex + 1) % this.playerList.length];
+      }
+
+      activePlayer.active = false;
       newActivePlayer.active = true;
 
       return newActivePlayer;
@@ -773,11 +795,11 @@
       if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
       this.eventHandlers[handler].push(source._id);
     }
-    callEventHandlers({ handler }) {
+    callEventHandlers({ handler, data }) {
       if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
       for (const sourceId of this.eventHandlers[handler]) {
         const source = this.getObjectById(sourceId);
-        source.callHandler({ handler });
+        source.callHandler({ handler, data });
       }
       this.eventHandlers[handler] = [];
     }
