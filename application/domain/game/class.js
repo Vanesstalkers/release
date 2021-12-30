@@ -12,6 +12,8 @@
     constructor(data, { parent } = {}) {
 
       if (!this._id) this._id = data._id || db.mongo.ObjectID();
+      this.activeEvent = data.activeEvent;
+      this.eventData = data.eventData || {};
 
       this.setParent(parent);
       this.addToParentsObjectStorage();
@@ -180,7 +182,6 @@
     }
 
     moveToTarget(target) {
-      // !!! проверить, что item корректно добавляются ко всем новомым parent
       const currentParent = this.getParent();
       currentParent.removeItem(this); // сначала удаляем, чтобы не помешать размещению на соседней зоне
       const moveResult = target.addItem(this);
@@ -584,8 +585,7 @@
     constructor(data, { parent }) {
       super(data, { parent });
 
-      this.active = data.active;
-      this.eventData = data.eventData || {};
+      this.active = data.active;      
     }
   }
 
@@ -611,7 +611,6 @@
         replaceDice: [],
         eventTrigger: [],
       };
-      this.activeEvent = data.activeEvent;
 
       if (data.playerList?.length) data.playerList.forEach(item => this.addPlayer(item));
       // !!! надо перевести на Deck (по аналогии с Player)
