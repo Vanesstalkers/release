@@ -16,8 +16,6 @@
     // if (user.player.toString() !== game.getActivePlayer()._id.toString())
     //   return new Error('Игрок не может совершить это действие, так как сейчас не его ход.');
 
-    game.callEventHandlers({ handler: 'replaceDice' });
-
     const dice = game.getObjectById(diceId);
     const zone = game.getObjectById(zoneId);
 
@@ -29,14 +27,16 @@
 
     dice.moveToTarget(zone);
 
-    const notReplacesDeletedDices = deletedDices.filter(dice => !dice.getParent().getNotDeletedItem());
-    if (notReplacesDeletedDices.length === 0) { // все удаленные dice заменены
+    const notReplacedDeletedDices = deletedDices.filter(dice => !dice.getParent().getNotDeletedItem());
+    if (notReplacedDeletedDices.length === 0) { // все удаленные dice заменены
       const deck = game.getObjectByCode('Deck[domino]');
       deletedDices.forEach(dice => {
         dice.deleted = undefined;
         dice.moveToTarget(deck); // возвращаем удаленные dice в deck
       })
     }
+
+    game.callEventHandlers({ handler: 'replaceDice' });
 
     const $set = { ...game };
     delete $set._id;

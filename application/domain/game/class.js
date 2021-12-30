@@ -123,6 +123,8 @@
     addDeck(data, { deckClass = Deck, deckListName = 'deckList', deckItemClass = Dice } = {}) {
 
       if (!this[deckListName]) this[deckListName] = [];
+      if (!data.settings) data.settings = {};
+      data.settings.parentDeckContainer = deckListName;
       const deck = new deckClass(data, { parent: this });
       this[deckListName].push(deck);
 
@@ -131,7 +133,15 @@
       if (data.itemList?.length) {
         data.itemList.forEach(item => deck.addItem(item));
       }
+
+      return deck;
     }
+    deleteDeck(deckToDelete) {
+      deckToDelete.deleteFromParentsObjectStorage();
+      const parentDeckContainer = deckToDelete.settings.parentDeckContainer;
+      this[parentDeckContainer] = this[parentDeckContainer].filter(deck => deck != deckToDelete);
+    }
+
   }
   const hasPlane = Base => class extends Base {
 
@@ -170,6 +180,7 @@
     }
 
     moveToTarget(target) {
+      // !!! проверить, что item корректно добавляются ко всем новомым parent
       const currentParent = this.getParent();
       currentParent.removeItem(this); // сначала удаляем, чтобы не помешать размещению на соседней зоне
       const moveResult = target.addItem(this);
@@ -221,11 +232,11 @@
     play() {
       const config = this.getSelfConfig();
       (config.handlers || []).forEach(handler => this.getGame().addEventHandler({ handler, source: this }));
-      if(this.#events.init) this.#events.init.call(this);
+      if (this.#events.init) this.#events.init.call(this);
     }
     callHandler({ handler, data }) {
       if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');
-      this.#events.handlers[handler].call(this, data);
+      return this.#events.handlers[handler].call(this, data);
     }
   }
 
@@ -240,6 +251,7 @@
       this.type = data.type;
       this.subtype = data.subtype;
       this.itemType = data.itemType;
+      this.settings = data.settings;
     }
     customObjectCode({ codeTemplate, replacementFragment }, data) {
       const replaceString = [data.type, data.subtype].filter(item => item).join('_');
@@ -629,18 +641,18 @@
     changeActivePlayer() {
 
       const activePlayer = this.getActivePlayer();
-      if(activePlayer.eventData.extraTurn){
+      if (activePlayer.eventData.extraTurn) {
         delete activePlayer.eventData.extraTurn;
-        if(target.eventData.skipTurn){
+        if (target.eventData.skipTurn) {
           delete target.eventData.skipTurn
-        }else{
+        } else {
           return activePlayer;
         }
       }
-      
+
       let activePlayerIndex = this.playerList.findIndex(player => player === activePlayer);
       let newActivePlayer = this.playerList[(activePlayerIndex + 1) % this.playerList.length];
-      while(newActivePlayer.eventData.skipTurn){
+      while (newActivePlayer.eventData.skipTurn) {
         delete newActivePlayer.eventData.skipTurn;
         activePlayerIndex++;
         newActivePlayer = this.playerList[(activePlayerIndex + 1) % this.playerList.length];
@@ -793,15 +805,24 @@
 
     addEventHandler({ handler, source }) {
       if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
-      this.eventHandlers[handler].push(source._id);
+      this.eventHandlers[handler].push(source._id.toString());
+    }
+    deleteEventHandler({ handler, source }) {
+      if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
+      this.eventHandlers[handler] = this.eventHandlers[handler].filter(_id => _id !== source._id.toString());
     }
     callEventHandlers({ handler, data }) {
       if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
       for (const sourceId of this.eventHandlers[handler]) {
         const source = this.getObjectById(sourceId);
-        source.callHandler({ handler, data });
+        const deleteHandler = source.callHandler({ handler, data });
+        if (deleteHandler) this.deleteEventHandler({ handler, source });
       }
-      this.eventHandlers[handler] = [];
+    }
+    clearEventHandlers() {
+      Object.keys(this.eventHandlers).forEach(handler => {
+        this.eventHandlers[handler] = [];
+      });
     }
   }
 }

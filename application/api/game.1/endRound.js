@@ -17,7 +17,12 @@
     if (game.activeEvent)
       return new Error(game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.');
 
+    // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
+
     game.callEventHandlers({handler: 'endRound'});
+    game.clearEventHandlers();
+
+    // ЛОГИКА НАЧАЛА НОВОГО РАУНДА
 
     // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
     const prevPlayer = game.getActivePlayer();

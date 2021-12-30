@@ -2,15 +2,50 @@
   config: {
     autoPlay: true
   },
-  init: () => {
-    console.log("flowstate init: async ()=>{");
+  init: function () {
+    const game = this.getGame();
+    const player = game.getActivePlayer();
+    const deck = game.getObjectByCode('Deck[domino]');
+
+    const newPlayerHand = player.addDeck({
+      type: 'domino',
+      subtype: 'flowstate',
+      itemType: 'any',
+      settings: {
+        itemsUsageLimit: 2,
+        itemsStartCount: 3,
+      }
+    });
+    for (let i = 0; i < newPlayerHand.settings.itemsStartCount; i++) {
+      const item = deck.getRandomItem();
+      if (item) item.moveToTarget(newPlayerHand);
+    }
   },
   handlers: {
-    replaceDice: () => {
-      console.log("flowstate replaceDice: async ()=>{");
+    replaceDice: function () {
+      const game = this.getGame();
+      const player = game.getActivePlayer();
+      const deck = player.getObjectByCode('Deck[domino_flowstate]');
+
+      if (deck.itemList.length <= deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) {
+        const gameDominoDeck = game.getObjectByCode('Deck[domino]');
+        deck.itemList.forEach(item => item.moveToTarget(gameDominoDeck));
+        player.deleteDeck(deck);
+        return true;
+      }
+      return false; // если itemsUsageLimit станет больше 1, то handler не должен удаляться из game.eventHandlers
     },
-    endRound: () => {
-      console.log("flowstate endRound: async ()=>{");
+    endRound: function () {
+      const game = this.getGame();
+      const player = game.getActivePlayer();
+      const deck = player.getObjectByCode('Deck[domino_flowstate]');
+
+      if(deck){ // deck еще не удален - не было сыграно достаточное количество dice
+        const gameDominoDeck = game.getObjectByCode('Deck[domino]');
+        deck.itemList.forEach(item => item.moveToTarget(gameDominoDeck));
+        player.deleteDeck(deck);
+      }
+      return true;
     },
   }
 });
