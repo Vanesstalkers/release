@@ -68,10 +68,16 @@
     const cardDeck = game.getObjectByCode('Deck[card]');
     const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
     const cardDeckActive = game.getObjectByCode('Deck[card_active]');
-    const card = cardDeck.getRandomItem();
+    let card = cardDeck.getRandomItem();
     cardDeckActive.getObjects({ className: 'Card' }).forEach(card => {
       card.moveToTarget(cardDeckDrop);
     });
+    if(!card){
+      cardDeckDrop.getObjects({ className: 'Card' }).forEach(card => {
+        card.moveToTarget(cardDeck);
+      });
+      card = cardDeck.getRandomItem();
+    }
     if (card) {
       card.moveToTarget(cardDeckActive);
       if (card.needAutoPlay()) card.play();

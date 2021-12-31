@@ -26,6 +26,13 @@
       return { result: 'error', msg: 'Добавлять новые костяшки можно только взамен временно удаленных' };
 
     dice.moveToTarget(zone);
+    if(zone.checkForRelease()){
+      const player = game.getActivePlayer();
+      const playerHand = player.getObjectByCode('Deck[card]');
+      const deck = game.getObjectByCode('Deck[card]');
+      const item = deck.getRandomItem();
+      if (item) item.moveToTarget(playerHand);
+    }
 
     const notReplacedDeletedDices = deletedDices.filter(dice => !dice.getParent().getNotDeletedItem());
     if (notReplacedDeletedDices.length === 0) { // все удаленные dice заменены

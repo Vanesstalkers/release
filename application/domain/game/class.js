@@ -395,6 +395,13 @@
       if (!sizeOfExpectedValues0 && !sizeOfExpectedValues1) return true;
       return false;
     }
+    checkForRelease(){
+      const parent = this.getParent();
+      if(parent.release) return false;
+      if(parent.getObjects({ className: 'Zone' }).find( zone => !zone.getNotDeletedItem() )) return false;
+      parent.release = true;
+      return true;
+    }
   }
   class ZoneSide extends GameObject {
     constructor(data, { parent }) {
@@ -508,6 +515,7 @@
     constructor(data, { parent }) {
       super(data, { parent });
 
+      this.release = data.release || false;
       this.left = data.left || 0;
       this.top = data.top || 0;
       this.rotation = data.rotation || 0;
@@ -606,6 +614,7 @@
       this.addTime = data.addTime;
       this.settings = data.settings;
       this.round = data.round;
+      this.activeEvent = data.activeEvent; // в конструктор Game передается только _id
       this.eventHandlers = data.eventHandlers || {
         endRound: [],
         replaceDice: [],
@@ -642,8 +651,8 @@
       const activePlayer = this.getActivePlayer();
       if (activePlayer.eventData.extraTurn) {
         delete activePlayer.eventData.extraTurn;
-        if (target.eventData.skipTurn) {
-          delete target.eventData.skipTurn
+        if (activePlayer.eventData.skipTurn) {
+          delete activePlayer.eventData.skipTurn
         } else {
           return activePlayer;
         }

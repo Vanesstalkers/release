@@ -15,9 +15,9 @@
       const target = game.getObjectById(targetId);
       target.eventData.skipTurn = true;
       
-      delete game.activeEvent;
+      game.activeEvent = null;
       game.getObjects({ className: 'Player' }).forEach(player => {
-        delete player.activeEvent;
+        player.activeEvent = null;
       });
     },
   }
