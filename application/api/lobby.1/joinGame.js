@@ -1,20 +1,31 @@
 ({
   access: 'public',
   method: async ({ gameId }) => {
-    //const game = domain.db.forms.lobby.__games.l.find(game => game._id.toString() === gameId);
-    const game = domain.db.data.game[gameId];
+    const Game = domain.game.class();
+    const game = new Game({ _id: gameId }).fromJSON(
+      await db.mongo.findOne('game', gameId)
+    );
 
-    const freePlayer = game.playerList.find((player) => !player.ready);
-    freePlayer.ready = 1;
-    freePlayer.user = context.userId;
+    const player = game.getFreePlayerSlot();
+    player.ready = 1;
+    player.user = context.userId;
 
     const session = domain.db.data.session.get(context.client);
     const user = domain.db.data.user[session.userId];
 
     user.game = game._id;
-    user.player = freePlayer._id;
+    user.player = player._id;
 
-    await db.mongo.updateOne('game', game._id, { $set: game });
+    const deck = game.getObjectByCode('Deck[domino]');
+    const playerHand = player.getObjectByCode('Deck[domino]');
+    for (let i = 0; i < 3; i++) {
+      const item = deck.getRandomItem();
+      if (item) item.moveToTarget(playerHand);
+    }
+
+    const $set = { ...game };
+    delete $set._id;
+    await db.mongo.updateOne('game', game._id, { $set });
     await db.mongo.updateOne('user', user._id, { $set: user });
 
     domain.db.broadcast({

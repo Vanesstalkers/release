@@ -107,7 +107,7 @@
       portList: [
         {
           _code: 1,
-          left: 30,
+          left: 25,
           top: 100,
           direct: { left: true },
           links: ['Zone[2].ZoneSide[1]'],
@@ -125,6 +125,7 @@
         },
       ],
     },
+
     {
       _code: 2,
       zoneLinks: {
@@ -152,7 +153,7 @@
       portList: [
         {
           _code: 1,
-          left: 30,
+          left: 25,
           top: 5,
           direct: { top: true, left: false },
           links: ['Zone[1].ZoneSide[1]'],
@@ -170,7 +171,7 @@
         },
         {
           _code: 3,
-          left: 30,
+          left: 25,
           top: 170,
           //direct: { bottom: true, left: false },
           direct: { bottom: false, left: true },
@@ -212,7 +213,7 @@
       portList: [
         {
           _code: 1,
-          left: 30,
+          left: 25,
           top: 70,
           direct: { left: true },
           links: ['Zone[1].ZoneSide[1]'],
@@ -221,14 +222,14 @@
         {
           _code: 2,
           left: 215,
-          top: 20,
+          top: 5,
           direct: { top: true },
           links: ['Zone[2].ZoneSide[1]'],
           t: 'any',
         },
         {
           _code: 3,
-          left: 430,
+          left: 400,
           top: 70,
           direct: { right: true },
           links: ['Zone[3].ZoneSide[2]'],
@@ -236,6 +237,7 @@
         },
       ],
     },
+
     // {
     //   _code: 4,
     //   zoneLinks: {
@@ -259,7 +261,7 @@
     //   portList: [
     //     {
     //       _code: 1,
-    //       left: 30,
+    //       left: 25,
     //       top: 70,
     //       direct: { left: true },
     //       links: ['Zone[1].ZoneSide[1]'],
@@ -268,14 +270,14 @@
     //     {
     //       _code: 2,
     //       left: 215,
-    //       top: 20,
+    //       top: 5,
     //       direct: { top: true },
     //       links: ['Zone[2].ZoneSide[1]'],
     //       t: 'any',
     //     },
     //     {
     //       _code: 3,
-    //       left: 430,
+    //       left: 400,
     //       top: 70,
     //       direct: { right: true },
     //       links: ['Zone[3].ZoneSide[2]'],
@@ -318,7 +320,7 @@
     //   portList: [
     //     {
     //       _code: 1,
-    //       left: 30,
+    //       left: 25,
     //       top: 100,
     //       direct: { left: true },
     //       links: ['Zone[2].ZoneSide[1]'],
