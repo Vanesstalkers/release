@@ -8,8 +8,7 @@
         'Игрок не может совершить это действие, так как не участвует в игре.'
       );
 
-    const Game = domain.game.class();
-    const game = new Game({ _id: gameId }).fromJSON(
+    const game = new domain.game.class({ _id: gameId }).fromJSON(
       await db.mongo.findOne('game', gameId)
     );
     // const game = domain.db.data.game[gameId];

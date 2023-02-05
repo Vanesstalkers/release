@@ -4,9 +4,7 @@
     // if(context.game !== gameId)
     //   return { result: 'error', msg: 'Игрок не может совершить это действие, так как не участвует в игре' };
 
-    //const game = domain.db.forms.lobby.__games.l.find(game => game._id.toString() === gameId);
-    const Game = domain.game.class();
-    const game = new Game(await db.mongo.findOne('game', gameId));
+    const game = new domain.game.class(await db.mongo.findOne('game', gameId));
 
     game.finished = true;
     //const leavePlayer = game.playerList.find(player => player._id.toString() === user.player.toString());

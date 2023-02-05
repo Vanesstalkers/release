@@ -1,8 +1,7 @@
 ({
   access: 'public',
   method: async ({ gameId, diceId }) => {
-    const Game = domain.game.class();
-    const game = new Game({ _id: gameId }).fromJSON(
+    const game = new domain.game.class({ _id: gameId }).fromJSON(
       await db.mongo.findOne('game', gameId)
     );
 

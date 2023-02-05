@@ -1,9 +1,13 @@
 ({
   access: 'public',
-  method: async ({ gameId, joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => {
-
-    const Game = domain.game.class();
-    const game = new Game({ _id: gameId }).fromJSON(
+  method: async ({
+    gameId,
+    joinPortId,
+    targetPortId,
+    targetPortDirect,
+    joinPortDirect,
+  }) => {
+    const game = new domain.game.class({ _id: gameId }).fromJSON(
       await db.mongo.findOne('game', gameId)
     );
 
@@ -16,10 +20,10 @@
     joinPort.updateDirect(joinPortDirect);
     targetPort.updateDirect(targetPortDirect);
     game.linkPlanes({ joinPort, targetPort });
-    
+
     joinPlane.getParent().removeItem(joinPlane);
     joinPlane.getParent().deleteFromObjectStorage(joinPlane);
-    game.addPlane( joinPlane );
+    game.addPlane(joinPlane);
 
     const $set = { ...game };
     delete $set._id;
