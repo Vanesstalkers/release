@@ -588,6 +588,10 @@
       }
     }
 
+    getCodePrefix(){
+      return '';
+    }
+
     addPort(data) {
       const port = new Port(data, { parent: this });
       this.portList.push(port);
