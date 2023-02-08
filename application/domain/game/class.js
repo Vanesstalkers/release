@@ -1,6 +1,7 @@
 (class Game extends domain.game['!hasPlane'](
   domain.game['!hasDeck'](domain.game['!GameObject'])
 ) {
+  changes = {};
   playerList = [];
   bridgeList = [];
 

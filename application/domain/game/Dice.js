@@ -1,6 +1,6 @@
 (class Dice extends domain.game['!GameObject'] {
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'dice', parent });
 
     this.deleted = data.deleted;
 

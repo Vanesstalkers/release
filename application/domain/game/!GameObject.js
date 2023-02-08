@@ -1,13 +1,15 @@
 (class {
   _id;
+  col;
   #game;
   #parent;
   #parentList;
   #_objects = {};
   #fakeParent = null;
 
-  constructor(data, { parent } = {}) {
+  constructor(data, { col, parent } = {}) {
     if (!this._id) this._id = data._id || db.mongo.ObjectID();
+    if(col) this.col = col;
     this.activeEvent = data.activeEvent;
     this.eventData = data.eventData || {};
 
@@ -36,6 +38,19 @@
         this.constructor.name + '[' + (data._code || '') + ']'
       );
     }
+  }
+  set(key, value) {
+    if (!this.col) {
+      throw new Error(
+        `${key}=${value} not saved to changes ('col' is no defined)`
+      );
+    } else {
+      if (!this.#game.changes[this.col]) this.#game.changes[this.col] = {};
+      if (!this.#game.changes[this.col][this._id])
+        this.#game.changes[this.col][this._id] = {};
+      this.#game.changes[this.col][this._id][key] = value;
+    }
+    this[key] = value;
   }
   default_customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, data._code);

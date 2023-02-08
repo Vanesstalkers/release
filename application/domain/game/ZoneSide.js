@@ -1,6 +1,6 @@
 (class ZoneSide extends domain.game['!GameObject'] {
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'zoneside', parent });
 
     this.value = data.value || undefined;
     this.links = data.links || {};

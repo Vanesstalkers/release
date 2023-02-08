@@ -2,7 +2,7 @@
   itemList = [];
 
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'zone', parent });
 
     this.left = data.left || 0;
     this.top = data.top || 0;
