@@ -37,6 +37,12 @@
       game: { [gameId]: game },
     });
 
+    domain.db.broadcast({
+      smart: true,
+      room: 'game-' + game._id,
+      data: { ...game.getChanges() },
+    });
+
     return { status: 'ok' };
   },
 });

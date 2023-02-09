@@ -4,18 +4,25 @@
       data,
       {
         deckClass = domain.game.Deck,
-        deckListName = 'deckList',
+        deckListName = 'deckMap',
         deckItemClass = domain.game.Dice,
       } = {}
     ) {
-      if (!this[deckListName]) this[deckListName] = [];
+      if (!this[deckListName]) this[deckListName] = {};
       if (!data.settings) data.settings = {};
       data.settings.parentDeckContainer = deckListName;
       const deck = new deckClass(data, { parent: this });
-      this[deckListName].push(deck);
+      this[deckListName][deck._id] = {};
 
       deck.setItemClass(deckItemClass);
 
+      if (data.itemMap) {
+        data.itemList = [];
+        const store = this.getFlattenStore();
+        for (const _id of Object.keys(data.itemMap)) {
+          data.itemList.push(store[_id]);
+        }
+      }
       if (data.itemList?.length) {
         data.itemList.forEach((item) => deck.addItem(item));
       }

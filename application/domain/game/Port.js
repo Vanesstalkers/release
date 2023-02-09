@@ -26,7 +26,7 @@
   height = 73;
 
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'port', parent });
 
     this.left = data.left;
     this.top = data.top;
@@ -43,21 +43,25 @@
 
     if (newDirect) {
       if (this.direct[newDirect] !== undefined) {
-        for (const direct of directKeys) this.direct[direct] = false;
-        this.direct[newDirect] = true;
+        const directions = {};
+        for (const direct of directKeys) directions[direct] = false;
+        directions[newDirect] = true;
+        this.set('direct', directions);
 
         return true;
       } else {
         return false;
       }
     } else {
+      const directions = {};
       let usedDirectionIndex = 0;
       for (let i = 0; i < directKeys.length; i++) {
         if (this.direct[directKeys[i]]) usedDirectionIndex = i;
-        this.direct[directKeys[i]] = false;
+        directions[directKeys[i]] = false;
       }
       const newDirectionIndex = (usedDirectionIndex + 1) % directKeys.length;
-      this.direct[directKeys[newDirectionIndex]] = true;
+      directions[directKeys[newDirectionIndex]] = true;
+      this.set('direct', directions);
 
       return directKeys[newDirectionIndex];
     }

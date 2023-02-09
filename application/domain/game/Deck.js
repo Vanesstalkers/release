@@ -1,9 +1,9 @@
 (class Deck extends domain.game['!GameObject'] {
-  itemList = [];
+  itemMap = {};
   #itemClass;
 
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'deck', parent });
 
     this.type = data.type;
     this.subtype = data.subtype;
@@ -27,13 +27,17 @@
     const itemClass = this.getItemClass();
     if (item.constructor != itemClass)
       item = new itemClass(item, { parent: this });
-    this.itemList.push(item);
+    this.set('itemMap', { ...this.itemMap, [item._id]: {} });
     return true;
   }
   removeItem(itemToRemove) {
-    this.itemList = this.itemList.filter((item) => item != itemToRemove);
+    delete this.itemMap[itemToRemove._id];
+    this.set('itemMap', { ...this.itemMap });
   }
   getRandomItem() {
-    return this.itemList[Math.floor(Math.random() * this.itemList.length)];
+    const itemIds = Object.keys(this.itemMap);
+    const id = itemIds[Math.floor(Math.random() * itemIds.length)];
+    const store = this.getFlattenStore();
+    return store[id];
   }
 });

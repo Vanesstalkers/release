@@ -8,13 +8,14 @@
   }
 
   addLink(link) {
-    this.links[link._id] = link.code;
+    this.set('links', { ...this.links, [link._id]: link.code });
   }
   updateExpectedValues() {
-    this.expectedValues = {};
+    const expectedValues = {};
     for (const linkCode of Object.values(this.links)) {
       const link = this.getGame().getObjectByCode(linkCode);
-      if (link.value !== undefined) this.expectedValues[link.value] = true;
+      if (link.value !== undefined) expectedValues[link.value] = true;
     }
+    this.set('expectedValues', expectedValues);
   }
 });

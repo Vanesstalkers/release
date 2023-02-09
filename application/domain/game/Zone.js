@@ -55,9 +55,9 @@
     this.sideList.forEach((side, sideIndex) => {
       if (item) {
         const itemSide = item.sideList[sideIndex];
-        side.value = itemSide.value;
+        side.set('value', itemSide.value);
       } else {
-        side.value = undefined;
+        side.set('value', undefined);
       }
       for (const linkCode of Object.values(side.links)) {
         this.getGame().getObjectByCode(linkCode).updateExpectedValues();

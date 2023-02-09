@@ -2,7 +2,7 @@
   #events;
 
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'card', parent });
 
     this.name = data.name;
     this.#events = domain.cardEvent[this.name];

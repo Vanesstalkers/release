@@ -1,11 +1,11 @@
 (class Plane extends domain.game['!GameObject'] {
-  zoneList = [];
-  portList = [];
+  zoneMap = {};
+  portMap = {};
   width = 500;
   height = 250;
 
   constructor(data, { parent }) {
-    super(data, { parent });
+    super(data, { col: 'plane', parent });
 
     this.release = data.release || false;
     this.left = data.left || 0;
@@ -14,9 +14,16 @@
     if (data.width) this.width = data.width;
     if (data.height) this.height = data.height;
 
+    if (data.zoneMap) {
+      data.zoneList = [];
+      for (const _id of Object.keys(data.zoneMap)) {
+        data.zoneList.push(this.getStore().zone[_id]);
+      }
+    }
     if (data.zoneList?.length) {
       data.zoneList.forEach((item) => {
-        this.zoneList.push(new domain.game.Zone(item, { parent: this }));
+        const zone = new domain.game.Zone(item, { parent: this });
+        this.set('zoneMap', { ...this.zoneMap, [zone._id]: {} });
       });
     }
     if (data.zoneLinks) {
@@ -35,6 +42,12 @@
       });
     }
 
+    if (data.portMap) {
+      data.portList = [];
+      for (const _id of Object.keys(data.portMap)) {
+        data.portList.push(this.getStore().port[_id]);
+      }
+    }    
     if (data.portList?.length) {
       for (const port of data.portList) {
         const filledLinks = {};
@@ -55,11 +68,12 @@
 
   addPort(data) {
     const port = new domain.game.Port(data, { parent: this });
-    this.portList.push(port);
+    this.set('portMap', {...this.portMap, [port._id]: {}});
   }
-  getZone({ code }) {
-    return this.zoneList.find((zone) => zone.code === code);
+  getZone() {
+    return Object.keys(this.zoneMap).map((_id) => this.getStore().zone[_id]).find((zone) => zone.code === code);
   }
+
   getCurrentRotation() {
     return this.rotation;
   }

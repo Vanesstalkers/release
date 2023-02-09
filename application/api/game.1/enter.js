@@ -17,6 +17,10 @@
       },
       { client: context.client }
     );
+    domain.db.broadcast({
+      room: `game-${gameId}`,
+      data: { ...game.store },
+    });
 
     return { status: 'ok' };
   },

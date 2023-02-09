@@ -118,11 +118,11 @@
       client.emit('db/updated', sendData);
     });
   },
-  broadcast({ room: roomName, client: singleClient, data, event }) {
+  broadcast({ room: roomName, client: singleClient, data, event, smart = false }) {
     const room = domain.db.getRoom(roomName);
     for (const [client] of room) {
       if (!singleClient || singleClient === client) {
-        client.emit('db/updated', data);
+        client.emit(smart ? 'db/smartUpdated' : 'db/updated', data);
         if (typeof event === 'function') event({ client });
       }
     }

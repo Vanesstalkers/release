@@ -4,17 +4,23 @@
   const joinPlane = joinPort.getParent();
   const targetPlane = targetPort.getParent();
 
-  joinPlane.rotation = getPlaneRotationByLinkedPortDirections({
-    joinPort,
-    targetPort,
-  });
+  joinPlane.set(
+    'rotation',
+    getPlaneRotationByLinkedPortDirections({
+      joinPort,
+      targetPort,
+    })
+  );
 
   const targetLinkPoint = getLinkPointCoordinates(targetPort);
   const joinLinkPoint = getLinkPointCoordinates(joinPort);
 
-  // // сдвигаем plane на значение разницы позиций между потенциальными точками стыковки
-  joinPlane.top += targetLinkPoint.top - joinLinkPoint.top;
-  joinPlane.left += targetLinkPoint.left - joinLinkPoint.left;
+  // сдвигаем plane на значение разницы позиций между потенциальными точками стыковки
+  joinPlane.set('top', joinPlane.top + targetLinkPoint.top - joinLinkPoint.top);
+  joinPlane.set(
+    'left',
+    joinPlane.left + targetLinkPoint.left - joinLinkPoint.left
+  );
 
   function getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }) {
     let targetDirectWithRotate = targetPort.getDirect();
@@ -56,35 +62,35 @@
     const direct = port.getDirect();
     //console.log('getLinkPointFromPortDirection', port, direct);
     switch (direct) {
-    case 'left':
-      return { top: port.top + port.height / 2, left: -offsetSpace };
-    case 'right':
-      return {
-        top: port.top + port.height / 2,
-        left: port.getParent().width + offsetSpace,
-      };
-    case 'top':
-      return { top: -offsetSpace, left: port.left + port.width / 2 };
-    case 'bottom':
-      return {
-        top: port.getParent().height + offsetSpace,
-        left: port.left + port.width / 2,
-      };
+      case 'left':
+        return { top: port.top + port.height / 2, left: -offsetSpace };
+      case 'right':
+        return {
+          top: port.top + port.height / 2,
+          left: port.getParent().width + offsetSpace,
+        };
+      case 'top':
+        return { top: -offsetSpace, left: port.left + port.width / 2 };
+      case 'bottom':
+        return {
+          top: port.getParent().height + offsetSpace,
+          left: port.left + port.width / 2,
+        };
     }
   }
 
   function rotatePoint({ top, left }, rotate) {
     switch (rotate) {
-    case 0:
-      return { top, left };
-    case 1:
-      return { top: left, left: -top };
-    case 2:
-      return { top: -top, left: -left };
-    case 3:
-      return { top: -left, left: top };
+      case 0:
+        return { top, left };
+      case 1:
+        return { top: left, left: -top };
+      case 2:
+        return { top: -top, left: -left };
+      case 3:
+        return { top: -left, left: top };
     }
   }
-  
+
   return { result: 'success', targetLinkPoint, joinLinkPoint };
 };

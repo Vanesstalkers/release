@@ -9,7 +9,7 @@
 
   constructor(data, { col, parent } = {}) {
     if (!this._id) this._id = data._id || db.mongo.ObjectID();
-    if(col) this.col = col;
+    if (col) this.col = col;
     this.activeEvent = data.activeEvent;
     this.eventData = data.eventData || {};
 
@@ -18,6 +18,8 @@
     if (parent) {
       const game = parent.getGame();
       this.setGame(game);
+      if (!game.store[this.col]) game.store[this.col] = {};
+      game.store[this.col][this._id] = this;
     }
 
     const customObjectCode = Object.getPrototypeOf(this).customObjectCode;
@@ -45,10 +47,7 @@
         `${key}=${value} not saved to changes ('col' is no defined)`
       );
     } else {
-      if (!this.#game.changes[this.col]) this.#game.changes[this.col] = {};
-      if (!this.#game.changes[this.col][this._id])
-        this.#game.changes[this.col][this._id] = {};
-      this.#game.changes[this.col][this._id][key] = value;
+      this.#game.change({ col: this.col, _id: this._id, key, value });
     }
     this[key] = value;
   }
@@ -143,5 +142,14 @@
   }
   setGame(game) {
     this.#game = game;
+  }
+  getStore() {
+    return this.getGame().store;
+  }
+  getFlattenStore() {
+    return Object.values(this.getStore()).reduce(
+      (obj, item) => ({ ...obj, ...item }),
+      {}
+    );
   }
 });

@@ -1,10 +1,10 @@
 (Base) =>
   class extends Base {
-    planeList = [];
+    planeMap = {};
 
     addPlane(data) {
-      const plane = new domain.game.Plane(data, { parent: this });
-      this.planeList.push(plane);
+      const plane = new domain.game.Plane(data, {parent: this });
+      this.set('planeMap', { ...this.planeMap, [plane._id]: {} });
 
       return plane;
     }
