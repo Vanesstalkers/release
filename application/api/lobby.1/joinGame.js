@@ -6,14 +6,15 @@
     );
 
     const player = game.getFreePlayerSlot();
-    player.ready = 1;
-    player.user = context.userId;
+    player.set('ready', true);
+    player.set('user', context.userId);
 
     const session = domain.db.data.session.get(context.client);
     const user = domain.db.data.user[session.userId];
-
     user.game = game._id;
     user.player = player._id;
+    context.game = game._id;
+    context.player = player._id;
 
     const deck = game.getObjectByCode('Deck[domino]');
     const playerHand = player.getObjectByCode('Deck[domino]');

@@ -1,3 +1,4 @@
+// prettier-ignore
 ({
   addTime: Date.now(),
   settings: {

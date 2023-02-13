@@ -1,6 +1,6 @@
 ({
   config: {
-    autoPlay: true
+    autoPlay: true,
   },
   init: function () {
     const game = this.getGame();
@@ -14,7 +14,7 @@
       settings: {
         itemsUsageLimit: 2,
         itemsStartCount: 3,
-      }
+      },
     });
     for (let i = 0; i < newPlayerHand.settings.itemsStartCount; i++) {
       const item = deck.getRandomItem();
@@ -26,10 +26,16 @@
       const game = this.getGame();
       const player = game.getActivePlayer();
       const deck = player.getObjectByCode('Deck[domino_flowstate]');
+      const itemIds = Object.keys(deck.itemMap);
 
-      if (deck.itemList.length <= deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) {
+      if (
+        itemIds.length <=
+        deck.settings.itemsStartCount - deck.settings.itemsUsageLimit
+      ) {
         const gameDominoDeck = game.getObjectByCode('Deck[domino]');
-        deck.itemList.forEach(item => item.moveToTarget(gameDominoDeck));
+        for (const itemId of itemIds) {
+          game.getStore().dice[itemId].moveToTarget(gameDominoDeck);
+        }
         player.deleteDeck(deck);
         return true;
       }
@@ -40,12 +46,15 @@
       const player = game.getActivePlayer();
       const deck = player.getObjectByCode('Deck[domino_flowstate]');
 
-      if(deck){ // deck еще не удален - не было сыграно достаточное количество dice
+      if (deck) {
+        // deck еще не удален - не было сыграно достаточное количество dice
         const gameDominoDeck = game.getObjectByCode('Deck[domino]');
-        deck.itemList.forEach(item => item.moveToTarget(gameDominoDeck));
+        for (const itemId of Object.keys(deck.itemMap)) {
+          game.getStore().dice[itemId].moveToTarget(gameDominoDeck);
+        }
         player.deleteDeck(deck);
       }
       return true;
     },
-  }
+  },
 });

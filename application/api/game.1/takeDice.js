@@ -5,13 +5,12 @@
       await db.mongo.findOne('game', gameId)
     );
 
-    const dice = game.getObjectById(diceId);
-    const zone = dice.getParent();
-    const checkItemCanBeRotated = zone.checkItemCanBeRotated();
-
-    if (checkItemCanBeRotated) {
-      dice.sideList.reverse();
-      zone.updateValues();
+    const player = game.getActivePlayer();
+    const playerHand = player.getObjectByCode('Deck[domino]');
+    const deck = game.getObjectByCode('Deck[domino]');
+    for (let i = 0; i < 3; i++) {
+      const item = deck.getRandomItem();
+      if (item) item.moveToTarget(playerHand);
     }
 
     const $set = { ...game };
@@ -22,8 +21,10 @@
       { $set }
     );
 
-    domain.db.broadcastData({
-      game: { [gameId]: game },
+    domain.db.broadcast({
+      smart: true,
+      room: 'game-' + game._id,
+      data: { ...game.getChanges() },
     });
 
     return { status: 'ok' };

@@ -11,15 +11,12 @@
       type: 'game',
     });
 
-    domain.db.broadcastData(
-      {
-        game: { [gameId]: game },
-      },
-      { client: context.client }
-    );
     domain.db.broadcast({
       room: `game-${gameId}`,
-      data: { ...game.store },
+      data: {
+        ...game.store,
+        game: { [gameId]: { ...game, store: undefined } },
+      },
     });
 
     return { status: 'ok' };

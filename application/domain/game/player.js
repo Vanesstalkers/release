@@ -3,5 +3,7 @@
     super(data, { col: 'player', parent });
 
     this.active = data.active;
+    this.ready = data.ready;
+    this.user = data.user;
   }
 });

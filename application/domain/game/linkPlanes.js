@@ -2,7 +2,6 @@
   const DIRECTIONS = joinPort.constructor.DIRECTIONS;
 
   const joinPlane = joinPort.getParent();
-  const targetPlane = targetPort.getParent();
 
   joinPlane.set(
     'rotation',

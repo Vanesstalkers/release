@@ -1,5 +1,5 @@
 (class Zone extends domain.game['!GameObject'] {
-  itemList = [];
+  itemMap = {};
 
   constructor(data, { parent }) {
     super(data, { col: 'zone', parent });
@@ -15,17 +15,29 @@
       ];
     } else {
       this.sideList = [
-        new domain.game.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
-        new domain.game.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
+        new domain.game.ZoneSide(
+          { _code: 1, value: data[0] },
+          { parent: this }
+        ),
+        new domain.game.ZoneSide(
+          { _code: 2, value: data[1] },
+          { parent: this }
+        ),
       ];
     }
 
+    if (data.itemMap) {
+      data.itemList = [];
+      for (const _id of Object.keys(data.itemMap)) {
+        data.itemList.push(this.getStore().dice[_id]);
+      }
+    }
     if (data.itemList?.length) {
       data.itemList.forEach((item) => {
         const itemClass = this.getItemClass();
         if (item.constructor != itemClass)
           item = new itemClass(item, { parent: this });
-        this.itemList.push(item);
+        this.itemMap[item._id] = {};
       });
     }
   }
@@ -43,8 +55,9 @@
 
     const available = this.checkIsAvailable(item);
     if (available) {
-      if (available === 'rotate') item.sideList.reverse();
-      this.itemList.push(item);
+      if (available === 'rotate')
+        item.set('sideList', [...item.sideList.reverse()]);
+      this.set('itemMap', { ...this.itemMap, [item._id]: {} });
       this.updateValues();
     }
 
@@ -65,11 +78,12 @@
     });
   }
   removeItem(itemToRemove) {
-    this.itemList = this.itemList.filter((item) => item != itemToRemove);
+    delete this.itemMap[itemToRemove._id];
+    this.set('itemMap', { ...this.itemMap });
     this.updateValues();
   }
   getNotDeletedItem() {
-    return this.itemList.find((item) => !item.deleted);
+    return Object.keys(this.itemMap).map((_id) => this.getStore().dice[_id]).find((dice) => !dice.deleted);
   }
   checkIsAvailable(dice, { skipPlacedItem } = {}) {
     if (!skipPlacedItem && this.getNotDeletedItem()) return false; // zone уже занята
@@ -129,7 +143,7 @@
         .find((zone) => !zone.getNotDeletedItem())
     )
       return false;
-    parent.release = true;
+    parent.set('release', true);
     return true;
   }
 });
