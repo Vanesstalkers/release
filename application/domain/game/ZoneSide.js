@@ -8,7 +8,7 @@
   }
 
   addLink(link) {
-    this.set('links', { ...this.links, [link._id]: link.code });
+    this.assign('links', { [link._id]: link.code });
   }
   updateExpectedValues() {
     const expectedValues = {};

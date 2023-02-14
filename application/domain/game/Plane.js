@@ -16,20 +16,16 @@
 
     if (data.zoneMap) {
       data.zoneList = [];
-      for (const _id of Object.keys(data.zoneMap)) {
-        data.zoneList.push(this.getStore().zone[_id]);
-      }
+      for (const _id of Object.keys(data.zoneMap)) data.zoneList.push(this.getStore().zone[_id]);
     }
-    if (data.zoneList?.length) {
-      data.zoneList.forEach((item) => {
-        const zone = new domain.game.Zone(item, { parent: this });
-        this.set('zoneMap', { ...this.zoneMap, [zone._id]: {} });
-      });
+    for (const item of data.zoneList || []) {
+      const zone = new domain.game.Zone(item, { parent: this });
+      this.assign('zoneMap', { [zone._id]: {} });
     }
     if (data.zoneLinks) {
-      Object.entries(data.zoneLinks).forEach(([zoneCode, sideList]) => {
-        Object.entries(sideList).forEach(([sideCode, links]) => {
-          links.forEach((link) => {
+      for (const [zoneCode, sideList] of Object.entries(data.zoneLinks)) {
+        for (const [sideCode, links] of Object.entries(sideList)) {
+          for (const link of links) {
             const [linkZoneCode, linkSideCode] = link.split('.');
             const zone = this.getObjectByCode(zoneCode);
             const side = zone.getObjectByCode(sideCode);
@@ -37,28 +33,24 @@
             const linkSide = linkZone.getObjectByCode(linkSideCode);
             side.addLink(linkSide);
             linkSide.addLink(side);
-          });
-        });
-      });
+          }
+        }
+      }
     }
 
     if (data.portMap) {
       data.portList = [];
-      for (const _id of Object.keys(data.portMap)) {
-        data.portList.push(this.getStore().port[_id]);
+      for (const _id of Object.keys(data.portMap)) data.portList.push(this.getStore().port[_id]);
+    }
+    for (const port of data.portList || []) {
+      const filledLinks = {};
+      for (const linkCode of Object.values(port.links)) {
+        const [linkZoneCode, linkSideCode] = linkCode.split('.');
+        const linkZone = this.getObjectByCode(linkZoneCode);
+        const linkSide = linkZone.getObjectByCode(linkSideCode);
+        filledLinks[linkSide._id] = linkCode;
       }
-    }    
-    if (data.portList?.length) {
-      for (const port of data.portList) {
-        const filledLinks = {};
-        for (const linkCode of Object.values(port.links)) {
-          const [linkZoneCode, linkSideCode] = linkCode.split('.');
-          const linkZone = this.getObjectByCode(linkZoneCode);
-          const linkSide = linkZone.getObjectByCode(linkSideCode);
-          filledLinks[linkSide._id] = linkCode;
-        }
-        this.addPort({ ...port, links: filledLinks });
-      }
+      this.addPort({ ...port, links: filledLinks });
     }
   }
 
@@ -68,10 +60,12 @@
 
   addPort(data) {
     const port = new domain.game.Port(data, { parent: this });
-    this.set('portMap', {...this.portMap, [port._id]: {}});
+    this.assign('portMap', { [port._id]: {} });
   }
   getZone() {
-    return Object.keys(this.zoneMap).map((_id) => this.getStore().zone[_id]).find((zone) => zone.code === code);
+    return Object.keys(this.zoneMap)
+      .map((_id) => this.getStore().zone[_id])
+      .find((zone) => zone.code === code);
   }
 
   getCurrentRotation() {

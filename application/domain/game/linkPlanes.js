@@ -2,24 +2,14 @@
   const DIRECTIONS = joinPort.constructor.DIRECTIONS;
 
   const joinPlane = joinPort.getParent();
-
-  joinPlane.set(
-    'rotation',
-    getPlaneRotationByLinkedPortDirections({
-      joinPort,
-      targetPort,
-    })
-  );
+  joinPlane.set('rotation', getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }));
 
   const targetLinkPoint = getLinkPointCoordinates(targetPort);
   const joinLinkPoint = getLinkPointCoordinates(joinPort);
 
   // сдвигаем plane на значение разницы позиций между потенциальными точками стыковки
   joinPlane.set('top', joinPlane.top + targetLinkPoint.top - joinLinkPoint.top);
-  joinPlane.set(
-    'left',
-    joinPlane.left + targetLinkPoint.left - joinLinkPoint.left
-  );
+  joinPlane.set('left', joinPlane.left + targetLinkPoint.left - joinLinkPoint.left);
 
   function getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }) {
     let targetDirectWithRotate = targetPort.getDirect();
@@ -30,10 +20,7 @@
       targetDirectWithRotate = DIRECTIONS[targetDirectWithRotate].nextDirection;
     }
     let resultRotation = 0;
-    while (
-      DIRECTIONS[joinDirectWithRotate].oppositeDirection !==
-      targetDirectWithRotate
-    ) {
+    while (DIRECTIONS[joinDirectWithRotate].oppositeDirection !== targetDirectWithRotate) {
       joinDirectWithRotate = DIRECTIONS[joinDirectWithRotate].nextDirection;
       resultRotation++;
     }
@@ -42,14 +29,8 @@
 
   function getLinkPointCoordinates(port) {
     const plane = port.getParent();
-    //if (!plane) plane = port.plane;
     const coordinatesWithoutRotate = getLinkPointFromPortDirection(port);
-    //console.log("coordinatesWithoutRotate=", coordinatesWithoutRotate);
-    const rotatedCoordinates = rotatePoint(
-      coordinatesWithoutRotate,
-      plane.rotation
-    );
-    //console.log("rotatedCoordinates=", rotatedCoordinates);
+    const rotatedCoordinates = rotatePoint(coordinatesWithoutRotate, plane.rotation);
     return lib.utils.sumPropertiesOfObjects(
       [rotatedCoordinates, { top: plane.top, left: plane.left }],
       ['top', 'left']
@@ -59,7 +40,6 @@
   function getLinkPointFromPortDirection(port) {
     const offsetSpace = 5;
     const direct = port.getDirect();
-    //console.log('getLinkPointFromPortDirection', port, direct);
     switch (direct) {
       case 'left':
         return { top: port.top + port.height / 2, left: -offsetSpace };

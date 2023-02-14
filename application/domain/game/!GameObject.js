@@ -27,29 +27,26 @@
       this.code = data.code;
     } else if (typeof customObjectCode === 'function') {
       const replacementFragment = '$$_code_$$';
-      const codeTemplate = this.getCodeTemplate(
-        this.constructor.name + '[' + replacementFragment + ']'
-      );
-      this.code = customObjectCode.call(
-        this,
-        { codeTemplate, replacementFragment },
-        data
-      );
+      const codeTemplate = this.getCodeTemplate(this.constructor.name + '[' + replacementFragment + ']');
+      this.code = customObjectCode.call(this, { codeTemplate, replacementFragment }, data);
     } else {
-      this.code = this.getCodeTemplate(
-        this.constructor.name + '[' + (data._code || '') + ']'
-      );
+      this.code = this.getCodeTemplate(this.constructor.name + '[' + (data._code || '') + ']');
     }
   }
   set(key, value) {
     if (!this.col) {
-      throw new Error(
-        `${key}=${value} not saved to changes ('col' is no defined)`
-      );
+      throw new Error(`${key}=${value} not saved to changes ('col' is no defined)`);
     } else {
       this.#game.change({ col: this.col, _id: this._id, key, value });
     }
     this[key] = value;
+  }
+  assign(objKey, value) {
+    this.set(objKey, { ...(this[objKey] || {}), ...value });
+  }
+  delete(objKey, key) {
+    delete this[objKey][key];
+    this.set(objKey, { ...this[objKey] });
   }
   default_customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, data._code);
@@ -98,10 +95,8 @@
   }
   getObjects({ className, directParent } = {}) {
     let result = Object.values(this.#_objects);
-    if (className)
-      result = result.filter((obj) => obj.constructor.name === className);
-    if (directParent)
-      result = result.filter((obj) => obj.getParent() === directParent);
+    if (className) result = result.filter((obj) => obj.constructor.name === className);
+    if (directParent) result = result.filter((obj) => obj.getParent() === directParent);
     return result;
   }
   setParent(parent) {
@@ -147,9 +142,6 @@
     return this.getGame().store;
   }
   getFlattenStore() {
-    return Object.values(this.getStore()).reduce(
-      (obj, item) => ({ ...obj, ...item }),
-      {}
-    );
+    return Object.values(this.getStore()).reduce((obj, item) => ({ ...obj, ...item }), {});
   }
 });

@@ -3,14 +3,12 @@ async (game, { joinPlaneId }) => {
   const fakePlane = game.addPlane(joinPlane);
   const availablePorts = [];
 
-  fakePlane.getObjects({ className: 'Port' }).forEach((fakePort) => {
-    Object.keys(fakePort.direct).forEach((fakePortDirect) => {
+  for (const fakePort of fakePlane.getObjects({ className: 'Port' })) {
+    for (const fakePortDirect of Object.keys(fakePort.direct)) {
       fakePort.updateDirect(fakePortDirect);
-      availablePorts.push(
-        ...game.getAvailablePortsToJoinPlane({ joinPort: fakePort })
-      );
-    });
-  });
+      availablePorts.push(...game.getAvailablePortsToJoinPlane({ joinPort: fakePort }));
+    }
+  }
 
   return { status: 'ok', clearChanges: true, availablePorts };
 };

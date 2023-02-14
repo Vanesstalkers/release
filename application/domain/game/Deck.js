@@ -11,9 +11,7 @@
     this.settings = data.settings;
   }
   customObjectCode({ codeTemplate, replacementFragment }, data) {
-    const replaceString = [data.type, data.subtype]
-      .filter((item) => item)
-      .join('_');
+    const replaceString = [data.type, data.subtype].filter((item) => item).join('_');
     return codeTemplate.replace(replacementFragment, replaceString);
   }
 
@@ -25,14 +23,12 @@
   }
   addItem(item) {
     const itemClass = this.getItemClass();
-    if (item.constructor != itemClass)
-      item = new itemClass(item, { parent: this });
-    this.set('itemMap', { ...this.itemMap, [item._id]: {} });
+    if (item.constructor != itemClass) item = new itemClass(item, { parent: this });
+    this.assign('itemMap', { [item._id]: {} });
     return true;
   }
   removeItem(itemToRemove) {
-    delete this.itemMap[itemToRemove._id];
-    this.set('itemMap', { ...this.itemMap });
+    this.delete('itemMap', itemToRemove._id);
   }
   getRandomItem() {
     const itemIds = Object.keys(this.itemMap);

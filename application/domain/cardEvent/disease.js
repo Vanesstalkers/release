@@ -1,24 +1,23 @@
 ({
   config: {
-    autoPlay: true
+    autoPlay: true,
   },
   init: function () {
     const game = this.getGame();
-    game.activeEvent = {sourceId: this._id};
-    game.getObjects({ className: 'Player' }).forEach(player => {
-      player.activeEvent = {sourceId: this._id};
-    });
+    game.set('activeEvent', { sourceId: this._id });
+    for (const player of game.getObjects({ className: 'Player' })) {
+      player.set('activeEvent', { sourceId: this._id });
+    }
   },
   handlers: {
-    eventTrigger: function ({targetId}) {
+    eventTrigger: function ({ targetId }) {
       const game = this.getGame();
       const target = game.getObjectById(targetId);
-      target.eventData.skipTurn = true;
-      
-      game.activeEvent = null;
-      game.getObjects({ className: 'Player' }).forEach(player => {
-        player.activeEvent = null;
-      });
+      target.assign('eventData', { skipTurn: true });
+      game.set('activeEvent', null);
+      for (const player of game.getObjects({ className: 'Player' })) {
+        player.set('activeEvent', null);
+      }
     },
-  }
+  },
 });

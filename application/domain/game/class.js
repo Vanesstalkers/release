@@ -1,6 +1,4 @@
-(class Game extends domain.game['!hasPlane'](
-  domain.game['!hasDeck'](domain.game['!GameObject'])
-) {
+(class Game extends domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject'])) {
   #changes = {};
   store = {};
   playerMap = {};
@@ -17,7 +15,7 @@
     if (!this.#changes[col][_id]) this.#changes[col][_id] = {};
     this.#changes[col][_id][key] = value;
   }
-  markNew(obj){
+  markNew(obj) {
     const col = obj.col;
     const _id = obj._id;
     if (!this.#changes[col]) this.#changes[col] = {};
@@ -43,12 +41,9 @@
 
     if (data.playerMap) {
       data.playerList = [];
-      for (const _id of Object.keys(data.playerMap)) {
-        data.playerList.push(this.store.player[_id]);
-      }
+      for (const _id of Object.keys(data.playerMap)) data.playerList.push(this.store.player[_id]);
     }
-    if (data.playerList?.length)
-      data.playerList.forEach((item) => this.addPlayer(item));
+    for (const item of data.playerList || []) this.addPlayer(item);
     // !!! надо перевести на Deck (по аналогии с Player)
     // if (data.planeList?.length) data.planeList.forEach(item => this.addDeck(item, {
     //   deckListName: 'planeList', deckItemClass: Plane,
@@ -56,63 +51,46 @@
 
     if (data.planeMap) {
       data.planeList = [];
-      for (const _id of Object.keys(data.planeMap)) {
-        data.planeList.push(this.store.plane[_id]);
-      }
+      for (const _id of Object.keys(data.planeMap)) data.planeList.push(this.store.plane[_id]);
     }
-    if (data.planeList?.length)
-      data.planeList.forEach((item) => this.addPlane(item));
+    for (const item of data.planeList || []) this.addPlane(item);
 
     if (data.deckMap) {
       data.deckList = [];
-      for (const _id of Object.keys(data.deckMap)) {
-        data.deckList.push(this.store.deck[_id]);
-      }
+      for (const _id of Object.keys(data.deckMap)) data.deckList.push(this.store.deck[_id]);
     }
-    if (data.deckList?.length)
-      data.deckList.forEach((item) =>
-        this.addDeck(item, {
-          deckItemClass:
-            item.type === 'domino' ? domain.game.Dice : domain.game.Card,
-        })
-      );
+    for (const item of data.deckList || []) {
+      const deckItemClass = item.type === 'domino' ? domain.game.Dice : domain.game.Card;
+      this.addDeck(item, { deckItemClass });
+    }
 
     if (data.bridgeMap) {
       data.bridgeList = [];
-      for (const _id of Object.keys(data.bridgeMap)) {
-        data.bridgeList.push(this.store.bridge[_id]);
-      }
+      for (const _id of Object.keys(data.bridgeMap)) data.bridgeList.push(this.store.bridge[_id]);
     }
-    if (data.bridgeList?.length)
-      data.bridgeList.forEach((item) => this.addBridge(item));
+    for (const item of data.bridgeList || []) this.addBridge(item);
 
     this.clearChanges();
     return this;
   }
   addPlayer(data) {
+    const store = this.getStore();
     const player = new domain.game.Player(data, { parent: this });
-    this.playerMap[player._id] = {};
+    this.assign('playerMap', { [player._id]: {} });
 
     if (data.deckMap) {
       data.deckList = [];
-      for (const _id of Object.keys(data.deckMap)) {
-        data.deckList.push(this.getStore().deck[_id]);
-      }
+      for (const _id of Object.keys(data.deckMap)) data.deckList.push(store.deck[_id]);
     }
-    if (data.deckList?.length)
-      data.deckList.forEach((item) =>
-        player.addDeck(item, {
-          deckItemClass:
-            item.type === 'domino'
-              ? domain.game.Dice
-              : item.type === 'plane'
-              ? domain.game.Plane
-              : domain.game.Card,
-        })
-      );
+    for (const item of data.deckList || []) {
+      const deckItemClass =
+        item.type === 'domino' ? domain.game.Dice : item.type === 'plane' ? domain.game.Plane : domain.game.Card;
+      player.addDeck(item, { deckItemClass });
+    }
   }
   getPlayerList() {
-    return Object.keys(this.playerMap).map((_id) => this.getStore().player[_id]);
+    const store = this.getStore();
+    return Object.keys(this.playerMap).map((_id) => store.player[_id]);
   }
   getFreePlayerSlot() {
     return this.getPlayerList().find((player) => !player.ready);
@@ -123,36 +101,31 @@
   changeActivePlayer() {
     const activePlayer = this.getActivePlayer();
     if (activePlayer.eventData.extraTurn) {
-      delete activePlayer.eventData.extraTurn;
+      activePlayer.delete('eventData', 'extraTurn');
       if (activePlayer.eventData.skipTurn) {
-        delete activePlayer.eventData.skipTurn;
+        // актуально только для событий в течение хода игрока, инициированных не им самим
+        activePlayer.delete('eventData', 'skipTurn');
       } else {
         return activePlayer;
       }
     }
 
     const playerList = this.getPlayerList();
-    let activePlayerIndex = playerList.findIndex(
-      (player) => player === activePlayer
-    );
-    let newActivePlayer =
-      playerList[(activePlayerIndex + 1) % playerList.length];
+    let activePlayerIndex = playerList.findIndex((player) => player === activePlayer);
+    let newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
     while (newActivePlayer.eventData.skipTurn) {
-      delete newActivePlayer.eventData.skipTurn;
+      newActivePlayer.delete('eventData', 'skipTurn');
       activePlayerIndex++;
       newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
     }
 
-    activePlayer.active = false;
-    newActivePlayer.active = true;
+    activePlayer.set('active', false);
+    newActivePlayer.set('active', true);
 
     return newActivePlayer;
   }
   linkPlanes({ joinPort, targetPort, fake }) {
-    const { targetLinkPoint } = domain.game.linkPlanes({
-      joinPort,
-      targetPort,
-    });
+    const { targetLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
 
     if (fake) return;
 
@@ -161,12 +134,8 @@
 
     const joinPlane = joinPort.getParent();
     const targetPlane = targetPort.getParent();
-    const joinPlaneZoneLink = [
-      joinPlane.code + Object.values(joinPort.links)[0],
-    ];
-    const targetPlaneZoneLink = [
-      targetPlane.code + Object.values(targetPort.links)[0],
-    ];
+    const joinPlaneZoneLink = [joinPlane.code + Object.values(joinPort.links)[0]];
+    const targetPlaneZoneLink = [targetPlane.code + Object.values(targetPort.links)[0]];
 
     // !!! zoneLinks может быть несколько (links[...]) - пока что не актуально (нет таких Plane)
 
@@ -202,24 +171,13 @@
     const planePosition = checkPlane.getPosition();
 
     function checkCollysion(pos1, pos2) {
-      return !(
-        pos1.bottom < pos2.top ||
-        pos1.top > pos2.bottom ||
-        pos1.right < pos2.left ||
-        pos1.left > pos2.right
-      );
+      return !(pos1.bottom < pos2.top || pos1.top > pos2.bottom || pos1.right < pos2.left || pos1.left > pos2.right);
     }
 
     const collysionList = [];
-    this.getObjects({ className: 'Plane', directParent: this }).forEach(
-      (plane) => {
-        if (plane !== checkPlane) {
-          if (checkCollysion(planePosition, plane.getPosition())) {
-            collysionList.push(plane.code);
-          }
-        }
-      }
-    );
+    for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
+      if (plane !== checkPlane && checkCollysion(planePosition, plane.getPosition())) collysionList.push(plane.code);
+    }
 
     return { collysionList, planePosition };
   }
@@ -227,57 +185,49 @@
     const availablePorts = [];
 
     const joinPlane = joinPort.getParent();
-    this.getObjects({ className: 'Plane', directParent: this }).forEach(
-      (plane) => {
-        if (plane === joinPlane) return;
-        plane.getObjects({ className: 'Port' }).forEach((port) => {
-          if (!port.linkedBridge) {
-            Object.keys(port.direct).forEach((portDirect) => {
-              port.updateDirect(portDirect);
-              this.linkPlanes({
-                joinPort: joinPort,
-                targetPort: port,
-                fake: true,
+    for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
+      if (plane === joinPlane) continue;
+      for (const port of plane.getObjects({ className: 'Port' })) {
+        if (!port.linkedBridge) {
+          for (const portDirect of Object.keys(port.direct)) {
+            port.updateDirect(portDirect);
+            this.linkPlanes({ joinPort: joinPort, targetPort: port, fake: true });
+            const checkPlaneCollysion = this.checkPlaneCollysion(joinPlane);
+            if (checkPlaneCollysion.collysionList.length === 0) {
+              availablePorts.push({
+                joinPortId: joinPort._id,
+                joinPortDirect: joinPort.getDirect(),
+                targetPortId: port._id,
+                targetPortDirect: portDirect,
+                position: checkPlaneCollysion.planePosition,
               });
-              const checkPlaneCollysion = this.checkPlaneCollysion(joinPlane);
-              if (checkPlaneCollysion.collysionList.length === 0) {
-                availablePorts.push({
-                  joinPortId: joinPort._id,
-                  joinPortDirect: joinPort.getDirect(),
-                  targetPortId: port._id,
-                  targetPortDirect: portDirect,
-                  position: checkPlaneCollysion.planePosition,
-                });
-              }
-            });
+            }
           }
-        });
+        }
       }
-    );
+    }
     return availablePorts;
   }
 
   addBridge(data) {
+    const store = this.getStore();
     const bridge = new domain.game.Bridge(data, { parent: this });
     this.markNew(bridge);
-    this.set('bridgeMap', { ...this.bridgeMap, [bridge._id]: {} });
+    this.assign('bridgeMap', { [bridge._id]: {} });
 
     if (data.zoneMap) {
       data.zoneList = [];
-      for (const _id of Object.keys(data.zoneMap)) {
-        data.zoneList.push(this.getStore().zone[_id]);
-      }
+      for (const _id of Object.keys(data.zoneMap)) data.zoneList.push(store.zone[_id]);
     }
-    if (data.zoneList?.length) {
-      data.zoneList.forEach((item) => {
-        const zone = new domain.game.Zone(item, { parent: bridge });
-        this.markNew(zone);
-        bridge.set('zoneMap', { ...bridge.zoneMap, [zone._id]: {} });
-      });
+    for (const item of data.zoneList || []) {
+      const zone = new domain.game.Zone(item, { parent: bridge });
+      this.markNew(zone);
+      bridge.assign('zoneMap', { [zone._id]: {} });
     }
+
     if (data.zoneLinks) {
-      Object.entries(data.zoneLinks).forEach(([zoneCode, sideList]) => {
-        Object.entries(sideList).forEach(([sideCode, links]) => {
+      for (const [zoneCode, sideList] of Object.entries(data.zoneLinks)) {
+        for (const [sideCode, links] of Object.entries(sideList)) {
           links.forEach((link) => {
             const [linkZoneCode, linkSideCode] = link.split('.');
             const zone = bridge.getObjectByCode(zoneCode);
@@ -287,8 +237,8 @@
             side.addLink(linkSide);
             linkSide.addLink(side);
           });
-        });
-      });
+        }
+      }
     }
 
     return bridge.code;
@@ -296,21 +246,19 @@
   getZonesAvailability(dice) {
     const result = new Map();
     dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
-    this.getObjects({ className: 'Zone' }).forEach((zone) => {
+    for (const zone of this.getObjects({ className: 'Zone' })) {
       const isAvailableStatus = zone.checkIsAvailable(dice);
       result.set(zone, isAvailableStatus);
-    });
+    }
     dice.getParent().addItem(dice); // * восстанавливаем состояние
     return result;
   }
 
   getDeletedDices() {
-    let result = [];
-    this.getObjects({ className: 'Zone' }).forEach((zone) => {
-      result = result.concat(
-        zone.getObjects({ className: 'Dice' }).filter((dice) => dice.deleted)
-      );
-    });
+    const result = [];
+    for (const zone of this.getObjects({ className: 'Zone' })) {
+      result.push(...zone.getObjects({ className: 'Dice' }).filter((dice) => dice.deleted));
+    }
     return result;
   }
 
@@ -320,9 +268,7 @@
   }
   deleteEventHandler({ handler, source }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
-    this.eventHandlers[handler] = this.eventHandlers[handler].filter(
-      (_id) => _id !== source._id.toString()
-    );
+    this.eventHandlers[handler] = this.eventHandlers[handler].filter((_id) => _id !== source._id.toString());
   }
   callEventHandlers({ handler, data }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
@@ -333,8 +279,6 @@
     }
   }
   clearEventHandlers() {
-    Object.keys(this.eventHandlers).forEach((handler) => {
-      this.eventHandlers[handler] = [];
-    });
+    for (const handler of Object.keys(this.eventHandlers)) this.eventHandlers[handler] = [];
   }
 });

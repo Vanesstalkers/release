@@ -4,15 +4,9 @@ async (game, { diceId, zoneId }) => {
 
   const deletedDices = game.getDeletedDices();
   const replacedDice = deletedDices.find((dice) => dice.getParent() == zone);
-  const remainDeletedDices = deletedDices.filter(
-    (dice) => dice != replacedDice
-  );
+  const remainDeletedDices = deletedDices.filter((dice) => dice != replacedDice);
   if (!replacedDice && remainDeletedDices.length)
-    return {
-      status: 'err',
-      message:
-        'Добавлять новые костяшки можно только взамен временно удаленных',
-    };
+    throw new Error('Добавлять новые костяшки можно только взамен временно удаленных');
 
   dice.moveToTarget(zone);
   if (zone.checkForRelease()) {
@@ -23,9 +17,7 @@ async (game, { diceId, zoneId }) => {
     if (item) item.moveToTarget(playerHand);
   }
 
-  const notReplacedDeletedDices = deletedDices.filter(
-    (dice) => !dice.getParent().getNotDeletedItem()
-  );
+  const notReplacedDeletedDices = deletedDices.filter((dice) => !dice.getParent().getNotDeletedItem());
   // все удаленные dice заменены
   if (notReplacedDeletedDices.length === 0) {
     const deck = game.getObjectByCode('Deck[domino]');

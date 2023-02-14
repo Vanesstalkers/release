@@ -3,9 +3,8 @@
     planeMap = {};
 
     addPlane(data) {
-      const plane = new domain.game.Plane(data, {parent: this });
-      this.set('planeMap', { ...this.planeMap, [plane._id]: {} });
-
+      const plane = new domain.game.Plane(data, { parent: this });
+      this.assign('planeMap', { [plane._id]: {} });
       return plane;
     }
   };

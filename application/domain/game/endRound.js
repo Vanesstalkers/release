@@ -1,8 +1,7 @@
 async (game) => {
   if (game.activeEvent)
     return new Error(
-      game.activeEvent.errorMsg ||
-        'Игрок не может совершить это действие, пока не завершит активное событие.'
+      game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
     );
 
   // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
@@ -36,9 +35,7 @@ async (game) => {
         const linkedZone = linkedSide.getParent();
         const linkedDice = linkedZone.getNotDeletedItem();
 
-        const checkIsAvailable =
-          !linkedDice ||
-          linkedZone.checkIsAvailable(linkedDice, { skipPlacedItem: true });
+        const checkIsAvailable = !linkedDice || linkedZone.checkIsAvailable(linkedDice, { skipPlacedItem: true });
         if (checkIsAvailable === 'rotate') {
           // linkedDice был повернут после удаления dice
           linkedDice.set('sideList', [...linkedDice.sideList.reverse()]);
@@ -55,19 +52,23 @@ async (game) => {
   const cardDeck = game.getObjectByCode('Deck[card]');
   const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
   const cardDeckActive = game.getObjectByCode('Deck[card_active]');
-  let card = cardDeck.getRandomItem();
-  cardDeckActive.getObjects({ className: 'Card' }).forEach((card) => {
+  for (const card of cardDeckActive.getObjects({ className: 'Card' })) {
     card.moveToTarget(cardDeckDrop);
-  });
-  if (!card) {
-    cardDeckDrop.getObjects({ className: 'Card' }).forEach((card) => {
-      card.moveToTarget(cardDeck);
-    });
-    card = cardDeck.getRandomItem();
   }
+  if (cardDeck.getObjects({ className: 'Card' }).length === 0) {
+    for (const card of cardDeckDrop.getObjects({ className: 'Card' })) {
+      card.moveToTarget(cardDeck);
+    }
+  }
+  const card = cardDeck.getRandomItem();
   if (card) {
     card.moveToTarget(cardDeckActive);
-    if (card.needAutoPlay()) card.play();
+    if (game.settings.acceptAutoPlayRoundStartCard === true && card.needAutoPlay()) card.play();
+  }
+  if (cardDeck.getObjects({ className: 'Card' }).length === 0) {
+    for (const card of cardDeckDrop.getObjects({ className: 'Card' })) {
+      card.moveToTarget(cardDeck);
+    }
   }
 
   game.set('round', game.round + 1);

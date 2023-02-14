@@ -19,23 +19,20 @@
     return moveResult;
   }
   getSelfConfig() {
-    return {
-      handlers: Object.keys(this.#events.handlers),
-    };
+    return { handlers: Object.keys(this.#events.handlers || {}) };
   }
   needAutoPlay() {
     return this.#events?.config?.autoPlay;
   }
   play() {
     const config = this.getSelfConfig();
-    (config.handlers || []).forEach((handler) =>
-      this.getGame().addEventHandler({ handler, source: this })
-    );
+    for (const handler of config.handlers) {
+      this.getGame().addEventHandler({ handler, source: this });
+    }
     if (this.#events.init) this.#events.init.call(this);
   }
   callHandler({ handler, data }) {
-    if (!this.#events.handlers[handler])
-      throw new Error('eventHandler not found');
+    if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');
     return this.#events.handlers[handler].call(this, data);
   }
 });
