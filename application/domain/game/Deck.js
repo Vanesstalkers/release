@@ -24,6 +24,7 @@
   addItem(item) {
     const itemClass = this.getItemClass();
     if (item.constructor != itemClass) item = new itemClass(item, { parent: this });
+    this.getGame().markNew(item);
     this.assign('itemMap', { [item._id]: {} });
     return true;
   }

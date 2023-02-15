@@ -5,9 +5,10 @@
     this.deleted = data.deleted;
 
     if (data.sideList) {
+      const store = this.getGame().getStore();
       this.sideList = [
-        new domain.game.DiceSide(data.sideList[0], { parent: this }),
-        new domain.game.DiceSide(data.sideList[1], { parent: this }),
+        new domain.game.DiceSide(store.diceside[data.sideList[0]._id], { parent: this }),
+        new domain.game.DiceSide(store.diceside[data.sideList[1]._id], { parent: this }),
       ];
     } else {
       this.sideList = [

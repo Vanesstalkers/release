@@ -29,6 +29,7 @@
     },
   ],
   deckList: [
+    { type: 'plane' },
     {
       type: 'domino',
       itemType: 'any',
@@ -46,13 +47,13 @@
       type: 'card',
       itemType: 'event',
       itemList: [
-        // {name: 'pilot', playOneTime: true},
-        // {name: 'req_tax', playOneTime: true},
-        // {name: 'req_legal', playOneTime: true},
+        {name: 'pilot'},
+        {name: 'req_tax'},
+        {name: 'req_legal'},
         { name: 'coffee' },
         { name: 'weekend' },
         { name: 'disease' },
-        { name: 'rain' },
+        { name: 'water' },
         { name: 'teamlead' },
         { name: 'flowstate' },
         { name: 'crutch' },

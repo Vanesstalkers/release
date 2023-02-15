@@ -6,6 +6,8 @@ async (
   const joinPlane = joinPort.getParent();
   const targetPort = game.getObjectById(targetPortId);
 
+  game.set('availablePorts', null);
+
   // тут нужна проверка getAvailablePortsToJoinPlane
 
   joinPort.updateDirect(joinPortDirect);
@@ -15,6 +17,8 @@ async (
   joinPlane.getParent().removeItem(joinPlane);
   joinPlane.getParent().deleteFromObjectStorage(joinPlane);
   game.addPlane(joinPlane);
+
+  game.callEventHandlers({ handler: 'addPlane' });
 
   return { status: 'ok' };
 };

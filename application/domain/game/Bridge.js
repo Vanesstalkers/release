@@ -9,5 +9,6 @@
     this.left = data.left;
     this.top = data.top;
     this.rotation = data.rotation || 0;
+    this.bridgeToCardPlane = data.bridgeToCardPlane;
   }
 });

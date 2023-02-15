@@ -24,6 +24,9 @@
   needAutoPlay() {
     return this.#events?.config?.autoPlay;
   }
+  playOneTime() {
+    return this.#events?.config?.playOneTime;
+  }
   play() {
     const config = this.getSelfConfig();
     for (const handler of config.handlers) {

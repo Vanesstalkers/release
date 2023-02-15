@@ -11,12 +11,23 @@
 
       const event = domain.game[eventName];
       const result = await event(game, eventData);
-      const { clearChanges, clientCustomUpdates } = result;
-      if (clearChanges) game.clearChanges();
+      const { clientCustomUpdates } = result;
 
       const changes = game.getChanges();
       if (Object.keys(changes).length) {
-        const $set = { ...game };
+        const $set = {};
+        for (const [col, ids] of Object.entries(changes)) {
+          if (col === 'game') {
+            Object.assign($set, changes.game[gameId]);
+          } else {
+            for (const [id, value] of Object.entries(ids)) {
+              for (const [key, val] of Object.entries(value)) {
+                $set[`store.${col}.${id}.${key}`] = val;
+              }
+            }
+          }
+        }
+
         delete $set._id;
         await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
 

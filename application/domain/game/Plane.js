@@ -11,6 +11,11 @@
     this.left = data.left || 0;
     this.top = data.top || 0;
     this.rotation = data.rotation || 0;
+    this.customClass = data.customClass || [];
+    if (this.isCardPlane()) {
+      this.width = 120;
+      this.height = 180;
+    }
     if (data.width) this.width = data.width;
     if (data.height) this.height = data.height;
 
@@ -20,6 +25,7 @@
     }
     for (const item of data.zoneList || []) {
       const zone = new domain.game.Zone(item, { parent: this });
+      this.getGame().markNew(zone);
       this.assign('zoneMap', { [zone._id]: {} });
     }
     if (data.zoneLinks) {
@@ -54,12 +60,17 @@
     }
   }
 
+  isCardPlane() {
+    return this.customClass.includes('card-plane');
+  }
+
   getCodePrefix() {
     return '';
   }
 
   addPort(data) {
     const port = new domain.game.Port(data, { parent: this });
+    this.getGame().markNew(port);
     this.assign('portMap', { [port._id]: {} });
   }
   getZone() {
@@ -102,5 +113,16 @@
           bottom: this.top,
         };
     }
+  }
+  moveToTarget(target) {
+    const currentParent = this.getParent();
+    currentParent.removeItem(this); // сначала удаляем
+    const moveResult = target.addItem(this);
+    if (moveResult) {
+      this.updateParent(target);
+    } else {
+      currentParent.addItem(this);
+    }
+    return moveResult;
   }
 });

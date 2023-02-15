@@ -1,5 +1,6 @@
 (class Game extends domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject'])) {
   #changes = {};
+  #disableChanges = false;
   store = {};
   playerMap = {};
   bridgeMap = {};
@@ -11,6 +12,7 @@
     delete this.code; // мешается в ZoneSide.links + в принципе не нужен
   }
   change({ col, _id, key, value }) {
+    if (this.#disableChanges) return;
     if (!this.#changes[col]) this.#changes[col] = {};
     if (!this.#changes[col][_id]) this.#changes[col][_id] = {};
     this.#changes[col][_id][key] = value;
@@ -24,6 +26,12 @@
   getChanges() {
     return this.#changes;
   }
+  acceptChanges() {
+    this.#disableChanges = false;
+  }
+  disableChanges() {
+    this.#disableChanges = true;
+  }
   clearChanges() {
     this.#changes = {};
   }
@@ -36,6 +44,7 @@
     this.eventHandlers = data.eventHandlers || {
       endRound: [],
       replaceDice: [],
+      addPlane: [],
       eventTrigger: [],
     };
 
@@ -60,7 +69,8 @@
       for (const _id of Object.keys(data.deckMap)) data.deckList.push(this.store.deck[_id]);
     }
     for (const item of data.deckList || []) {
-      const deckItemClass = item.type === 'domino' ? domain.game.Dice : domain.game.Card;
+      const deckItemClass =
+        item.type === 'domino' ? domain.game.Dice : item.type === 'plane' ? domain.game.Plane : domain.game.Card;
       this.addDeck(item, { deckItemClass });
     }
 
@@ -134,24 +144,25 @@
 
     const joinPlane = joinPort.getParent();
     const targetPlane = targetPort.getParent();
-    const joinPlaneZoneLink = [joinPlane.code + Object.values(joinPort.links)[0]];
-    const targetPlaneZoneLink = [targetPlane.code + Object.values(targetPort.links)[0]];
-
     // !!! zoneLinks может быть несколько (links[...]) - пока что не актуально (нет таких Plane)
-
+    const [joinPlaneZoneCode] = Object.values(joinPort.links);
+    const [targetPlaneZoneCode] = Object.values(targetPort.links);
     const reverseLinks = targetPortDirect.bridge.reverse;
-    const bridgeZoneLinks = {
-      'Zone[1]': {
-        [reverseLinks ? 'ZoneSide[2]' : 'ZoneSide[1]']: targetPlaneZoneLink,
-        [reverseLinks ? 'ZoneSide[1]' : 'ZoneSide[2]']: joinPlaneZoneLink,
-      },
-    };
+    const bridgeZoneLinks = {};
+    const bridgeToCardPlane = joinPlane.isCardPlane();
+    if (bridgeToCardPlane) {
+      // у card-plane отсутствует связанная zone
+      bridgeZoneLinks[reverseLinks ? 'ZoneSide[2]' : 'ZoneSide[1]'] = [targetPlane.code + targetPlaneZoneCode];
+    } else {
+      bridgeZoneLinks[reverseLinks ? 'ZoneSide[2]' : 'ZoneSide[1]'] = [targetPlane.code + targetPlaneZoneCode];
+      bridgeZoneLinks[reverseLinks ? 'ZoneSide[1]' : 'ZoneSide[2]'] = [joinPlane.code + joinPlaneZoneCode];
+    }
     const bridgeData = {
       _code: joinPlane.code + '-' + targetPlane.code,
       left: targetLinkPoint.left,
       top: targetLinkPoint.top,
       rotation: targetPlane.rotation,
-      zoneLinks: bridgeZoneLinks,
+      zoneLinks: { 'Zone[1]': bridgeZoneLinks },
       zoneList: [
         {
           _code: 1,
@@ -161,6 +172,7 @@
           vertical: targetPortDirect.bridge.vertical,
         },
       ],
+      bridgeToCardPlane,
     };
 
     const bridgeCode = this.addBridge(bridgeData);
@@ -228,7 +240,7 @@
     if (data.zoneLinks) {
       for (const [zoneCode, sideList] of Object.entries(data.zoneLinks)) {
         for (const [sideCode, links] of Object.entries(sideList)) {
-          links.forEach((link) => {
+          for (const link of links) {
             const [linkZoneCode, linkSideCode] = link.split('.');
             const zone = bridge.getObjectByCode(zoneCode);
             const side = zone.getObjectByCode(sideCode);
@@ -236,7 +248,8 @@
             const linkSide = linkZone.getObjectByCode(linkSideCode);
             side.addLink(linkSide);
             linkSide.addLink(side);
-          });
+            linkZone.updateValues();
+          }
         }
       }
     }
@@ -264,11 +277,13 @@
 
   addEventHandler({ handler, source }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
-    this.eventHandlers[handler].push(source._id.toString());
+    this.assign('eventHandlers', { [handler]: this.eventHandlers[handler].concat(source._id.toString()) });
   }
   deleteEventHandler({ handler, source }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
-    this.eventHandlers[handler] = this.eventHandlers[handler].filter((_id) => _id !== source._id.toString());
+    this.assign('eventHandlers', {
+      [handler]: this.eventHandlers[handler].filter((_id) => _id !== source._id.toString()),
+    });
   }
   callEventHandlers({ handler, data }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
@@ -279,6 +294,6 @@
     }
   }
   clearEventHandlers() {
-    for (const handler of Object.keys(this.eventHandlers)) this.eventHandlers[handler] = [];
+    for (const handler of Object.keys(this.eventHandlers)) this.assign('eventHandlers', { [handler]: [] });
   }
 });

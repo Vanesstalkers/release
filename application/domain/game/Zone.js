@@ -9,15 +9,19 @@
     this.vertical = data.vertical;
 
     if (data.sideList) {
+      const store = this.getGame().getStore();
       this.sideList = [
-        new domain.game.ZoneSide(data.sideList[0], { parent: this }),
-        new domain.game.ZoneSide(data.sideList[1], { parent: this }),
+        new domain.game.ZoneSide(store.zoneside[data.sideList[0]._id], { parent: this }),
+        new domain.game.ZoneSide(store.zoneside[data.sideList[1]._id], { parent: this }),
       ];
     } else {
+      const game = this.getGame();
       this.sideList = [
         new domain.game.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
         new domain.game.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
       ];
+      game.markNew(this.sideList[0]);
+      game.markNew(this.sideList[1]);
     }
 
     if (data.itemMap) {
@@ -86,8 +90,14 @@
     const expectedValues1 = this.sideList[1].expectedValues;
     const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
 
-    if (this.findParent({ className: 'Bridge' }) !== undefined && (!sizeOfExpectedValues0 || !sizeOfExpectedValues1))
-      return false; // для bridge-zone должны быть заполнены соседние zone
+    const bridgeParent = this.findParent({ className: 'Bridge' });
+    if (bridgeParent !== undefined) {
+      if (bridgeParent.bridgeToCardPlane) {
+        if (!(sizeOfExpectedValues0 || sizeOfExpectedValues1)) return false; // для card-bridge-zone должна быть заполнена zone прилегающего plane
+      } else if (!sizeOfExpectedValues0 || !sizeOfExpectedValues1) {
+        return false; // для bridge-zone должны быть заполнены соседние zone
+      }
+    }
 
     if (!sizeOfExpectedValues0 && !sizeOfExpectedValues1) return true; // соседние zone свободны
 

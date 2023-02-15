@@ -57,7 +57,7 @@ async (game) => {
   }
   if (cardDeck.getObjects({ className: 'Card' }).length === 0) {
     for (const card of cardDeckDrop.getObjects({ className: 'Card' })) {
-      card.moveToTarget(cardDeck);
+      if (!card.playOneTime()) card.moveToTarget(cardDeck);
     }
   }
   const card = cardDeck.getRandomItem();
@@ -67,7 +67,7 @@ async (game) => {
   }
   if (cardDeck.getObjects({ className: 'Card' }).length === 0) {
     for (const card of cardDeckDrop.getObjects({ className: 'Card' })) {
-      card.moveToTarget(cardDeck);
+      if (!card.playOneTime()) card.moveToTarget(cardDeck);
     }
   }
 
