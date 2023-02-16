@@ -275,6 +275,25 @@
     return result;
   }
 
+  smartMoveRandomCard({ target }) {
+    const deck = this.getObjectByCode('Deck[card]');
+    let card = deck.getRandomItem();
+    if (card) card.moveToTarget(target);
+    else {
+      this.restoreCardsFromDrop();
+      card = deck.getRandomItem();
+      if (card) card.moveToTarget(target);
+    }
+    return card;
+  }
+  restoreCardsFromDrop() {
+    const deck = this.getObjectByCode('Deck[card]');
+    const deckDrop = this.getObjectByCode('Deck[card_drop]');
+    for (const card of deckDrop.getObjects({ className: 'Card' })) {
+      if (!card.playOneTime()) card.moveToTarget(deck);
+    }
+  }
+
   addEventHandler({ handler, source }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     this.assign('eventHandlers', { [handler]: this.eventHandlers[handler].concat(source._id.toString()) });

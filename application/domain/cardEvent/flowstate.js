@@ -1,37 +1,21 @@
 ({
-  config: {
-    autoPlay: true,
-  },
-  init: function () {
-    const game = this.getGame();
-    const player = game.getActivePlayer();
+  init: function ({ game, player }) {
     const deck = game.getObjectByCode('Deck[domino]');
 
     const newPlayerHand = player.addDeck({
       type: 'domino',
       subtype: 'flowstate',
       itemType: 'any',
-      settings: {
-        itemsUsageLimit: 2,
-        itemsStartCount: 3,
-      },
+      settings: { itemsUsageLimit: 2, itemsStartCount: 3 },
     });
-    for (let i = 0; i < newPlayerHand.settings.itemsStartCount; i++) {
-      const item = deck.getRandomItem();
-      if (item) item.moveToTarget(newPlayerHand);
-    }
+    deck.moveRandomItems({ count: newPlayerHand.settings.itemsStartCount, target: newPlayerHand });
   },
   handlers: {
-    replaceDice: function () {
-      const game = this.getGame();
-      const player = game.getActivePlayer();
+    replaceDice: function ({ game, player }) {
       const deck = player.getObjectByCode('Deck[domino_flowstate]');
       const itemIds = Object.keys(deck.itemMap);
 
-      if (
-        itemIds.length <=
-        deck.settings.itemsStartCount - deck.settings.itemsUsageLimit
-      ) {
+      if (itemIds.length <= deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) {
         const gameDominoDeck = game.getObjectByCode('Deck[domino]');
         for (const itemId of itemIds) {
           game.getStore().dice[itemId].moveToTarget(gameDominoDeck);
@@ -41,9 +25,7 @@
       }
       return false; // если itemsUsageLimit станет больше 1, то handler не должен удаляться из game.eventHandlers
     },
-    endRound: function () {
-      const game = this.getGame();
-      const player = game.getActivePlayer();
+    endRound: function ({ game, player }) {
       const deck = player.getObjectByCode('Deck[domino_flowstate]');
 
       if (deck) {

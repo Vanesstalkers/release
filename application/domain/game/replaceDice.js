@@ -10,11 +10,7 @@ async (game, { diceId, zoneId }) => {
 
   dice.moveToTarget(zone);
   if (zone.checkForRelease()) {
-    const player = game.getActivePlayer();
-    const playerHand = player.getObjectByCode('Deck[card]');
-    const deck = game.getObjectByCode('Deck[card]');
-    const item = deck.getRandomItem();
-    if (item) item.moveToTarget(playerHand);
+    game.smartMoveRandomCard({ target: game.getActivePlayer().getObjectByCode('Deck[card]') });
   }
 
   const notReplacedDeletedDices = deletedDices.filter((dice) => !dice.getParent().getNotDeletedItem());

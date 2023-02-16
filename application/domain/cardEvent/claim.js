@@ -6,8 +6,12 @@
     }
   },
   handlers: {
-    eventTrigger: function ({ game, target }) {
-      target.assign('eventData', { skipTurn: true });
+    eventTrigger: function ({ game, target: targetPlayer }) {
+      const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
+      const gameDeck = game.getObjectByCode('Deck[domino]');
+
+      targetPlayerHand.moveAllItems({ target: gameDeck });
+
       game.set('activeEvent', null);
       for (const player of game.getObjects({ className: 'Player' })) {
         player.set('activeEvent', null);

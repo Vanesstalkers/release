@@ -2,9 +2,7 @@
   config: {
     playOneTime: true,
   },
-  init: function () {
-    const game = this.getGame();
-    const player = game.getActivePlayer();
+  init: function ({ game, player }) {
     const deck = player.getObjectByCode('Deck[plane]');
     deck.addItem({
       _code: 1005,
@@ -119,10 +117,8 @@
     });
   },
   handlers: {
-    addPlane: function () {
-      const game = this.getGame();
+    addPlane: function ({ game, player }) {
       const gameDeck = game.getObjectByCode('Deck[plane]');
-      const player = game.getActivePlayer();
       const deck = player.getObjectByCode('Deck[plane]');
       const itemIds = Object.keys(deck.itemMap);
       for (const itemId of itemIds) {

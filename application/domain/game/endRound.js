@@ -17,6 +17,9 @@ async (game) => {
   // player которому передают ход
   const activePlayer = game.changeActivePlayer();
   const playerHand = activePlayer.getObjectByCode('Deck[domino]');
+  const gameDominoDeck = game.getObjectByCode('Deck[domino]');
+  const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
+  const cardDeckActive = game.getObjectByCode('Deck[card_active]');
 
   // если есть временно удаленные dice, то восстанавливаем состояние до их удаления
   game.getDeletedDices().forEach((dice) => {
@@ -45,31 +48,22 @@ async (game) => {
     }
   });
 
-  const deck = game.getObjectByCode('Deck[domino]');
-  const item = deck.getRandomItem();
-  if (item) item.moveToTarget(playerHand);
+  if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
+    if (prevPlayer.eventData.disablePlayerHandLimit) {
+      prevPlayer.delete('eventData', 'disablePlayerHandLimit');
+    } else {
+      prevPlayerHand.moveAllItems({ target: gameDominoDeck });
+    }
+  }
 
-  const cardDeck = game.getObjectByCode('Deck[card]');
-  const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
-  const cardDeckActive = game.getObjectByCode('Deck[card_active]');
+  gameDominoDeck.moveRandomItems({ count: 1, target: playerHand });
+
   for (const card of cardDeckActive.getObjects({ className: 'Card' })) {
     card.moveToTarget(cardDeckDrop);
   }
-  if (cardDeck.getObjects({ className: 'Card' }).length === 0) {
-    for (const card of cardDeckDrop.getObjects({ className: 'Card' })) {
-      if (!card.playOneTime()) card.moveToTarget(cardDeck);
-    }
-  }
-  const card = cardDeck.getRandomItem();
-  if (card) {
-    card.moveToTarget(cardDeckActive);
-    if (game.settings.acceptAutoPlayRoundStartCard === true && card.needAutoPlay()) card.play();
-  }
-  if (cardDeck.getObjects({ className: 'Card' }).length === 0) {
-    for (const card of cardDeckDrop.getObjects({ className: 'Card' })) {
-      if (!card.playOneTime()) card.moveToTarget(cardDeck);
-    }
-  }
+
+  const card = game.smartMoveRandomCard({ target: cardDeckActive });
+  if (card && game.settings.acceptAutoPlayRoundStartCard === true && card.needAutoPlay()) card.play();
 
   game.set('round', game.round + 1);
 

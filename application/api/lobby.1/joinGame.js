@@ -16,17 +16,11 @@
 
     const deck = game.getObjectByCode('Deck[domino]');
     const playerHand = player.getObjectByCode('Deck[domino]');
-    for (let i = 0; i < 3; i++) {
-      const item = deck.getRandomItem();
-      if (item) item.moveToTarget(playerHand);
-    }
-    // const deckCard = game.getObjectByCode('Deck[card]');
-    // const playerHandCard = player.getObjectByCode('Deck[card]');
-    // for (let i = 0; i < 3; i++) {
-    //   const item = deckCard.getRandomItem();
-    //   if (item) item.moveToTarget(playerHandCard);
-    // }
+    deck.moveRandomItems({ count: 3, target: playerHand });
 
+    const deckCard = game.getObjectByCode('Deck[card]');
+    const playerHandCard = player.getObjectByCode('Deck[card]');
+    deckCard.moveRandomItems({ count: 3, target: playerHandCard });
 
     const $set = { ...game };
     delete $set._id;

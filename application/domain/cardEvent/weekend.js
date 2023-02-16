@@ -1,12 +1,5 @@
 ({
-  config: {
-    autoPlay: true,
-  },
-  handlers: {
-    endRound: function () {
-      const game = this.getGame();
-      const player = game.getActivePlayer();
-      player.set('eventData', { extraTurn: true });
-    },
+  init: function ({ game, player }) {
+    player.set('eventData', { extraTurn: true });
   },
 });

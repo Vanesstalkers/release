@@ -2,8 +2,7 @@
   config: {
     playOneTime: true,
   },
-  init: function () {
-    const game = this.getGame();
+  init: function ({ game }) {
     const deck = game.getObjectByCode('Deck[plane]');
     const code = 1002;
     deck.addItem({
