@@ -2,6 +2,8 @@ async (game, { diceId, zoneId }) => {
   const dice = game.getObjectById(diceId);
   const zone = game.getObjectById(zoneId);
 
+  if(dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу');
+
   const deletedDices = game.getDeletedDices();
   const replacedDice = deletedDices.find((dice) => dice.getParent() == zone);
   const remainDeletedDices = deletedDices.filter((dice) => dice != replacedDice);

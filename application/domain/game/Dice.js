@@ -3,6 +3,8 @@
     super(data, { col: 'dice', parent });
 
     this.deleted = data.deleted;
+    this.visible = data.visible;
+    this.locked = data.locked;
 
     if (data.sideList) {
       const store = this.getGame().getStore();
@@ -26,7 +28,9 @@
     const currentParent = this.getParent();
     currentParent.removeItem(this); // сначала удаляем, чтобы не помешать размещению на соседней зоне
     const moveResult = target.addItem(this);
+
     if (moveResult) {
+      this.set('visible', false);
       this.updateParent(target);
     } else {
       currentParent.addItem(this);

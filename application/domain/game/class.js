@@ -18,6 +18,7 @@
     this.#changes[col][_id][key] = value;
   }
   markNew(obj) {
+    if (this.#disableChanges) return;
     const col = obj.col;
     const _id = obj._id;
     if (!this.#changes[col]) this.#changes[col] = {};
@@ -26,7 +27,7 @@
   getChanges() {
     return this.#changes;
   }
-  acceptChanges() {
+  enableChanges() {
     this.#disableChanges = false;
   }
   disableChanges() {
@@ -258,12 +259,16 @@
   }
   getZonesAvailability(dice) {
     const result = new Map();
-    dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
-    for (const zone of this.getObjects({ className: 'Zone' })) {
-      const isAvailableStatus = zone.checkIsAvailable(dice);
-      result.set(zone, isAvailableStatus);
+    this.disableChanges();
+    {
+      dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
+      for (const zone of this.getObjects({ className: 'Zone' })) {
+        const isAvailableStatus = zone.checkIsAvailable(dice);
+        result.set(zone, isAvailableStatus);
+      }
+      dice.getParent().addItem(dice); // * восстанавливаем состояние
     }
-    dice.getParent().addItem(dice); // * восстанавливаем состояние
+    this.enableChanges();
     return result;
   }
 

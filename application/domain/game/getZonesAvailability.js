@@ -11,7 +11,7 @@ async (game, { diceId }) => {
       }
     });
   }
-  game.acceptChanges();
+  game.enableChanges();
 
   return { status: 'ok', clientCustomUpdates: { zone: availableZones } };
 };

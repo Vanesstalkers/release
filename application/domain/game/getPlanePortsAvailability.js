@@ -13,7 +13,7 @@ async (game, { joinPlaneId }) => {
       }
     }
   }
-  game.acceptChanges();
+  game.enableChanges();
 
   game.set('availablePorts', availablePorts);
 

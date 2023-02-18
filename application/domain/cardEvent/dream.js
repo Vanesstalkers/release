@@ -1,8 +1,8 @@
 ({
   init: function ({ game }) {
     game.set('activeEvent', { sourceId: this._id });
-    for (const plane of game.getObjects({ className: 'Plane' })) {
-      if(plane.isCardPlane()) continue;
+    for (const plane of game.getObjects({ className: 'Plane', directParent: game })) {
+      if (plane.isCardPlane()) continue;
       plane.set('activeEvent', { sourceId: this._id });
     }
   },
@@ -16,7 +16,7 @@
       }
 
       game.set('activeEvent', null);
-      for (const plane of game.getObjects({ className: 'Plane' })) {
+      for (const plane of game.getObjects({ className: 'Plane', directParent: game })) {
         plane.set('activeEvent', null);
       }
     },
