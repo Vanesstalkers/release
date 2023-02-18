@@ -1,4 +1,5 @@
 (class Game extends domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject'])) {
+  broadcastUserList = {};
   #changes = {};
   #disableChanges = false;
   store = {};
@@ -37,6 +38,7 @@
     this.#changes = {};
   }
   fromJSON(data) {
+    if (data.broadcastUserList) this.broadcastUserList = data.broadcastUserList;
     if (data.store) this.store = data.store;
     this.addTime = data.addTime;
     this.settings = data.settings;
@@ -313,8 +315,8 @@
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     for (const sourceId of this.eventHandlers[handler]) {
       const source = this.getObjectById(sourceId);
-      const deleteHandler = source.callHandler({ handler, data });
-      if (deleteHandler) this.deleteEventHandler({ handler, source });
+      const { saveHandler } = source.callHandler({ handler, data }) || {};
+      if (!saveHandler) this.deleteEventHandler({ handler, source });
     }
   }
   clearEventHandlers() {

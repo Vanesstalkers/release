@@ -10,7 +10,7 @@
   },
   handlers: {
     eventTrigger: function ({ game, player: activePlayer, target }) {
-      if (!target) return true;
+      if (!target) return;
 
       if (!game.activeEvent.targetDiceId) {
         const deck = activePlayer.getObjectByCode('Deck[domino]');
@@ -23,8 +23,8 @@
           if (player === activePlayer) continue;
           player.set('activeEvent', { sourceId: this._id });
         }
-
-        return false;
+        
+        return { saveHandler: true };
       } else {
         const playerHand = target.getObjectByCode('Deck[domino]');
         const dice = game.getObjectById(game.activeEvent.targetDiceId);
@@ -36,8 +36,6 @@
           if (player === activePlayer) continue;
           player.set('activeEvent', null);
         }
-
-        return true;
       }
     },
   },

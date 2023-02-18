@@ -124,7 +124,6 @@
       for (const itemId of itemIds) {
         game.getStore().plane[itemId].moveToTarget(gameDeck);
       }
-      return true;
     },
   },
 });

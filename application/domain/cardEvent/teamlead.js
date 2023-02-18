@@ -15,15 +15,13 @@
       const deck = player.getObjectByCode('Deck[domino_teamlead]');
       const itemIds = Object.keys(deck.itemMap);
 
-      if (itemIds.length <= deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) {
-        const gameDominoDeck = game.getObjectByCode('Deck[domino]');
-        for (const itemId of itemIds) {
-          game.getStore().dice[itemId].moveToTarget(gameDominoDeck);
-        }
-        player.deleteDeck(deck);
-        return true;
+      if (itemIds.length > deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) return { saveHandler: true };
+
+      const gameDominoDeck = game.getObjectByCode('Deck[domino]');
+      for (const itemId of itemIds) {
+        game.getStore().dice[itemId].moveToTarget(gameDominoDeck);
       }
-      return false; // если itemsUsageLimit станет больше 1, то handler не должен удаляться из game.eventHandlers
+      player.deleteDeck(deck);
     },
     endRound: function ({ game, player }) {
       const deck = player.getObjectByCode('Deck[domino_teamlead]');

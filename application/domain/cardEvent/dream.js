@@ -8,7 +8,7 @@
   },
   handlers: {
     eventTrigger: function ({ game, target }) {
-      if (!target) return true;
+      if (!target) return;
 
       const deck = game.getObjectByCode('Deck[domino]');
       for (const dice of target.getObjects({ className: 'Dice' })) {

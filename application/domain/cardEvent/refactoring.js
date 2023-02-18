@@ -17,7 +17,7 @@
   },
   handlers: {
     eventTrigger: function ({ game, player: activePlayer, target: dice }) {
-      if (!dice) return true;
+      if (!dice) return;
 
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
       dice.moveToTarget(playerHand);
@@ -36,8 +36,6 @@
           dice.set('activeEvent', null);
         }
       }
-
-      return true;
     },
     endRound: function ({ game }) {
       for (const dice of game.getObjects({ className: 'Dice' })) {

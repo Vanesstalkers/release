@@ -12,8 +12,8 @@
   },
   handlers: {
     eventTrigger: function ({ game, player, target, fakeValue = 0 }) {
-      if (fakeValue === undefined) return true;
-      if (!target) return true;
+      if (fakeValue === undefined) return;
+      if (!target) return;
 
       const realValue = target.eventData.fakeValue?.realValue ?? target.value;
       target.assign('eventData', { fakeValue: { realValue } });
@@ -26,8 +26,6 @@
         }
       }
       game.set('activeEvent', null);
-
-      return true;
     },
     endRound: function ({ game }) {
       for (const dside of game.getObjects({ className: 'DiceSide' })) {
