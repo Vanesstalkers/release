@@ -14,6 +14,7 @@
       for (const dice of target.getObjects({ className: 'Dice' })) {
         dice.moveToTarget(deck);
       }
+      target.set('release', null);
 
       game.set('activeEvent', null);
       for (const plane of game.getObjects({ className: 'Plane', directParent: game })) {

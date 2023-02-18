@@ -30,7 +30,7 @@ async (game) => {
     const alreadyPlacedDice = zone.getNotDeletedItem();
     if (alreadyPlacedDice) alreadyPlacedDice.moveToTarget(prevPlayerHand);
 
-    dice.set('deleted', false);
+    dice.set('deleted', null);
     zone.updateValues();
     for (const side of zone.sideList) {
       for (const linkCode of Object.values(side.links)) {

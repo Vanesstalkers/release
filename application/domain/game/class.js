@@ -297,7 +297,7 @@
     const deck = this.getObjectByCode('Deck[card]');
     const deckDrop = this.getObjectByCode('Deck[card_drop]');
     for (const card of deckDrop.getObjects({ className: 'Card' })) {
-      if (!card.playOneTime()) card.moveToTarget(deck);
+      if (card.restoreAvailable()) card.moveToTarget(deck);
     }
   }
 

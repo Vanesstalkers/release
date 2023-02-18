@@ -20,7 +20,7 @@ async (game, { diceId, zoneId }) => {
   if (notReplacedDeletedDices.length === 0) {
     const deck = game.getObjectByCode('Deck[domino]');
     deletedDices.forEach((dice) => {
-      dice.set('deleted', false);
+      dice.set('deleted', null);
       dice.moveToTarget(deck); // возвращаем удаленные dice в deck
     });
   }

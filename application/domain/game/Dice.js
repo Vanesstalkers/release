@@ -30,7 +30,7 @@
     const moveResult = target.addItem(this);
 
     if (moveResult) {
-      this.set('visible', false);
+      this.set('visible', null);
       this.updateParent(target);
     } else {
       currentParent.addItem(this);

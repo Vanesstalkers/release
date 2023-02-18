@@ -5,6 +5,7 @@
       for (const dice of bridge.getObjects({ className: 'Dice' })) {
         dice.moveToTarget(deck);
       }
+      bridge.set('release', null);
     }
   },
 });

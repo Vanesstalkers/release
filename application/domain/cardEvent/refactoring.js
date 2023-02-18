@@ -19,6 +19,8 @@
     eventTrigger: function ({ game, player: activePlayer, target: dice }) {
       if (!dice) return;
 
+      const plane = dice.findParent({ className: 'Plane' });
+      plane.set('release', null);
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
       dice.moveToTarget(playerHand);
       dice.set('visible', true);
@@ -39,7 +41,7 @@
     },
     endRound: function ({ game }) {
       for (const dice of game.getObjects({ className: 'Dice' })) {
-        if (dice.locked) dice.set('locked', false);
+        if (dice.locked) dice.set('locked', null);
       }
     },
   },
