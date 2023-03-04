@@ -6,6 +6,7 @@
     const player = game.getFreePlayerSlot();
     player.set('ready', true);
     player.set('user', context.userId);
+    game.assign('broadcastUserList', { [context.userId]: { playerId: player._id } });
 
     const session = domain.db.data.session.get(context.client);
     const user = domain.db.data.user[session.userId];
@@ -18,9 +19,9 @@
     const playerHand = player.getObjectByCode('Deck[domino]');
     deck.moveRandomItems({ count: 3, target: playerHand });
 
-    const deckCard = game.getObjectByCode('Deck[card]');
-    const playerHandCard = player.getObjectByCode('Deck[card]');
-    deckCard.moveRandomItems({ count: 3, target: playerHandCard });
+    // const deckCard = game.getObjectByCode('Deck[card]');
+    // const playerHandCard = player.getObjectByCode('Deck[card]');
+    // deckCard.moveRandomItems({ count: 3, target: playerHandCard });
 
     const $set = { ...game };
     delete $set._id;

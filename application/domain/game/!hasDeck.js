@@ -2,6 +2,7 @@
   class extends Base {
     addDeck(data, { deckClass = domain.game.Deck, deckListName = 'deckMap', deckItemClass = domain.game.Dice } = {}) {
       if (!data.settings) data.settings = {};
+      if(!data.access) data.access = {};
       data.settings.parentDeckContainer = deckListName;
 
       const deck = new deckClass(data, { parent: this });

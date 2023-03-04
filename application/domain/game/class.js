@@ -12,10 +12,10 @@
     this.setGame(this);
     delete this.code; // мешается в ZoneSide.links + в принципе не нужен
   }
-  change({ col, _id, key, value }) {
+  change({ col, _id, key, value, fake }) {
     if (this.#disableChanges) return;
     if (!this.#changes[col]) this.#changes[col] = {};
-    if (!this.#changes[col][_id]) this.#changes[col][_id] = {};
+    if (!this.#changes[col][_id]) this.#changes[col][_id] = { fake };
     this.#changes[col][_id][key] = value;
   }
   markNew(obj) {
@@ -37,6 +37,30 @@
   clearChanges() {
     this.#changes = {};
   }
+
+  prepareBroadcastData(userId, data) {
+    // return data;
+    const result = {};
+    const { playerId } = this.broadcastUserList[userId] || {};
+    const player = playerId ? this.getObjectById(playerId) : null;
+
+    for (const [col, ids] of Object.entries(data)) {
+      result[col] = {};
+      for (const [id, changes] of Object.entries(ids)) {
+        if (col === 'game' || col === 'player' || changes.fake) {
+          result[col][id] = changes;
+        } else {
+          const obj = this.getObjectById(id);
+          // объект может быть удален (!!! костыль)
+          if (obj && typeof obj.prepareDataForPlayer === 'function')
+            result[col][id] = obj.prepareDataForPlayer({ data: changes, player });
+          else result[col][id] = changes;
+        }
+      }
+    }
+    return result;
+  }
+
   fromJSON(data) {
     if (data.broadcastUserList) this.broadcastUserList = data.broadcastUserList;
     if (data.store) this.store = data.store;
@@ -74,6 +98,8 @@
     for (const item of data.deckList || []) {
       const deckItemClass =
         item.type === 'domino' ? domain.game.Dice : item.type === 'plane' ? domain.game.Plane : domain.game.Card;
+
+      if (item.access === 'all') item.access = this.playerMap;
       this.addDeck(item, { deckItemClass });
     }
 

@@ -9,7 +9,51 @@
     this.subtype = data.subtype;
     this.itemType = data.itemType;
     this.settings = data.settings;
+    this.access = data.access;
   }
+  prepareDataForPlayer({ data, player }) {
+    let result = {};
+    const parent = this.getParent();
+    if (parent.matches({ className: 'Game' })) {
+      for (const [key, value] of Object.entries(data)) {
+        if (key === 'itemMap' && !this.access[player?._id]) {
+          const ids = {};
+          for (const [idx, [id, val]] of Object.entries(value).entries()) {
+            const item = this.getObjectById(id);
+            ids[item.fakeId] = val;
+          }
+          result.itemMap = ids;
+        } else {
+          result[key] = value;
+        }
+      }
+    } else if (parent.matches({ className: 'Player' })) {
+      for (const [key, value] of Object.entries(data)) {
+        if (key === 'itemMap') {
+          const ids = {};
+          for (const [idx, [id, val]] of Object.entries(value).entries()) {
+            if (parent === player) {
+              ids[id] = val;
+            } else {
+              const item = this.getObjectById(id);
+              if (item.visible) {
+                ids[id] = val;
+              } else {
+                ids[item.fakeId] = val;
+              }
+            }
+          }
+          result.itemMap = ids;
+        } else {
+          result[key] = value;
+        }
+      }
+    } else {
+      result = data;
+    }
+    return result;
+  }
+
   customObjectCode({ codeTemplate, replacementFragment }, data) {
     const replaceString = [data.type, data.subtype].filter((item) => item).join('_');
     return codeTemplate.replace(replacementFragment, replaceString);

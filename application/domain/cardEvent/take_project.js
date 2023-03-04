@@ -12,7 +12,12 @@
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
   },
   handlers: {
-    eventTrigger: function ({ game, player: activePlayer, target: dice }) {
+    eventTrigger: function ({ game, player: activePlayer, targetId: fakeId, targetPlayerId }) {
+      if (!fakeId || !targetPlayerId) return;
+      const targetPlayer = game.getObjectById(targetPlayerId);
+      if (!targetPlayer) return;
+      const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
+      const dice = targetPlayerHand.getObjects({ className: 'Dice' }).find((dice) => dice.fakeId === fakeId);
       if (!dice) return;
 
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');

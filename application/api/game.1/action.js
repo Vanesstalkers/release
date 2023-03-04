@@ -21,6 +21,7 @@
             Object.assign($set, changes.game[gameId]);
           } else {
             for (const [id, value] of Object.entries(ids)) {
+              if(value.fake) continue;
               for (const [key, val] of Object.entries(value)) {
                 $set[`store.${col}.${id}.${key}`] = val;
               }
@@ -31,11 +32,12 @@
         delete $set._id;
         await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
 
-        domain.db.broadcast({
-          smart: true,
-          room: 'game-' + game._id,
-          data: changes,
-        });
+        const room = domain.db.getRoom('game-' + game._id);
+        for (const [client] of room) {
+          const { userId } = domain.db.data.session.get(client);
+          const data = game.prepareBroadcastData(userId, changes);
+          client.emit('db/smartUpdated', data);
+        }
       }
 
       if (clientCustomUpdates) context.client.emit('db/smartUpdated', clientCustomUpdates);

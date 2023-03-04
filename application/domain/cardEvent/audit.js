@@ -11,6 +11,7 @@
       for(const dice of hand.getObjects({ className: 'Dice' })){
         dice.set('visible', true);
       }
+      hand.set('itemMap', hand.itemMap); // инициирует рассылку изменений с пересчетом видимости
 
       game.set('activeEvent', null);
       for (const player of game.getObjects({ className: 'Player' })) {

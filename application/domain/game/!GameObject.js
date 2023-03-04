@@ -125,6 +125,10 @@
       return true;
     });
   }
+  matches({className} = {}) {
+    if (className && this.constructor.name === className) return true;
+    return false;
+  }
   getAllLinks() {
     return {
       parent: this.getParent(),

@@ -2,7 +2,7 @@
   access: 'public',
   method: async () => {
     async function newGame() {
-      const game = new domain.game.class().fromJSON(domain.game.exampleJSON);
+      const game = new domain.game.class().fromJSON(JSON.parse(JSON.stringify(domain.game.exampleJSON['duel-blitz'])));
 
       game.linkPlanes({
         joinPort: game.getObjectByCode('Plane[1]').getObjectByCode('Port[1]'),
