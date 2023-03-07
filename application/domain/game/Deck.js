@@ -51,7 +51,7 @@
     } else {
       result = data;
     }
-    return result;
+    return { visibleId: this._id, preparedData: result };
   }
 
   customObjectCode({ codeTemplate, replacementFragment }, data) {
@@ -70,7 +70,10 @@
   }
   addItem(item) {
     const itemClass = this.getItemClass();
-    if (item.constructor != itemClass) item = new itemClass(item, { parent: this });
+    if (item.constructor != itemClass) {
+      item = new itemClass(item, { parent: this });
+      if (!item.fakeId) item.updateFakeId();
+    }
     this.getGame().markNew(item);
     this.assign('itemMap', { [item._id]: {} });
     return true;

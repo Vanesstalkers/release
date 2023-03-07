@@ -11,6 +11,7 @@ async (game, { diceId, zoneId }) => {
     throw new Error('Добавлять новые костяшки можно только взамен временно удаленных');
 
   dice.moveToTarget(zone);
+  game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
   if (zone.checkForRelease()) {
     game.smartMoveRandomCard({ target: game.getActivePlayer().getObjectByCode('Deck[card]') });
   }

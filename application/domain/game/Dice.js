@@ -23,6 +23,19 @@
   customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, '' + data[0] + data[1]);
   }
+  prepareDataForPlayer({ data, player }) {
+    let visibleId = this._id;
+    let preparedData = data;
+    const parent = this.getParent();
+    if (parent.matches({ className: 'Deck' })) {
+      if (!parent.access[player?._id] && !this.visible) {
+        visibleId = this.fakeId;
+        preparedData = {};
+        if (data.activeEvent !== undefined) preparedData.activeEvent = data.activeEvent;
+      }
+    }
+    return { visibleId, preparedData };
+  }
 
   moveToTarget(target) {
     const currentParent = this.getParent();

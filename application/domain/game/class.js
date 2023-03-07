@@ -39,7 +39,6 @@
   }
 
   prepareBroadcastData(userId, data) {
-    // return data;
     const result = {};
     const { playerId } = this.broadcastUserList[userId] || {};
     const player = playerId ? this.getObjectById(playerId) : null;
@@ -52,9 +51,10 @@
         } else {
           const obj = this.getObjectById(id);
           // объект может быть удален (!!! костыль)
-          if (obj && typeof obj.prepareDataForPlayer === 'function')
-            result[col][id] = obj.prepareDataForPlayer({ data: changes, player });
-          else result[col][id] = changes;
+          if (obj && typeof obj.prepareDataForPlayer === 'function') {
+            const { visibleId, preparedData } = obj.prepareDataForPlayer({ data: changes, player });
+            result[col][visibleId] = preparedData;
+          } else result[col][id] = changes;
         }
       }
     }
@@ -124,6 +124,7 @@
     for (const item of data.deckList || []) {
       const deckItemClass =
         item.type === 'domino' ? domain.game.Dice : item.type === 'plane' ? domain.game.Plane : domain.game.Card;
+      item.access = { [player._id]: {} };
       player.addDeck(item, { deckItemClass });
     }
   }

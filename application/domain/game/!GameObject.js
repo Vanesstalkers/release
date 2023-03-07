@@ -10,6 +10,7 @@
   constructor(data, { col, parent } = {}) {
     if (!this._id) this._id = data._id || db.mongo.ObjectID();
     if (col) this.col = col;
+    this.fakeId = data.fakeId;
     this.activeEvent = data.activeEvent;
     this.eventData = data.eventData || {};
 
@@ -32,6 +33,9 @@
     } else {
       this.code = this.getCodeTemplate(this.constructor.name + '[' + (data._code || '') + ']');
     }
+  }
+  updateFakeId() {
+    this.fakeId = (Date.now() + Math.random()).toString();
   }
   set(key, value) {
     if (!this.col) {
@@ -109,6 +113,7 @@
     this.#fakeParent = parent;
   }
   updateParent(newParent) {
+    this.updateFakeId();
     this.getParent().deleteFromObjectStorage(this);
     this.setParent(newParent);
     newParent.addToObjectStorage(this);
@@ -125,7 +130,7 @@
       return true;
     });
   }
-  matches({className} = {}) {
+  matches({ className } = {}) {
     if (className && this.constructor.name === className) return true;
     return false;
   }

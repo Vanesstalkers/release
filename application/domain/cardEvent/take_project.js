@@ -17,7 +17,9 @@
       const targetPlayer = game.getObjectById(targetPlayerId);
       if (!targetPlayer) return;
       const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
-      const dice = targetPlayerHand.getObjects({ className: 'Dice' }).find((dice) => dice.fakeId === fakeId);
+      const dice = targetPlayerHand
+        .getObjects({ className: 'Dice' })
+        .find((dice) => dice.fakeId === fakeId || dice._id.toString() === fakeId);
       if (!dice) return;
 
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
