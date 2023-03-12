@@ -12,8 +12,6 @@
     session: new Map(),
     user: {},
     game: {},
-    sessions: {},
-    games: {},
   },
   dataAccessFilters: {
     game: {

@@ -30,7 +30,7 @@
     if (parent.matches({ className: 'Deck' })) {
       if (!parent.access[player?._id] && !this.visible) {
         visibleId = this.fakeId;
-        preparedData = {};
+        preparedData = { _id: this.fakeId };
         if (data.activeEvent !== undefined) preparedData.activeEvent = data.activeEvent;
       }
     }

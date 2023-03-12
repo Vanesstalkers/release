@@ -8,6 +8,7 @@
         dice.set('activeEvent', { sourceId: this._id });
         diceFound = true;
       }
+      player.set('activeEvent', { showDecks: true, sourceId: this._id });
     }
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
   },
@@ -33,6 +34,7 @@
         for (const dice of deck.getObjects({ className: 'Dice' })) {
           dice.set('activeEvent', null);
         }
+        player.set('activeEvent', null);
       }
     },
   },

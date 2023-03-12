@@ -2,7 +2,7 @@
   init: function ({ game }) {
     game.set('activeEvent', { sourceId: this._id });
     for (const player of game.getObjects({ className: 'Player' })) {
-      player.set('activeEvent', { sourceId: this._id });
+      player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
     }
   },
   handlers: {

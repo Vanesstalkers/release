@@ -21,7 +21,7 @@
         game.assign('activeEvent', { targetDiceId: target._id });
         for (const player of game.getObjects({ className: 'Player' })) {
           if (player === activePlayer) continue;
-          player.set('activeEvent', { sourceId: this._id });
+          player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
         }
         
         return { saveHandler: true };

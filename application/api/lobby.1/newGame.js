@@ -251,24 +251,20 @@
       const insertOne = await db.mongo.insertOne('game', game);
       game._id = insertOne._id;
 
-      return { result: 'success', gameId: game._id };
+      return { result: 'success', game };
     }
 
-    const { gameId } = await newGame();
-    const game = await db.mongo.findOne('game', gameId);
+    const { game } = await newGame();
+    const { _id: gameId } = game;
 
-    domain.db.data.game[game._id] = game;
-    domain.db.forms.lobby.__game[game._id] = {};
+    domain.db.data.game[gameId] = game;
+    domain.db.forms.lobby.__game[gameId] = {};
     domain.db.broadcast({
       room: 'lobby',
       data: { lobby: domain.db.forms.lobby },
       event: ({ client }) => {
-        domain.db.subscribe({
-          name: 'game-' + game._id,
-          client,
-          type: 'lobby',
-        });
-        client.emit('db/updated', { game: { [game._id]: game } });
+        domain.db.subscribe({ name: 'game-' + gameId, client, type: 'lobby' });
+        client.emit('db/updated', { game: { [gameId]: game } });
       },
     });
 

@@ -1,10 +1,11 @@
 ({
   access: 'public',
-  method: async ({ name: eventName, data: eventData }) => {
+  method: async ({ name: eventName, data: eventData = {} }) => {
     try {
       const gameId = context.game;
       const user = await db.mongo.findOne('user', context.userId);
-      const game = new domain.game.class({ _id: gameId }).fromJSON(await db.mongo.findOne('game', gameId));
+      const game = domain.db.data.game[gameId];
+      game.clearChanges();
 
       if (user.player.toString() !== game.getActivePlayer()._id.toString())
         throw new Error('Игрок не может совершить это действие, так как сейчас не его ход');
@@ -21,7 +22,7 @@
             Object.assign($set, changes.game[gameId]);
           } else {
             for (const [id, value] of Object.entries(ids)) {
-              if(value.fake) continue;
+              if (value.fake) continue;
               for (const [key, val] of Object.entries(value)) {
                 $set[`store.${col}.${id}.${key}`] = val;
               }

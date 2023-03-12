@@ -68,6 +68,7 @@
   }
   deleteFromParentsObjectStorage() {
     let parent = this.getParent();
+    if(!parent) return;
     do {
       parent.deleteFromObjectStorage(this);
     } while ((parent = parent.getParent()));
@@ -105,8 +106,10 @@
   }
   setParent(parent) {
     if (parent) {
+      this.deleteFromParentsObjectStorage();
       this.#parent = parent;
       this.#parentList = [parent].concat(parent.getParentList() || []); // самый дальний родитель в конце массива
+      this.addToParentsObjectStorage();
     }
   }
   setFakeParent(parent) {
@@ -114,9 +117,7 @@
   }
   updateParent(newParent) {
     this.updateFakeId();
-    this.getParent().deleteFromObjectStorage(this);
     this.setParent(newParent);
-    newParent.addToObjectStorage(this);
   }
   getParent() {
     return this.#fakeParent || this.#parent;

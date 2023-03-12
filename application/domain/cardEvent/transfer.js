@@ -6,10 +6,5 @@
     const count = playerHand.itemsCount();
     playerHand.moveAllItems({ target: gameDeck });
     gameDeck.moveRandomItems({ count, target: playerHand });
-
-    game.set('activeEvent', null);
-    for (const player of game.getObjects({ className: 'Player' })) {
-      player.set('activeEvent', null);
-    }
   },
 });

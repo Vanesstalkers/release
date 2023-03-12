@@ -7,6 +7,7 @@
       subtype: 'teamlead',
       itemType: 'any',
       settings: { itemsUsageLimit: 1, itemsStartCount: 5 },
+      access: { [player._id]: {} },
     });
     deck.moveRandomItems({ count: newPlayerHand.settings.itemsStartCount, target: newPlayerHand });
   },

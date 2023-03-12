@@ -1,7 +1,7 @@
 ({
   access: 'public',
   method: async ({ gameId }) => {
-    const game = new domain.game.class({ _id: gameId }).fromJSON(await db.mongo.findOne('game', gameId));
+    const game = domain.db.data.game[gameId];
 
     const player = game.getFreePlayerSlot();
     player.set('ready', true);
@@ -17,7 +17,7 @@
 
     const deck = game.getObjectByCode('Deck[domino]');
     const playerHand = player.getObjectByCode('Deck[domino]');
-    deck.moveRandomItems({ count: 3, target: playerHand });
+    deck.moveRandomItems({ count: game.settings.playerHandStart, target: playerHand });
 
     // const deckCard = game.getObjectByCode('Deck[card]');
     // const playerHandCard = player.getObjectByCode('Deck[card]');
