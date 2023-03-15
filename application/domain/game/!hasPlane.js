@@ -7,4 +7,9 @@
       this.assign('planeMap', { [plane._id]: {} });
       return plane;
     }
+    removePlane(plane){
+      // не проверял работоспособность
+      this.delete('planeMap', plane._id);
+      plane.deleteFromParentsObjectStorage();
+    }
   };

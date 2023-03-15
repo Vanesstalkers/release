@@ -13,12 +13,10 @@ async (
   joinPort.updateDirect(joinPortDirect);
   targetPort.updateDirect(targetPortDirect);
   game.linkPlanes({ joinPort, targetPort });
-
   joinPlane.getParent().removeItem(joinPlane);
   joinPlane.getParent().deleteFromObjectStorage(joinPlane);
   game.addPlane(joinPlane);
 
   game.callEventHandlers({ handler: 'addPlane' });
-
   return { status: 'ok' };
 };

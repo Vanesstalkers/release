@@ -2,16 +2,8 @@
   access: 'public',
   method: async () => {
     async function newGame() {
-      const game = new domain.game.class().fromJSON(JSON.parse(JSON.stringify(domain.game.exampleJSON['duel-blitz'])));
-
-      game.linkPlanes({
-        joinPort: game.getObjectByCode('Plane[1]').getObjectByCode('Port[1]'),
-        targetPort: game.getObjectByCode('Plane[2]').getObjectByCode('Port[2]'),
-      });
-      game.linkPlanes({
-        joinPort: game.getObjectByCode('Plane[3]').getObjectByCode('Port[2]'),
-        targetPort: game.getObjectByCode('Plane[2]').getObjectByCode('Port[4]'),
-      });
+      const gameData = lib.utils.structuredClone(domain.game.exampleJSON['duel-blitz']);
+      const game = new domain.game.class().fromJSON(gameData, { newGame: true });
 
       // game
       //   .getObjectByCode('Player[1]')

@@ -17,7 +17,6 @@ async () => {
   db.mongo.ObjectID = npm.mongodb.ObjectID;
 
   if (application.worker.id === 'W1') {
-    db.mongo.fillGameData();
     db.mongo.afterStart.forEach((fn) => fn());
   }
 

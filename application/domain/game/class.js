@@ -61,7 +61,7 @@
     return result;
   }
 
-  fromJSON(data) {
+  fromJSON(data, { newGame } = {}) {
     if (data.broadcastUserList) this.broadcastUserList = data.broadcastUserList;
     if (data.store) this.store = data.store;
     this.addTime = data.addTime;
@@ -80,16 +80,6 @@
       for (const _id of Object.keys(data.playerMap)) data.playerList.push(this.store.player[_id]);
     }
     for (const item of data.playerList || []) this.addPlayer(item);
-    // !!! надо перевести на Deck (по аналогии с Player)
-    // if (data.planeList?.length) data.planeList.forEach(item => this.addDeck(item, {
-    //   deckListName: 'planeList', deckItemClass: Plane,
-    // }));
-
-    if (data.planeMap) {
-      data.planeList = [];
-      for (const _id of Object.keys(data.planeMap)) data.planeList.push(this.store.plane[_id]);
-    }
-    for (const item of data.planeList || []) this.addPlane(item);
 
     if (data.deckMap) {
       data.deckList = [];
@@ -101,6 +91,46 @@
 
       if (item.access === 'all') item.access = this.playerMap;
       this.addDeck(item, { deckItemClass });
+    }
+    if (newGame === true) {
+      for (const [deckCode, json] of [
+        ['Deck[domino]', domain.game.dicesJSON],
+        ['Deck[card]', domain.game.cardsJSON],
+        ['Deck[plane]', domain.game.planesJSON],
+      ]) {
+        const deck = this.getObjectByCode(deckCode);
+        const items = lib.utils.structuredClone(json);
+        for (const item of items) deck.addItem(item);
+      }
+    }
+
+    if (data.planeMap) {
+      // восстановление игры из БД
+      const planeIds = Object.keys(data.planeMap);
+      for (const _id of planeIds) this.addPlane(this.store.plane[_id]);
+    } else {
+      // создание игры
+      const deck = this.getObjectByCode('Deck[plane]');
+      for (let i = 0; i < this.settings.planesAtStart; i++) {
+        const plane = deck.getRandomItem();
+        if (plane) {
+          deck.removeItem(plane);
+          this.addPlane(plane);
+          if (i > 0) {
+            domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+            const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+            const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+
+            const joinPort = this.getObjectById(joinPortId);
+            joinPort.updateDirect(joinPortDirect);
+            const targetPort = this.getObjectById(targetPortId);
+            targetPort.updateDirect(targetPortDirect);
+            this.linkPlanes({ joinPort, targetPort });
+
+            this.set('availablePorts', null);
+          }
+        }
+      }
     }
 
     if (data.bridgeMap) {

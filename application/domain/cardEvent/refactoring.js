@@ -19,7 +19,7 @@
     eventTrigger: function ({ game, player: activePlayer, target: dice }) {
       if (!dice) return;
 
-      const plane = dice.findParent({ className: 'Plane' });
+      const plane = dice.findParent({ className: 'Zone' }).getParent();
       plane.set('release', null);
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
       dice.moveToTarget(playerHand);

@@ -121,7 +121,7 @@
     if (moveResult) {
       this.updateParent(target);
     } else {
-      currentParent.addItem(this);
+      currentParent.addItem(this); // восстанавливаем, если не получилось переместить
     }
     return moveResult;
   }
