@@ -48,6 +48,8 @@
     } else {
       currentParent.addItem(this);
     }
+    if(currentParent.matches({ className: 'Zone'})) currentParent.updateValues();
+
     return moveResult;
   }
 });

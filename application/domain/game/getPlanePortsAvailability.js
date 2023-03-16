@@ -16,7 +16,11 @@ async (game, { joinPlaneId }) => {
   }
   game.enableChanges();
 
-  game.set('availablePorts', availablePorts);
+  if(availablePorts.length > 0){
+    game.set('availablePorts', availablePorts);
+  }else{
+    // !!! тут надо удалять plane (разобраться, что делать с card-plane)
+  }
 
   return { status: 'ok' };
 };

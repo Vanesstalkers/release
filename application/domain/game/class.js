@@ -110,11 +110,11 @@
       for (const _id of planeIds) this.addPlane(this.store.plane[_id]);
     } else {
       // создание игры
-      const deck = this.getObjectByCode('Deck[plane]');
+      const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
       for (let i = 0; i < this.settings.planesAtStart; i++) {
-        const plane = deck.getRandomItem();
+        const plane = gamePlaneDeck.getRandomItem();
         if (plane) {
-          deck.removeItem(plane);
+          gamePlaneDeck.removeItem(plane);
           this.addPlane(plane);
           if (i > 0) {
             domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
@@ -131,6 +131,18 @@
           }
         }
       }
+
+      const players = this.getObjects({ className: 'Player' });
+      const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
+      for (let i = 0; i < planesPlacedByPlayerCount; i++) {
+        const hand = players[i % players.length].getObjectByCode('Deck[plane]');
+        for (let j = 0; j < 2; j++) {
+          const plane = gamePlaneDeck.getRandomItem();
+          plane.set('isStartPlane', true);
+          plane.moveToTarget(hand);
+        }
+      }
+      if (planesPlacedByPlayerCount > 0) this.set('activeEvent', { prepareGame: 'placeStartPlanes' });
     }
 
     if (data.bridgeMap) {

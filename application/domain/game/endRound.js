@@ -1,6 +1,6 @@
 async (game) => {
   if (game.activeEvent)
-    return new Error(
+    throw new Error(
       game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
     );
 
@@ -14,6 +14,10 @@ async (game) => {
   // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
   const prevPlayer = game.getActivePlayer();
   const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
+
+  if (prevPlayer.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' }).length > 0)
+    throw new Error('Игрок должен разместить блоки поля из его руки.');
+
   // player которому передают ход
   const activePlayer = game.changeActivePlayer();
   const playerHand = activePlayer.getObjectByCode('Deck[domino]');
