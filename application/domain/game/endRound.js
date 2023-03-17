@@ -70,6 +70,7 @@ async (game) => {
   if (card && game.settings.acceptAutoPlayRoundStartCard === true && card.needAutoPlay()) card.play();
 
   game.set('round', game.round + 1);
+  game.timerRestart();
 
   return { status: 'ok' };
 };

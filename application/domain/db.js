@@ -26,25 +26,6 @@
       game: (data, client) => {
         const session = domain.db.data.session.get(client);
         const user = domain.db.data.user[session.userId];
-
-        const playerList = data.playerList.filter(
-          (player) => player._id.toString() !== user.player.toString()
-        );
-        playerList.forEach((player) => {
-          player.deckList.forEach((deck) => {
-            deck.itemList = new Array(deck.itemList.length).fill({
-              _id: '???',
-            });
-          });
-        });
-
-        // console.log('dataAccessFilters game->game', {
-        //   data,
-        //   client,
-        //   session,
-        //   user,
-        //   playerList,
-        // });
         return data;
       },
     },

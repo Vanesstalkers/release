@@ -2,6 +2,7 @@
   broadcastUserList = {};
   #changes = {};
   #disableChanges = false;
+  #timerId;
   store = {};
   playerMap = {};
   bridgeMap = {};
@@ -38,6 +39,34 @@
     this.#changes = {};
   }
 
+  async broadcastData() {
+    const changes = this.getChanges();
+    if (Object.keys(changes).length) {
+      const $set = {};
+      for (const [col, ids] of Object.entries(changes)) {
+        if (col === 'game') {
+          Object.assign($set, changes.game[this._id]);
+        } else {
+          for (const [id, value] of Object.entries(ids)) {
+            if (value.fake) continue;
+            for (const [key, val] of Object.entries(value)) {
+              $set[`store.${col}.${id}.${key}`] = val;
+            }
+          }
+        }
+      }
+
+      delete $set._id;
+      await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(this._id) }, { $set });
+
+      const room = domain.db.getRoom('game-' + this._id);
+      for (const [client] of room) {
+        const { userId } = domain.db.data.session.get(client);
+        const data = this.prepareBroadcastData(userId, changes);
+        client.emit('db/smartUpdated', data);
+      }
+    }
+  }
   prepareBroadcastData(userId, data) {
     const result = {};
     const { playerId } = this.broadcastUserList[userId] || {};
@@ -51,6 +80,7 @@
         } else {
           const obj = this.getObjectById(id);
           // объект может быть удален (!!! костыль)
+          // ??? надо выяснить в каких случаях нет prepareDataForPlayer
           if (obj && typeof obj.prepareDataForPlayer === 'function') {
             const { visibleId, preparedData } = obj.prepareDataForPlayer({ data: changes, player });
             result[col][visibleId] = preparedData;
@@ -66,7 +96,7 @@
     if (data.store) this.store = data.store;
     this.addTime = data.addTime;
     this.settings = data.settings;
-    this.round = data.round;
+    this.round = data.round || 0;
     this.activeEvent = data.activeEvent; // в конструктор Game передается только _id
     this.eventHandlers = data.eventHandlers || {
       endRound: [],
@@ -108,6 +138,7 @@
       // восстановление игры из БД
       const planeIds = Object.keys(data.planeMap);
       for (const _id of planeIds) this.addPlane(this.store.plane[_id]);
+      this.timerRestart();
     } else {
       // создание игры
       const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
@@ -142,7 +173,11 @@
           plane.moveToTarget(hand);
         }
       }
-      if (planesPlacedByPlayerCount > 0) this.set('activeEvent', { prepareGame: 'placeStartPlanes' });
+      if (planesPlacedByPlayerCount > 0) {
+        this.set('activeEvent', { prepareGame: 'placeStartPlanes' });
+      } else {
+        this.timerRestart();
+      }
     }
 
     if (data.bridgeMap) {
@@ -292,6 +327,9 @@
     }
     return availablePorts;
   }
+  isSinglePlayer() {
+    return this.settings.singlePlayer;
+  }
 
   addBridge(data) {
     const store = this.getStore();
@@ -390,5 +428,20 @@
   }
   clearEventHandlers() {
     for (const handler of Object.keys(this.eventHandlers)) this.assign('eventHandlers', { [handler]: [] });
+  }
+
+  timerRestart({ time = null, extraTime = 0 } = {}) {
+    if (this.#timerId) clearTimeout(this.#timerId);
+    const player = this.getActivePlayer();
+    player.set('timer', (time ?? this.settings.timer) + extraTime); // это отправляем на фронт
+    player.set('timerUpdateTime', Date.now()); // без этого watch на фронте не увидит изменения
+    this.#timerId = setInterval(async () => {
+      if (this.finished) return clearTimeout(this.#timerId);
+      // это не отправляется на фронт, так что тут не обязательно ставить через player.set(timer, player.timer - 1)
+      if (player.timer-- <= 0) {
+        await domain.game.endRound(this, { timerOverdue: true });
+        await this.broadcastData();
+      }
+    }, 1000);
   }
 });
