@@ -9,6 +9,7 @@
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
       acceptAutoPlayRoundStartCard: true,
       singlePlayer: true,
+      cardsToRemove: ['audit', 'coffee', 'weekend'],
     },
     playerList: [
       {
@@ -34,6 +35,7 @@
       planesAtStart: 1, // изначальное количество блоков на поле
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
       acceptAutoPlayRoundStartCard: false,
+      cardsToRemove: [],
     },
     playerList: [
       {
@@ -63,6 +65,7 @@
       planesAtStart: 0, // изначальное количество блоков на поле
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
       acceptAutoPlayRoundStartCard: false,
+      cardsToRemove: [],
     },
     playerList: [
       {

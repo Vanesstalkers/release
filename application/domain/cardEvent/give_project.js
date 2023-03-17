@@ -12,6 +12,15 @@
     eventTrigger: function ({ game, player: activePlayer, target }) {
       if (!target) return;
 
+      function complete({ game, dice }) {
+        game.set('activeEvent', null);
+        dice.set('activeEvent', null);
+        for (const player of game.getObjects({ className: 'Player' })) {
+          if (player === activePlayer) continue;
+          player.set('activeEvent', null);
+        }
+      }
+
       if (!game.activeEvent.targetDiceId) {
         const deck = activePlayer.getObjectByCode('Deck[domino]');
         for (const dice of deck.getObjects({ className: 'Dice' })) {
@@ -23,19 +32,18 @@
           if (player === activePlayer) continue;
           player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
         }
-        
-        return { saveHandler: true };
+
+        if (game.isSinglePlayer()) {
+          dice.moveToTarget(game.getObjectByCode('Deck[card_drop]'));
+          complete({ game, dice });
+        } else {
+          return { saveHandler: true };
+        }
       } else {
         const playerHand = target.getObjectByCode('Deck[domino]');
         const dice = game.getObjectById(game.activeEvent.targetDiceId);
         dice.moveToTarget(playerHand);
-
-        game.set('activeEvent', null);
-        dice.set('activeEvent', null);
-        for (const player of game.getObjects({ className: 'Player' })) {
-          if (player === activePlayer) continue;
-          player.set('activeEvent', null);
-        }
+        complete({ game, dice });
       }
     },
   },

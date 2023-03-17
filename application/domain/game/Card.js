@@ -38,7 +38,7 @@
     const config = this.getSelfConfig();
     for (const handler of config.handlers) game.addEventHandler({ handler, source: this });
     if (this.#events.init) this.#events.init.call(this, { game, player });
-    this.set('played', true);
+    this.set('played', Date.now());
   }
   callHandler({ handler, data = {} }) {
     if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');

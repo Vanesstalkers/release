@@ -18,6 +18,13 @@ async (game) => {
   if (prevPlayer.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' }).length > 0)
     throw new Error('Игрок должен разместить блоки поля из его руки.');
 
+  prevPlayer.delete('eventData', 'actionsDisabled');
+  const singlePlayerSkipTurn = game.isSinglePlayer() && prevPlayer.eventData.skipTurn;
+  if (singlePlayerSkipTurn) {
+    prevPlayer.delete('eventData', 'skipTurn');
+    prevPlayer.assign('eventData', { actionsDisabled: true });
+  }
+
   // player которому передают ход
   const activePlayer = game.changeActivePlayer();
   const playerHand = activePlayer.getObjectByCode('Deck[domino]');
@@ -63,6 +70,7 @@ async (game) => {
   gameDominoDeck.moveRandomItems({ count: 1, target: playerHand });
 
   for (const card of cardDeckActive.getObjects({ className: 'Card' })) {
+    if (!card.isPlayOneTime()) card.set('played', null);
     card.moveToTarget(cardDeckDrop);
   }
 

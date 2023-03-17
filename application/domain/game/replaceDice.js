@@ -1,8 +1,13 @@
 async (game, { diceId, zoneId }) => {
+  if (game.activeEvent)
+    throw new Error(
+      game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
+    );
+
   const dice = game.getObjectById(diceId);
   const zone = game.getObjectById(zoneId);
 
-  if(dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу');
+  if (dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу');
 
   const deletedDices = game.getDeletedDices();
   const replacedDice = deletedDices.find((dice) => dice.getParent() == zone);

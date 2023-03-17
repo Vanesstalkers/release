@@ -123,9 +123,11 @@
       this.addDeck(item, { deckItemClass });
     }
     if (newGame === true) {
+      const cardsJSON = domain.game.cardsJSON.filter((card) => !this.settings.cardsToRemove.includes(card.name));
+
       for (const [deckCode, json] of [
         ['Deck[domino]', domain.game.dicesJSON],
-        ['Deck[card]', domain.game.cardsJSON],
+        ['Deck[card]', cardsJSON],
         ['Deck[plane]', domain.game.planesJSON],
       ]) {
         const deck = this.getObjectByCode(deckCode);
