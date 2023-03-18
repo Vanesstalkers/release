@@ -31,7 +31,7 @@ async (game, { diceId, zoneId }) => {
     });
   }
 
-  game.callEventHandlers({ handler: 'replaceDice' });
+  await game.callEventHandlers({ handler: 'replaceDice' });
 
   return { status: 'ok' };
 };

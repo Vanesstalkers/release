@@ -1,9 +1,10 @@
 ({
-  init: function ({ game, player: activePlayer }) {
+  init: async function ({ game, player: activePlayer }) {
     if (game.isSinglePlayer()) {
       const deck = game.getObjectByCode('Deck[domino]');
       const hand = activePlayer.getObjectByCode('Deck[domino]');
       deck.moveRandomItems({ count: 1, target: hand });
+      return { removeHandlers: true };
     } else {
       let diceFound = false;
       for (const player of game.getObjects({ className: 'Player' })) {
@@ -19,7 +20,7 @@
     }
   },
   handlers: {
-    eventTrigger: function ({ game, player: activePlayer, targetId: fakeId, targetPlayerId }) {
+    eventTrigger: async function ({ game, player: activePlayer, targetId: fakeId, targetPlayerId }) {
       if (!fakeId || !targetPlayerId) return;
       const targetPlayer = game.getObjectById(targetPlayerId);
       if (!targetPlayer) return;
@@ -41,6 +42,22 @@
           dice.set('activeEvent', null);
         }
         player.set('activeEvent', null);
+      }
+      return { timerOverdueOff: true };
+    },
+    timerOverdue: async function ({ game }) {
+      const activePlayer = game.getActivePlayer();
+
+      for (const player of game.getObjects({ className: 'Player' }).filter((p) => p !== activePlayer)) {
+        const dice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
+        if (dice) {
+          await domain.cardEvent['take_project'].handlers.eventTrigger({
+            game,
+            player: activePlayer,
+            targetId: dice.fakeId,
+            targetPlayerId: player._id,
+          });
+        }
       }
     },
   },

@@ -1,4 +1,6 @@
-async (game) => {
+async (game, { timerOverdue, forceActivePlayer } = {}) => {
+  if (timerOverdue) await game.callEventHandlers({ handler: 'timerOverdue' });
+
   if (game.activeEvent)
     throw new Error(
       game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
@@ -6,7 +8,7 @@ async (game) => {
 
   // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
 
-  game.callEventHandlers({ handler: 'endRound' });
+  await game.callEventHandlers({ handler: 'endRound' });
   game.clearEventHandlers();
 
   // ЛОГИКА НАЧАЛА НОВОГО РАУНДА
@@ -26,7 +28,7 @@ async (game) => {
   }
 
   // player которому передают ход
-  const activePlayer = game.changeActivePlayer();
+  const activePlayer = game.changeActivePlayer({ player: forceActivePlayer });
   const playerHand = activePlayer.getObjectByCode('Deck[domino]');
   const gameDominoDeck = game.getObjectByCode('Deck[domino]');
   const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
@@ -59,11 +61,13 @@ async (game) => {
     }
   });
 
-  if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
-    if (prevPlayer.eventData.disablePlayerHandLimit) {
-      prevPlayer.delete('eventData', 'disablePlayerHandLimit');
-    } else {
-      prevPlayerHand.moveAllItems({ target: gameDominoDeck });
+  if (!forceActivePlayer) {
+    if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
+      if (prevPlayer.eventData.disablePlayerHandLimit) {
+        prevPlayer.delete('eventData', 'disablePlayerHandLimit');
+      } else {
+        prevPlayerHand.moveAllItems({ target: gameDominoDeck });
+      }
     }
   }
 
@@ -75,10 +79,10 @@ async (game) => {
   }
 
   const card = game.smartMoveRandomCard({ target: cardDeckActive });
-  if (card && game.settings.acceptAutoPlayRoundStartCard === true && card.needAutoPlay()) card.play();
+  if (card && game.settings.acceptAutoPlayRoundStartCard === true) await card.play();
 
   game.set('round', game.round + 1);
-  game.timerRestart();
+  game.timerRestart(singlePlayerSkipTurn ? { time: 5 } : {});
 
   return { status: 'ok' };
 };

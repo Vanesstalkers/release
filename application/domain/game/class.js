@@ -91,7 +91,7 @@
     return result;
   }
 
-  fromJSON(data, { newGame } = {}) {
+  async fromJSON(data, { newGame } = {}) {
     if (data.broadcastUserList) this.broadcastUserList = data.broadcastUserList;
     if (data.store) this.store = data.store;
     this.addTime = data.addTime;
@@ -100,6 +100,7 @@
     this.activeEvent = data.activeEvent; // в конструктор Game передается только _id
     this.eventHandlers = data.eventHandlers || {
       endRound: [],
+      timerOverdue: [],
       replaceDice: [],
       addPlane: [],
       eventTrigger: [],
@@ -136,6 +137,7 @@
       }
     }
 
+    const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
     if (data.planeMap) {
       // восстановление игры из БД
       const planeIds = Object.keys(data.planeMap);
@@ -150,7 +152,7 @@
           gamePlaneDeck.removeItem(plane);
           this.addPlane(plane);
           if (i > 0) {
-            domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+            await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
             const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
             const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
 
@@ -166,7 +168,6 @@
       }
 
       const players = this.getObjects({ className: 'Player' });
-      const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
       for (let i = 0; i < planesPlacedByPlayerCount; i++) {
         const hand = players[i % players.length].getObjectByCode('Deck[plane]');
         for (let j = 0; j < 2; j++) {
@@ -174,11 +175,6 @@
           plane.set('isStartPlane', true);
           plane.moveToTarget(hand);
         }
-      }
-      if (planesPlacedByPlayerCount > 0) {
-        this.set('activeEvent', { prepareGame: 'placeStartPlanes' });
-      } else {
-        this.timerRestart();
       }
     }
 
@@ -189,6 +185,13 @@
     for (const item of data.bridgeList || []) this.addBridge(item);
 
     this.clearChanges();
+
+    if (planesPlacedByPlayerCount > 0) {
+      this.set('activeEvent', { prepareGame: 'placeStartPlanes' });
+    } else {
+      await domain.game.endRound(this, { forceActivePlayer: this.getActivePlayer() });
+    }
+
     return this;
   }
   addPlayer(data) {
@@ -217,7 +220,7 @@
   getActivePlayer() {
     return this.getPlayerList().find((player) => player.active);
   }
-  changeActivePlayer() {
+  changeActivePlayer({ player } = {}) {
     const activePlayer = this.getActivePlayer();
     if (activePlayer.eventData.extraTurn) {
       activePlayer.delete('eventData', 'extraTurn');
@@ -232,10 +235,15 @@
     const playerList = this.getPlayerList();
     let activePlayerIndex = playerList.findIndex((player) => player === activePlayer);
     let newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
-    while (newActivePlayer.eventData.skipTurn) {
-      newActivePlayer.delete('eventData', 'skipTurn');
-      activePlayerIndex++;
-      newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
+    if (player) {
+      if (player.eventData.skipTurn) player.delete('eventData', 'skipTurn');
+      newActivePlayer = player;
+    } else {
+      while (newActivePlayer.eventData.skipTurn) {
+        newActivePlayer.delete('eventData', 'skipTurn');
+        activePlayerIndex++;
+        newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
+      }
     }
 
     activePlayer.set('active', false);
@@ -420,12 +428,13 @@
       [handler]: this.eventHandlers[handler].filter((_id) => _id !== source._id.toString()),
     });
   }
-  callEventHandlers({ handler, data }) {
+  async callEventHandlers({ handler, data }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     for (const sourceId of this.eventHandlers[handler]) {
       const source = this.getObjectById(sourceId);
-      const { saveHandler } = source.callHandler({ handler, data }) || {};
+      const { saveHandler, timerOverdueOff } = (await source.callHandler({ handler, data })) || {};
       if (!saveHandler) this.deleteEventHandler({ handler, source });
+      if (timerOverdueOff) this.deleteEventHandler({ handler: 'timerOverdue', source });
     }
   }
   clearEventHandlers() {

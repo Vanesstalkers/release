@@ -1,5 +1,5 @@
 ({
-  init: function ({ game, player }) {
+  init: async function ({ game, player }) {
     let diceFound = false;
     const deck = player.getObjectByCode('Deck[domino]');
     for (const dice of deck.getObjects({ className: 'Dice' })) {
@@ -11,13 +11,14 @@
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
   },
   handlers: {
-    eventTrigger: function ({ game, player, target, fakeValue = 0 }) {
+    eventTrigger: async function ({ game, player, target, fakeValue = 0, skipFakeValueSet }) {
       if (fakeValue === undefined) return;
-      if (!target) return;
-
-      const realValue = target.eventData.fakeValue?.realValue ?? target.value;
-      target.assign('eventData', { fakeValue: { realValue } });
-      target.set('value', fakeValue);
+      if (!skipFakeValueSet) {
+        if (!target) return;
+        const realValue = target.eventData.fakeValue?.realValue ?? target.value;
+        target.assign('eventData', { fakeValue: { realValue } });
+        target.set('value', fakeValue);
+      }
 
       const deck = player.getObjectByCode('Deck[domino]');
       for (const dice of deck.getObjects({ className: 'Dice' })) {
@@ -26,8 +27,10 @@
         }
       }
       game.set('activeEvent', null);
+
+      return { timerOverdueOff: true };
     },
-    endRound: function ({ game }) {
+    endRound: async function ({ game }) {
       for (const dside of game.getObjects({ className: 'DiceSide' })) {
         if (dside.eventData.fakeValue) {
           dside.set('value', dside.eventData.fakeValue.realValue);
@@ -36,6 +39,13 @@
           if (zoneParent) zoneParent.updateValues();
         }
       }
+    },
+    timerOverdue: async function ({ game }) {
+      await domain.cardEvent['crutch'].handlers.eventTrigger({
+        game,
+        player: game.getActivePlayer(),
+        skipFakeValueSet: true,
+      });
     },
   },
 });

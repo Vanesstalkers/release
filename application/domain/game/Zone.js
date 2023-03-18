@@ -83,7 +83,7 @@
   checkIsAvailable(dice, { skipPlacedItem } = {}) {
     if (!skipPlacedItem && this.getNotDeletedItem()) return false; // zone уже занята
 
-    if (this.findParent({ className: 'Player' }) !== undefined) return false; // это plane в руке player
+    if (this.findParent({ className: 'Player' }) !== null) return false; // это plane в руке player
 
     const expectedValues0 = this.sideList[0].expectedValues;
     const sizeOfExpectedValues0 = Object.keys(expectedValues0).length;
@@ -91,7 +91,7 @@
     const sizeOfExpectedValues1 = Object.keys(expectedValues1).length;
 
     const bridgeParent = this.findParent({ className: 'Bridge' });
-    if (bridgeParent !== undefined) {
+    if (bridgeParent !== null) {
       if (bridgeParent.bridgeToCardPlane) {
         if (!(sizeOfExpectedValues0 || sizeOfExpectedValues1)) return false; // для card-bridge-zone должна быть заполнена zone прилегающего plane
       } else if (!sizeOfExpectedValues0 || !sizeOfExpectedValues1) {

@@ -8,7 +8,7 @@
       const activePlayer = game.getActivePlayer();
       game.clearChanges();
 
-      if (user.player.toString() !== activePlayer._id.toString())
+      if (user.player.toString() !== activePlayer._id.toString() && eventName !== 'leaveGame')
         throw new Error('Игрок не может совершить это действие, так как сейчас не его ход');
       if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
         throw new Error('Игрок не может совершая действие в этот ход');

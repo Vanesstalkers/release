@@ -126,10 +126,12 @@
     return this.#parentList;
   }
   findParent({ className } = {}) {
-    return this.#parentList.find((parent) => {
-      if (className && parent.constructor.name !== className) return false;
-      return true;
-    });
+    let parent = this.getParent();
+    while(parent){
+      if(className && parent.constructor.name === className) return parent;
+      parent = parent.getParent();
+    }
+    return null;
   }
   matches({ className } = {}) {
     if (className && this.constructor.name === className) return true;

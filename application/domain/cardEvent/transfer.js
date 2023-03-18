@@ -1,5 +1,5 @@
 ({
-  init: function ({ game, player }) {
+  init: async function ({ game, player }) {
     const playerHand = player.getObjectByCode('Deck[domino]');
     const gameDeck = game.getObjectByCode('Deck[domino]');
 

@@ -7,7 +7,7 @@
         const gameData = await db.mongo.findOne('game', gameId);
         if (!gameData) throw new Error('Game not found');
         if (gameData.finished) throw new Error('Game finished');
-        game = new domain.game.class({ _id: gameId }).fromJSON(gameData);
+        game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
         domain.db.data.game[gameId] = game;
       }
 

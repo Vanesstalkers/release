@@ -2,10 +2,11 @@
   access: 'public',
   method: async () => {
     async function newGame() {
-      // const gameType = 'duel-blitz';
-      const gameType = 'ffa-blitz';
+      const gameType = 'duel-blitz';
+      // const gameType = 'ffa-blitz';
+      // const gameType = 'single-blitz';
       const gameData = lib.utils.structuredClone(domain.game.exampleJSON[gameType]);
-      const game = new domain.game.class().fromJSON(gameData, { newGame: true });
+      const game = await new domain.game.class().fromJSON(gameData, { newGame: true });
       const insertOne = await db.mongo.insertOne('game', game);
       game._id = insertOne._id;
       return { result: 'success', game };

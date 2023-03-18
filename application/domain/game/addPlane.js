@@ -14,7 +14,7 @@ async (game, { joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => 
   joinPlane.getParent().deleteFromObjectStorage(joinPlane);
   game.addPlane(joinPlane);
 
-  game.callEventHandlers({ handler: 'addPlane' });
+  await game.callEventHandlers({ handler: 'addPlane' });
 
   if (joinPlane.isStartPlane === true) {
     const gamePlaneDeck = game.getObjectByCode('Deck[plane]');

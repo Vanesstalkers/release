@@ -1,10 +1,9 @@
 async (game, { joinPlaneId }) => {
   const availablePorts = [];
+  const joinPlane = game.getObjectById(joinPlaneId);
 
   game.disableChanges();
   {
-    const joinPlane = game.getObjectById(joinPlaneId);
-
     for (const joinPort of joinPlane.getObjects({ className: 'Port' })) {
       const realDirect = joinPort.getDirect();
       for (const portDirect of Object.keys(joinPort.direct)) {
@@ -16,9 +15,9 @@ async (game, { joinPlaneId }) => {
   }
   game.enableChanges();
 
-  if(availablePorts.length > 0){
+  if (availablePorts.length > 0) {
     game.set('availablePorts', availablePorts);
-  }else{
+  } else {
     // !!! тут надо удалять plane (разобраться, что делать с card-plane)
   }
 

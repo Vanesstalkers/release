@@ -1,5 +1,5 @@
 ({
-  init: function ({ game, player }) {
+  init: async function ({ game, player }) {
     const deck = game.getObjectByCode('Deck[domino]');
 
     const newPlayerHand = player.addDeck({
@@ -12,7 +12,7 @@
     deck.moveRandomItems({ count: newPlayerHand.settings.itemsStartCount, target: newPlayerHand });
   },
   handlers: {
-    replaceDice: function ({ game, player }) {
+    replaceDice: async function ({ game, player }) {
       const deck = player.getObjectByCode('Deck[domino_teamlead]');
       const itemIds = Object.keys(deck.itemMap);
 
@@ -24,7 +24,7 @@
       }
       player.deleteDeck(deck);
     },
-    endRound: function ({ game, player }) {
+    endRound: async function ({ game, player }) {
       const deck = player.getObjectByCode('Deck[domino_teamlead]');
 
       if (deck) {

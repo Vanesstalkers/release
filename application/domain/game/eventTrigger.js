@@ -1,4 +1,4 @@
 async (game, { eventData = {} }) => {
-  game.callEventHandlers({ handler: 'eventTrigger', data: eventData });
+  await game.callEventHandlers({ handler: 'eventTrigger', data: eventData });
   return { status: 'ok' };
 };

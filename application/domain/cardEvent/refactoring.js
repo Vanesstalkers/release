@@ -1,5 +1,5 @@
 ({
-  init: function ({ game, player: activePlayer }) {
+  init: async function ({ game, player: activePlayer }) {
     let diceFound = false;
     for (const plane of game.getObjects({ className: 'Plane' })) {
       for (const dice of plane.getObjects({ className: 'Dice' })) {
@@ -14,13 +14,14 @@
       }
     }
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
+    else return { removeHandlers: true };
   },
   handlers: {
-    eventTrigger: function ({ game, player: activePlayer, target: dice }) {
-      if (!dice) return;
+    eventTrigger: async function ({ game, player: activePlayer, target: dice }) {
+      if (!dice) return { timerOverdueOff: true };
 
-      const plane = dice.findParent({ className: 'Zone' }).getParent();
-      plane.set('release', null);
+      const parent = dice.findParent({ className: 'Zone' }).getParent(); // тут моет быть Bridge
+      parent.set('release', null);
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
       dice.moveToTarget(playerHand);
       dice.set('visible', true);
@@ -38,11 +39,31 @@
           dice.set('activeEvent', null);
         }
       }
+
+      return { timerOverdueOff: true };
     },
-    endRound: function ({ game }) {
+    endRound: async function ({ game }) {
       for (const dice of game.getObjects({ className: 'Dice' })) {
         if (dice.locked) dice.set('locked', null);
       }
+    },
+    timerOverdue: async function ({ game }) {
+      async function eventTrigger(dice) {
+        const player = game.getActivePlayer();
+        await domain.cardEvent['refactoring'].handlers.eventTrigger({ game, player, target: dice });
+      }
+
+      for (const plane of game.getObjects({ className: 'Plane' })) {
+        for (const dice of plane.getObjects({ className: 'Dice' })) {
+          return await eventTrigger(dice);
+        }
+      }
+      for (const bridge of game.getObjects({ className: 'Bridge' })) {
+        for (const dice of bridge.getObjects({ className: 'Dice' })) {
+          return await eventTrigger(dice);
+        }
+      }
+      await eventTrigger();
     },
   },
 });
