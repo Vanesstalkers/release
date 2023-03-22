@@ -1,4 +1,9 @@
 async (game, { diceId }) => {
+  if (game.activeEvent)
+    throw new Error(
+      game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
+    );
+
   const dice = game.getObjectById(diceId);
   const currentZone = dice.getParent();
   const availableZones = {};

@@ -3,6 +3,7 @@
     addTime: Date.now(),
     settings: {
       timer: 30,
+      timerReleasePremium: 10,
       playerHandStart: 3,
       playerHandLimit: 3,
       planesAtStart: 3, // изначальное количество блоков на поле
@@ -30,6 +31,7 @@
     addTime: Date.now(),
     settings: {
       timer: 30,
+      timerReleasePremium: 10,
       playerHandStart: 3,
       playerHandLimit: 3,
       planesAtStart: 1, // изначальное количество блоков на поле
@@ -60,6 +62,7 @@
     addTime: Date.now(),
     settings: {
       timer: 30,
+      timerReleasePremium: 10,
       playerHandStart: 2,
       playerHandLimit: 2,
       planesAtStart: 0, // изначальное количество блоков на поле

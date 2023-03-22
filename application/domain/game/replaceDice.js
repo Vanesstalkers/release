@@ -18,7 +18,22 @@ async (game, { diceId, zoneId }) => {
   dice.moveToTarget(zone);
   game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
   if (zone.checkForRelease()) {
-    game.smartMoveRandomCard({ target: game.getActivePlayer().getObjectByCode('Deck[card]') });
+    const player = game.getActivePlayer();
+    const playerCardDeck = player.getObjectByCode('Deck[card]');
+    await game.smartMoveRandomCard({ target: playerCardDeck });
+    game.timerRestart({ time: player.timer + game.settings.timerReleasePremium });
+
+    let finalRelease = true;
+    const planeList = game.getObjects({ className: 'Plane', directParent: game });
+    const bridgeList = game.getObjects({ className: 'Bridge', directParent: game });
+    for (const releaseItem of [...planeList, ...bridgeList]) {
+      if (!finalRelease) continue;
+      if (!releaseItem.release) finalRelease = false;
+    }
+    if (finalRelease) {
+      game.updateStatus();
+      return { status: 'ok' };
+    }
   }
 
   const notReplacedDeletedDices = deletedDices.filter((dice) => !dice.getParent().getNotDeletedItem());

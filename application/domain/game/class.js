@@ -96,6 +96,7 @@
     if (data.store) this.store = data.store;
     this.addTime = data.addTime;
     this.settings = data.settings;
+    this.status = data.status || 'waitForPlayers';
     this.round = data.round || 0;
     this.activeEvent = data.activeEvent; // в конструктор Game передается только _id
     this.eventHandlers = data.eventHandlers || {
@@ -137,45 +138,11 @@
       }
     }
 
-    const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
     if (data.planeMap) {
       // восстановление игры из БД
       const planeIds = Object.keys(data.planeMap);
       for (const _id of planeIds) this.addPlane(this.store.plane[_id]);
       this.timerRestart();
-    } else {
-      // создание игры
-      const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-      for (let i = 0; i < this.settings.planesAtStart; i++) {
-        const plane = gamePlaneDeck.getRandomItem();
-        if (plane) {
-          gamePlaneDeck.removeItem(plane);
-          this.addPlane(plane);
-          if (i > 0) {
-            await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-            const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-            const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
-
-            const joinPort = this.getObjectById(joinPortId);
-            joinPort.updateDirect(joinPortDirect);
-            const targetPort = this.getObjectById(targetPortId);
-            targetPort.updateDirect(targetPortDirect);
-            this.linkPlanes({ joinPort, targetPort });
-
-            this.set('availablePorts', null);
-          }
-        }
-      }
-
-      const players = this.getObjects({ className: 'Player' });
-      for (let i = 0; i < planesPlacedByPlayerCount; i++) {
-        const hand = players[i % players.length].getObjectByCode('Deck[plane]');
-        for (let j = 0; j < 2; j++) {
-          const plane = gamePlaneDeck.getRandomItem();
-          plane.set('isStartPlane', true);
-          plane.moveToTarget(hand);
-        }
-      }
     }
 
     if (data.bridgeMap) {
@@ -185,13 +152,6 @@
     for (const item of data.bridgeList || []) this.addBridge(item);
 
     this.clearChanges();
-
-    if (planesPlacedByPlayerCount > 0) {
-      this.set('activeEvent', { prepareGame: 'placeStartPlanes' });
-    } else {
-      await domain.game.endRound(this, { forceActivePlayer: this.getActivePlayer() });
-    }
-
     return this;
   }
   addPlayer(data) {
@@ -213,6 +173,14 @@
   getPlayerList() {
     const store = this.getStore();
     return Object.keys(this.playerMap).map((_id) => store.player[_id]);
+  }
+  async userJoin({ userId }) {
+    const player = this.getFreePlayerSlot();
+    player.set('ready', true);
+    player.set('user', userId);
+    this.assign('broadcastUserList', { [userId]: { playerId: player._id } });
+    if (!this.getFreePlayerSlot()) await this.updateStatus();
+    return player;
   }
   getFreePlayerSlot() {
     return this.getPlayerList().find((player) => !player.ready);
@@ -399,22 +367,46 @@
     return result;
   }
 
-  smartMoveRandomCard({ target }) {
+  async smartMoveRandomCard({ target }) {
     const deck = this.getObjectByCode('Deck[card]');
     let card = deck.getRandomItem();
     if (card) card.moveToTarget(target);
     else {
-      this.restoreCardsFromDrop();
+      await this.restoreCardsFromDrop();
       card = deck.getRandomItem();
       if (card) card.moveToTarget(target);
     }
     return card;
   }
-  restoreCardsFromDrop() {
+  async restoreCardsFromDrop() {
     const deck = this.getObjectByCode('Deck[card]');
     const deckDrop = this.getObjectByCode('Deck[card_drop]');
     for (const card of deckDrop.getObjects({ className: 'Card' })) {
       if (card.restoreAvailable()) card.moveToTarget(deck);
+    }
+    if (this.isSinglePlayer()) {
+      const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+      const plane = gamePlaneDeck.getRandomItem();
+      if (plane) {
+        gamePlaneDeck.removeItem(plane);
+        this.addPlane(plane);
+
+        await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+        const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+        const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+
+        const joinPort = this.getObjectById(joinPortId);
+        joinPort.updateDirect(joinPortDirect);
+        const targetPort = this.getObjectById(targetPortId);
+        targetPort.updateDirect(targetPortDirect);
+        this.linkPlanes({ joinPort, targetPort });
+
+        this.set('availablePorts', null);
+
+        // !!! почему так много Zone ???
+        this.getObjects({ className: 'Zone' }).length
+        console.log('length=', );
+      }
     }
   }
 
@@ -441,10 +433,10 @@
     for (const handler of Object.keys(this.eventHandlers)) this.assign('eventHandlers', { [handler]: [] });
   }
 
-  timerRestart({ time = null, extraTime = 0 } = {}) {
+  timerRestart({ time = null } = {}) {
     if (this.#timerId) clearTimeout(this.#timerId);
     const player = this.getActivePlayer();
-    player.set('timer', (time ?? this.settings.timer) + extraTime); // это отправляем на фронт
+    player.set('timer', time ?? this.settings.timer); // это отправляем на фронт
     player.set('timerUpdateTime', Date.now()); // без этого watch на фронте не увидит изменения
     this.#timerId = setInterval(async () => {
       if (this.finished) return clearTimeout(this.#timerId);
@@ -454,5 +446,96 @@
         await this.broadcastData();
       }
     }, 1000);
+  }
+  timerDelete() {
+    if (this.#timerId) clearTimeout(this.#timerId);
+    const player = this.getActivePlayer();
+    player.set('timer', 0);
+    player.set('timerUpdateTime', Date.now());
+  }
+
+  async updateStatus() {
+    const playerList = this.getObjects({ className: 'Player' });
+    switch (this.status) {
+      case 'waitForPlayers':
+        const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+        for (let i = 0; i < this.settings.planesAtStart; i++) {
+          const plane = gamePlaneDeck.getRandomItem();
+          if (plane) {
+            gamePlaneDeck.removeItem(plane);
+            this.addPlane(plane);
+            if (i > 0) {
+              await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+              const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+              const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+
+              const joinPort = this.getObjectById(joinPortId);
+              joinPort.updateDirect(joinPortDirect);
+              const targetPort = this.getObjectById(targetPortId);
+              targetPort.updateDirect(targetPortDirect);
+              this.linkPlanes({ joinPort, targetPort });
+
+              this.set('availablePorts', null);
+            }
+          }
+        }
+
+        const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
+        for (let i = 0; i < planesPlacedByPlayerCount; i++) {
+          const hand = playerList[i % playerList.length].getObjectByCode('Deck[plane]');
+          for (let j = 0; j < 2; j++) {
+            const plane = gamePlaneDeck.getRandomItem();
+            plane.moveToTarget(hand);
+          }
+        }
+
+        this.set('status', 'prepareStart');
+        if (planesPlacedByPlayerCount > 0) {
+          this.addEventHandler({ handler: 'addPlane', source: this });
+          this.timerRestart();
+        } else {
+          this.updateStatus();
+        }
+        break;
+      case 'prepareStart':
+        const deck = this.getObjectByCode('Deck[domino]');
+        for (const player of playerList) {
+          const playerHand = player.getObjectByCode('Deck[domino]');
+          deck.moveRandomItems({ count: this.settings.playerHandStart, target: playerHand });
+          // const deckCard = this.getObjectByCode('Deck[card]');
+          // const playerHandCard = player.getObjectByCode('Deck[card]');
+          // deckCard.moveRandomItems({ count: 3, target: playerHandCard });
+        }
+
+        this.set('status', 'inProcess');
+        await domain.game.endRound(this, { forceActivePlayer: playerList[0] });
+        break;
+      case 'inProcess':
+        this.timerDelete();
+        this.set('status', 'finished');
+        break;
+    }
+  }
+
+  async callHandler({ handler, data = {} }) {
+    const player = this.getActivePlayer();
+    switch (handler) {
+      case 'addPlane':
+        if (this.status === 'prepareStart') {
+          const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+          const playerPlaneDeck = player.getObjectByCode('Deck[plane]');
+          const planeList = playerPlaneDeck.getObjects({ className: 'Plane' });
+          for (const plane of planeList) plane.moveToTarget(gamePlaneDeck);
+          if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart) {
+            this.changeActivePlayer();
+            this.timerRestart();
+            return { saveHandler: true };
+          } else {
+            await this.updateStatus();
+            return { timerOverdueOff: true };
+          }
+        }
+        break;
+    }
   }
 });

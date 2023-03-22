@@ -2,7 +2,8 @@
   init: async function ({ game, player }) {
     if (game.isSinglePlayer()) {
       const target = game.getActivePlayer();
-      domain.cardEvent['claim'].handlers.eventTrigger({ game, target });
+      await domain.cardEvent['claim'].handlers.eventTrigger({ game, target });
+      return { removeHandlers: true };
     } else {
       game.set('activeEvent', { sourceId: this._id });
       for (const player of game.getObjects({ className: 'Player' })) {

@@ -68,7 +68,7 @@
   }
   deleteFromParentsObjectStorage() {
     let parent = this.getParent();
-    if(!parent) return;
+    if (!parent) return;
     do {
       parent.deleteFromObjectStorage(this);
     } while ((parent = parent.getParent()));
@@ -78,7 +78,7 @@
   }
   getObjectById(_id) {
     // _id всегда уникален
-    return this.#_objects[_id];
+    return this.#_objects[_id] || (_id === this.#game._id.toString() ? this.#game : null);
   }
   getObjectByCode(code) {
     // внутри одного родителя code может быть не уникален
@@ -127,8 +127,8 @@
   }
   findParent({ className } = {}) {
     let parent = this.getParent();
-    while(parent){
-      if(className && parent.constructor.name === className) return parent;
+    while (parent) {
+      if (className && parent.constructor.name === className) return parent;
       parent = parent.getParent();
     }
     return null;

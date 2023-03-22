@@ -1,5 +1,18 @@
 async (game, { timerOverdue, forceActivePlayer } = {}) => {
-  if (timerOverdue) await game.callEventHandlers({ handler: 'timerOverdue' });
+  if (game.status === 'prepareStart') {
+    const player = game.getActivePlayer();
+
+    const plane = player.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' })[0];
+    await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+    const availablePort = game.availablePorts[0];
+    await domain.game.addPlane(game, { ...availablePort });
+
+    return { status: 'ok' };
+  }
+
+  if (game.status !== 'inProcess') throw new Error('Действие запрещено');
+
+  if (timerOverdue || game.activeEvent) await game.callEventHandlers({ handler: 'timerOverdue' });
 
   if (game.activeEvent)
     throw new Error(
@@ -16,9 +29,6 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
   const prevPlayer = game.getActivePlayer();
   const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
-
-  if (prevPlayer.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' }).length > 0)
-    throw new Error('Игрок должен разместить блоки поля из его руки.');
 
   prevPlayer.delete('eventData', 'actionsDisabled');
   const singlePlayerSkipTurn = game.isSinglePlayer() && prevPlayer.eventData.skipTurn;
@@ -61,13 +71,11 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
     }
   });
 
-  if (!forceActivePlayer) {
-    if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
-      if (prevPlayer.eventData.disablePlayerHandLimit) {
-        prevPlayer.delete('eventData', 'disablePlayerHandLimit');
-      } else {
-        prevPlayerHand.moveAllItems({ target: gameDominoDeck });
-      }
+  if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
+    if (prevPlayer.eventData.disablePlayerHandLimit) {
+      prevPlayer.delete('eventData', 'disablePlayerHandLimit');
+    } else {
+      prevPlayerHand.moveAllItems({ target: gameDominoDeck });
     }
   }
 
@@ -78,7 +86,7 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
     card.moveToTarget(cardDeckDrop);
   }
 
-  const card = game.smartMoveRandomCard({ target: cardDeckActive });
+  const card = await game.smartMoveRandomCard({ target: cardDeckActive });
   if (card && game.settings.acceptAutoPlayRoundStartCard === true) await card.play();
 
   game.set('round', game.round + 1);

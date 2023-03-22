@@ -7,6 +7,7 @@
     const code = 1001;
     deck.addItem({
       _code: code,
+      release: true,
       customClass: ['card-plane', 'card-event', 'card-event-req_legal'],
       zoneLinks: {},
       zoneList: [],
@@ -14,9 +15,11 @@
     });
     const plane = deck.getObjectByCode(`Plane[${code}]`);
     await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+    game.set('activeEvent', { sourceId: this._id });
   },
   handlers: {
     addPlane: async function ({ game, player }) {
+      game.set('activeEvent', null);
       return { timerOverdueOff: true };
     },
     timerOverdue: async function ({ game }) {

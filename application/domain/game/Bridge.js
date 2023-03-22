@@ -6,6 +6,7 @@
   constructor(data, { parent }) {
     super(data, { col: 'bridge', parent });
 
+    this.release = data.release || false;
     this.left = data.left;
     this.top = data.top;
     this.rotation = data.rotation || 0;

@@ -1,11 +1,13 @@
 ({
   init: async function ({ game, player }) {
     let diceFound = false;
-    const deck = player.getObjectByCode('Deck[domino]');
-    for (const dice of deck.getObjects({ className: 'Dice' })) {
-      for (const dside of dice.getObjects({ className: 'DiceSide' })) {
-        dside.set('activeEvent', { sourceId: this._id });
-        diceFound = true;
+    for (const deck of player.getObjects({ className: 'Deck' })) {
+      if (deck.type !== 'domino') continue;
+      for (const dice of deck.getObjects({ className: 'Dice' })) {
+        for (const dside of dice.getObjects({ className: 'DiceSide' })) {
+          dside.set('activeEvent', { sourceId: this._id });
+          diceFound = true;
+        }
       }
     }
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
@@ -20,10 +22,12 @@
         target.set('value', fakeValue);
       }
 
-      const deck = player.getObjectByCode('Deck[domino]');
-      for (const dice of deck.getObjects({ className: 'Dice' })) {
-        for (const dside of dice.getObjects({ className: 'DiceSide' })) {
-          dside.set('activeEvent', null);
+      for (const deck of player.getObjects({ className: 'Deck' })) {
+        if (deck.type !== 'domino') continue;
+        for (const dice of deck.getObjects({ className: 'Dice' })) {
+          for (const dside of dice.getObjects({ className: 'DiceSide' })) {
+            dside.set('activeEvent', null);
+          }
         }
       }
       game.set('activeEvent', null);
