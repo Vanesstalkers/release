@@ -27,6 +27,8 @@
 
     const lobbySession = { ...sessionData, _id: sessionId.toString() };
     context.client.startSession(token, lobbySession);
+    context.userId = sessionData.userId;
+    context.client.userId = sessionData.userId;
 
     domain.db.data.session.set(context.client, { ...sessionData });
 

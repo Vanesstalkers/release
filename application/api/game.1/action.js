@@ -1,10 +1,16 @@
 ({
   access: 'public',
-  method: async ({ name: eventName, data: eventData = {} }) => {
+  method: async ({
+    name: eventName,
+    data: eventData = {},
+    customContext: { gameId: processGameId, userId: processUserId } = {},
+  }) => {
     try {
-      const gameId = context.game;
-      const user = await db.mongo.findOne('user', context.userId);
-      const game = domain.db.data.game[gameId];
+      const gameId = context.game || processGameId;
+      const userId = context.userId || processUserId;
+      const user = await db.mongo.findOne('user', userId);
+      const gameData = await db.mongo.findOne('game', gameId);
+      const game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
       const activePlayer = game.getActivePlayer();
       game.clearChanges();
 

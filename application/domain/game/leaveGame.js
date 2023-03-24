@@ -1,6 +1,7 @@
 async (game, { count }) => {
 
-  game.set('finished', true);
+  lib.timers.timerDelete(game);
+  game.set('status', 'finished');
   //const leavePlayer = game.playerList.find(player => player._id.toString() === user.player.toString());
   //leavePlayer.looser = true;
 

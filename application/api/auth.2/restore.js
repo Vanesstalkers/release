@@ -12,6 +12,8 @@
 
     const lobbySession = { ...session.data, _id: session._id.toString() };
     context.client.startSession(token, lobbySession);
+    context.userId = session.data.userId;
+    context.client.userId = session.data.userId;
 
     domain.db.data.session.set(context.client, { ...session.data });
     const user = await db.mongo.findOne('user', session.data.userId);

@@ -21,7 +21,7 @@ async (game, { diceId, zoneId }) => {
     const player = game.getActivePlayer();
     const playerCardDeck = player.getObjectByCode('Deck[card]');
     await game.smartMoveRandomCard({ target: playerCardDeck });
-    game.timerRestart({ time: player.timer + game.settings.timerReleasePremium });
+    lib.timers.timerRestart(game, { extraTime: game.settings.timerReleasePremium });
 
     let finalRelease = true;
     const planeList = game.getObjects({ className: 'Plane', directParent: game });

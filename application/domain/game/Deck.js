@@ -11,7 +11,7 @@
     this.settings = data.settings;
     this.access = data.access;
   }
-  prepareDataForPlayer({ data, player }) {
+  prepareFakeData({ data, player }) {
     let result = {};
     const parent = this.getParent();
     if (parent.matches({ className: 'Game' })) {

@@ -1,8 +1,6 @@
 (class Game extends domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject'])) {
-  broadcastUserList = {};
   #changes = {};
   #disableChanges = false;
-  #timerId;
   store = {};
   playerMap = {};
   bridgeMap = {};
@@ -62,15 +60,14 @@
       const room = domain.db.getRoom('game-' + this._id);
       for (const [client] of room) {
         const { userId } = domain.db.data.session.get(client);
-        const data = this.prepareBroadcastData(userId, changes);
+        const data = this.prepareFakeData({ userId, data: changes });
         client.emit('db/smartUpdated', data);
       }
     }
   }
-  prepareBroadcastData(userId, data) {
+  prepareFakeData({ data, userId }) {
     const result = {};
-    const { playerId } = this.broadcastUserList[userId] || {};
-    const player = playerId ? this.getObjectById(playerId) : null;
+    const player = this.getPlayerByUserId(userId);
 
     for (const [col, ids] of Object.entries(data)) {
       result[col] = {};
@@ -80,9 +77,8 @@
         } else {
           const obj = this.getObjectById(id);
           // объект может быть удален (!!! костыль)
-          // ??? надо выяснить в каких случаях нет prepareDataForPlayer
-          if (obj && typeof obj.prepareDataForPlayer === 'function') {
-            const { visibleId, preparedData } = obj.prepareDataForPlayer({ data: changes, player });
+          if (obj && typeof obj.prepareFakeData === 'function') {
+            const { visibleId, preparedData } = obj.prepareFakeData({ data: changes, player });
             result[col][visibleId] = preparedData;
           } else result[col][id] = changes;
         }
@@ -92,7 +88,6 @@
   }
 
   async fromJSON(data, { newGame } = {}) {
-    if (data.broadcastUserList) this.broadcastUserList = data.broadcastUserList;
     if (data.store) this.store = data.store;
     this.addTime = data.addTime;
     this.settings = data.settings;
@@ -142,7 +137,6 @@
       // восстановление игры из БД
       const planeIds = Object.keys(data.planeMap);
       for (const _id of planeIds) this.addPlane(this.store.plane[_id]);
-      this.timerRestart();
     }
 
     if (data.bridgeMap) {
@@ -174,11 +168,13 @@
     const store = this.getStore();
     return Object.keys(this.playerMap).map((_id) => store.player[_id]);
   }
+  getPlayerByUserId(id) {
+    return this.getPlayerList().find((player) => player.userId === id);
+  }
   async userJoin({ userId }) {
     const player = this.getFreePlayerSlot();
     player.set('ready', true);
-    player.set('user', userId);
-    this.assign('broadcastUserList', { [userId]: { playerId: player._id } });
+    player.set('userId', userId);
     if (!this.getFreePlayerSlot()) await this.updateStatus();
     return player;
   }
@@ -432,28 +428,6 @@
   clearEventHandlers() {
     for (const handler of Object.keys(this.eventHandlers)) this.assign('eventHandlers', { [handler]: [] });
   }
-
-  timerRestart({ time = null } = {}) {
-    if (this.#timerId) clearTimeout(this.#timerId);
-    const player = this.getActivePlayer();
-    player.set('timer', time ?? this.settings.timer); // это отправляем на фронт
-    player.set('timerUpdateTime', Date.now()); // без этого watch на фронте не увидит изменения
-    this.#timerId = setInterval(async () => {
-      if (this.finished) return clearTimeout(this.#timerId);
-      // это не отправляется на фронт, так что тут не обязательно ставить через player.set(timer, player.timer - 1)
-      if (player.timer-- <= 0) {
-        await domain.game.endRound(this, { timerOverdue: true });
-        await this.broadcastData();
-      }
-    }, 1000);
-  }
-  timerDelete() {
-    if (this.#timerId) clearTimeout(this.#timerId);
-    const player = this.getActivePlayer();
-    player.set('timer', 0);
-    player.set('timerUpdateTime', Date.now());
-  }
-
   async updateStatus() {
     const playerList = this.getObjects({ className: 'Player' });
     switch (this.status) {
@@ -492,7 +466,7 @@
         this.set('status', 'prepareStart');
         if (planesPlacedByPlayerCount > 0) {
           this.addEventHandler({ handler: 'addPlane', source: this });
-          this.timerRestart();
+          lib.timers.timerRestart(this);
         } else {
           this.updateStatus();
         }
@@ -511,7 +485,7 @@
         await domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
-        this.timerDelete();
+        lib.timers.timerDelete(this);
         this.set('status', 'finished');
         break;
     }
@@ -528,7 +502,7 @@
           for (const plane of planeList) plane.moveToTarget(gamePlaneDeck);
           if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart) {
             this.changeActivePlayer();
-            this.timerRestart();
+            lib.timers.timerRestart(this);
             return { saveHandler: true };
           } else {
             await this.updateStatus();
@@ -537,5 +511,33 @@
         }
         break;
     }
+  }
+
+  onTimerRestart({ timerId, data: { time = this.settings.timer, extraTime = 0 } = {} }) {
+    const player = this.getActivePlayer();
+    if (extraTime) {
+      player.set('timerEndTime', player.timerEndTime + extraTime * 1000);
+    } else {
+      player.set('timerEndTime', Date.now() + time * 1000);
+    }
+    player.set('timerUpdateTime', Date.now());
+  }
+  async onTimerTick({ timerId, data: { time = null } = {} }) {
+    const player = this.getActivePlayer();
+    console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки
+    if (this.finished) return clearInterval(timerId);
+    if (player.timerEndTime < Date.now()) {
+      clearInterval(timerId);
+      await api.game.action({
+        name: 'endRound',
+        data: { timerOverdue: true },
+        customContext: { gameId: this._id, userId: player.userId },
+      });
+    }
+  }
+  onTimerDelete({ timerId }) {
+    const player = this.getActivePlayer();
+    player.set('timerEndTime', null);
+    player.set('timerUpdateTime', Date.now());
   }
 });

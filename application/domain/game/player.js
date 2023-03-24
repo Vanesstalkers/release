@@ -2,8 +2,9 @@
   constructor(data, { parent }) {
     super(data, { col: 'player', parent });
 
+    this.userId = data.userId;
     this.active = data.active;
     this.ready = data.ready;
-    this.user = data.user;
+    this.timerEndTime = data.timerEndTime;
   }
 });

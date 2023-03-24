@@ -4,7 +4,7 @@
   },
   init: async function ({ game }) {
     const deck = game.getObjectByCode('Deck[plane]');
-    const code = 1001;
+    const code = 'event_req_legal';
     deck.addItem({
       _code: code,
       release: true,
@@ -23,6 +23,10 @@
       return { timerOverdueOff: true };
     },
     timerOverdue: async function ({ game }) {
+      if (!game.availablePorts) {
+        const plane = game.getObjectByCode('Plane[event_req_legal]');
+        await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+      }
       const availablePort = game.availablePorts[0];
       if (availablePort) await domain.game.addPlane(game, { ...availablePort });
     },

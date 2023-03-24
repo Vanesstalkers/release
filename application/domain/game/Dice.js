@@ -23,7 +23,7 @@
   customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, '' + data[0] + data[1]);
   }
-  prepareDataForPlayer({ data, player }) {
+  prepareFakeData({ data, player }) {
     let visibleId = this._id;
     let preparedData = data;
     const parent = this.getParent();

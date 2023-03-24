@@ -90,7 +90,7 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   if (card && game.settings.acceptAutoPlayRoundStartCard === true) await card.play();
 
   game.set('round', game.round + 1);
-  game.timerRestart(singlePlayerSkipTurn ? { time: 5 } : {});
+  lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
 
   return { status: 'ok' };
 };
