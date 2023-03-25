@@ -15,7 +15,7 @@
     });
     const plane = deck.getObjectByCode(`Plane[${code}]`);
     await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
-    game.set('activeEvent', { sourceId: this._id });
+    if(game.availablePorts.length) game.set('activeEvent', { sourceId: this._id });
   },
   handlers: {
     addPlane: async function ({ game, player }) {

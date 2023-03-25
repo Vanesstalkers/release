@@ -57,12 +57,7 @@
       delete $set._id;
       await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(this._id) }, { $set });
 
-      const room = domain.db.getRoom('game-' + this._id);
-      for (const [client] of room) {
-        const { userId } = domain.db.data.session.get(client);
-        const data = this.prepareFakeData({ userId, data: changes });
-        client.emit('db/smartUpdated', data);
-      }
+      lib.broadcaster.publish({ room: this, data: changes });
     }
   }
   prepareFakeData({ data, userId }) {
@@ -381,29 +376,46 @@
     for (const card of deckDrop.getObjects({ className: 'Card' })) {
       if (card.restoreAvailable()) card.moveToTarget(deck);
     }
-    if (this.isSinglePlayer()) {
-      const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-      const plane = gamePlaneDeck.getRandomItem();
-      if (plane) {
-        gamePlaneDeck.removeItem(plane);
-        this.addPlane(plane);
+    if (!this.isSinglePlayer()) return;
+    const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+    const plane = gamePlaneDeck.getRandomItem();
+    if (!plane) return;
 
-        await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-        const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-        const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+    gamePlaneDeck.removeItem(plane);
+    this.addPlane(plane);
 
-        const joinPort = this.getObjectById(joinPortId);
-        joinPort.updateDirect(joinPortDirect);
-        const targetPort = this.getObjectById(targetPortId);
-        targetPort.updateDirect(targetPortDirect);
-        this.linkPlanes({ joinPort, targetPort });
+    await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+    if (this.availablePorts) {
+      // plane удаляется в getPlanePortsAvailability
+      return; // все зоны стыковки заняты - новые блоки добавляться не будут
+    }
 
-        this.set('availablePorts', null);
+    const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+    const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
 
-        // !!! почему так много Zone ???
-        this.getObjects({ className: 'Zone' }).length
-        console.log('length=', );
-      }
+    const joinPort = this.getObjectById(joinPortId);
+    joinPort.updateDirect(joinPortDirect);
+    const targetPort = this.getObjectById(targetPortId);
+    targetPort.updateDirect(targetPortDirect);
+    this.linkPlanes({ joinPort, targetPort });
+
+    this.set('availablePorts', null);
+
+    let availableZoneCount = 0;
+    for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
+      availableZoneCount += plane.getObjects({ className: 'Zone' }).filter((zone) => !zone.getNotDeletedItem()).length;
+    }
+    for (const bridge of this.getObjects({ className: 'Bridge', directParent: this })) {
+      availableZoneCount += bridge.getObjects({ className: 'Zone' }).filter((zone) => !zone.getNotDeletedItem()).length;
+    }
+    const dominoCount =
+      this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
+      this.getActivePlayer().getObjects({ className: 'Dice' }).length;
+
+    console.log('availableZoneCount=', availableZoneCount, dominoCount);
+    if (availableZoneCount > dominoCount) {
+      game.updateStatus();
+      return { status: 'ok', gameFinished: true };
     }
   }
 

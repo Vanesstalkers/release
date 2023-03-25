@@ -8,8 +8,7 @@
       const game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
       domain.db.data.game[gameId] = game;
 
-      domain.db.subscribe({ name: 'game-' + gameId, client: context.client, type: 'game' });
-      lib.broadcaster.subscribe({ context, room: 'game-' + gameId });
+      lib.broadcaster.subscribe({ context, room: game });
 
       const data = game.prepareFakeData({
         userId: context.client.userId,

@@ -1,5 +1,5 @@
-({ context: { client, userId }, room: roomName }) => {
+({ context: { client, userId }, room: roomOwner }) => {
   const { getRoom } = lib.broadcaster;
-  const room = getRoom(roomName);
+  const room = getRoom(roomOwner);
   room.add(client);
 };
