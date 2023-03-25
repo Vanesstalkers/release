@@ -101,6 +101,7 @@
       addPlane: [],
       eventTrigger: [],
     };
+    this.availablePorts = data.availablePorts;
 
     if (data.playerMap) {
       data.playerList = [];
@@ -468,7 +469,7 @@
           this.addEventHandler({ handler: 'addPlane', source: this });
           lib.timers.timerRestart(this);
         } else {
-          this.updateStatus();
+          await this.updateStatus();
         }
         break;
       case 'prepareStart':

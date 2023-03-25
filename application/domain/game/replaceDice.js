@@ -16,6 +16,7 @@ async (game, { diceId, zoneId }) => {
     throw new Error('Добавлять новые костяшки можно только взамен временно удаленных');
 
   dice.moveToTarget(zone);
+  dice.set('placedAtRound', game.round);
   game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
   if (zone.checkForRelease()) {
     const player = game.getActivePlayer();
@@ -32,7 +33,7 @@ async (game, { diceId, zoneId }) => {
     }
     if (finalRelease) {
       game.updateStatus();
-      return { status: 'ok' };
+      return { status: 'ok', gameFinished: true };
     }
   }
 

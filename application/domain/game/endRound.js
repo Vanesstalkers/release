@@ -72,12 +72,11 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   });
 
   if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
-    if (prevPlayer.eventData.disablePlayerHandLimit) {
-      prevPlayer.delete('eventData', 'disablePlayerHandLimit');
-    } else {
+    if (!prevPlayer.eventData.disablePlayerHandLimit) {
       prevPlayerHand.moveAllItems({ target: gameDominoDeck });
     }
   }
+  prevPlayer.delete('eventData', 'disablePlayerHandLimit');
 
   gameDominoDeck.moveRandomItems({ count: 1, target: playerHand });
 

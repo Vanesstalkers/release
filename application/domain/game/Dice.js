@@ -5,6 +5,7 @@
     this.deleted = data.deleted;
     this.visible = data.visible;
     this.locked = data.locked;
+    this.placedAtRound = data.placedAtRound;
 
     if (data.sideList) {
       const store = this.getGame().getStore();
