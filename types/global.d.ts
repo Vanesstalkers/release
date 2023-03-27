@@ -8,6 +8,10 @@ import * as _impress from 'impress';
 import * as _metasql from 'metasql';
 import { Database } from 'metasql';
 
+import { Database as MongoDB } from '../application/db/mongo/types';
+import * as _game from '../application/domain/game/types';
+import * as _broadcaster from '../application/lib/broadcaster/types';
+
 declare global {
   namespace metarhia {
     const metasql: typeof _metasql;
@@ -15,11 +19,16 @@ declare global {
 
   namespace api {}
 
-  namespace lib {}
+  namespace lib {
+    const broadcaster: typeof _broadcaster;
+  }
 
-  namespace domain {}
+  namespace domain {
+    const game: typeof _game;
+  }
 
   namespace db {
     const pg: Database;
+    const mongo: MongoDB;
   }
 }

@@ -8,7 +8,7 @@
       return plane;
     }
     removePlane(plane){
-      // не проверял работоспособность
+      // !!! проверить, что не нужно удалять детей (zone и port)
       this.delete('planeMap', plane._id);
       plane.deleteFromParentsObjectStorage();
     }

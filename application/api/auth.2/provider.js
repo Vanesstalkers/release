@@ -4,38 +4,40 @@
     return metarhia.metautil.generateToken(secret, characters, length);
   },
 
-  async saveSession(token, data) {
-    //db.redis.set(token, JSON.stringify(data));
-    await db.mongo.findOneAndUpdate(
-      'session',
-      { token },
-      { $set: { data } },
-      { returnDocument: 'after' }
-    );
+  async saveSession(token, data, fields = {}) {
+    if (fields.online !== undefined) {
+      await db.redis.hset('online', token, fields.online ? 1 : 0);
+      delete fields.online;
+    }
+    const $set = { ...fields };
+    if (data) $set.data = data;
+    // const redisData = await db.redis.get(token);
+    // const sessionData = { ...JSON.parse(redisData), ...$set };
+    // await db.redis.set(token, JSON.stringify(sessionData));
+    await db.mongo.findOneAndUpdate('session', { token }, { $set }, { returnDocument: 'after' });
   },
 
-  async startSession(token, data, fields = {}) {
-    //db.redis.set(token, JSON.stringify(record));
-    const session = await db.mongo.insertOne('session', {
-      token,
-      data,
-      ...fields,
-    });
-    return session;
+  async createSession(token, data, fields = {}) {
+    if (!data.userId) throw new Error('userId not exists');
+    if (fields.online !== undefined) {
+      await db.redis.hset('online', token, fields.online ? 1 : 0);
+      delete fields.online;
+    }
+    await db.mongo.insertOne('session', { token, data, ...fields });
   },
 
   async restoreSession(token) {
-    // const record = await db.redis.get(token);
-    // if(record) return JSON.parse(record);
     const session = await db.mongo.findOne('session', { token });
     if (session && session.data) {
+      session.online = parseInt(await db.redis.hget('online', token)) > 0;
       return session;
     }
     return null;
   },
 
-  deleteSession(token) {
-    db.mongo.remove('session', { token });
+  async deleteSession(token) {
+    await db.mongo.deleteOne('session', { token });
+    await db.redis.hdel('online', token);
   },
 
   async registerUser(login, password) {

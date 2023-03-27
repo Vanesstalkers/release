@@ -544,7 +544,7 @@
       await api.game.action({
         name: 'endRound',
         data: { timerOverdue: true },
-        customContext: { gameId: this._id, userId: player.userId },
+        customContext: { gameId: this._id, playerId: player._id },
       });
     }
   }

@@ -25,7 +25,7 @@
       },
       game: (data, client) => {
         const session = domain.db.data.session.get(client);
-        const user = domain.db.data.user[session.userId];
+        // const user = domain.db.data.user[session.userId];
         return data;
       },
     },

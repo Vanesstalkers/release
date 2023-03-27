@@ -16,6 +16,7 @@
       const gameDeck = game.getObjectByCode('Deck[plane]');
       const deck = player.getObjectByCode('Deck[plane]');
       const itemIds = Object.keys(deck.itemMap);
+      // не всегда срабатывает сброс руки
       for (const itemId of itemIds) {
         game.getStore().plane[itemId].moveToTarget(gameDeck);
       }

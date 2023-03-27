@@ -1,6 +1,5 @@
-(roomOwner) => {
+(name) => {
   const { rooms } = lib.broadcaster;
-  const roomName = [roomOwner.col, roomOwner._id].join('-');
-  if (!rooms.has(roomName)) rooms.set(roomName, new Set());
-  return rooms.get(roomName);
+  if (!rooms.has(name)) rooms.set(name, new Set());
+  return rooms.get(name);
 };
