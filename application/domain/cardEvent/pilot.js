@@ -21,14 +21,19 @@
       }
       return { timerOverdueOff: true };
     },
-    timerOverdue: async function ({ game }) {
+    endRound: async function ({ game }) {
+      const player = game.getActivePlayer();
       if (!game.availablePorts) {
-        const player = game.getActivePlayer();
-        const plane = player.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' })[0];
-        await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+        const planeDeck = player.getObjectByCode('Deck[plane]');
+        const plane = planeDeck.getObjects({ className: 'Plane' })[0];
+        if (plane) await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
       }
       const availablePort = game.availablePorts[0];
       if (availablePort) await domain.game.addPlane(game, { ...availablePort });
+      await domain.cardEvent['pilot'].handlers.addPlane({ game, player });
+    },
+    timerOverdue: async function ({ game }) {
+      await domain.cardEvent['pilot'].handlers.endRound({ game });
     },
   },
 });

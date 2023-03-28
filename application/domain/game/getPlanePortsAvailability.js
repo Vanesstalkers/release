@@ -15,9 +15,15 @@ async (game, { joinPlaneId }) => {
   }
   game.enableChanges();
 
+  // переделать на callEventHandlers({ handler: 'addPlane'})
+  // if (Object.keys(game.planeMap).length === 0) game.addPlane(joinPlane); // начало игры с planesAtStart=0
 
   game.set('availablePorts', availablePorts);
-  if (availablePorts.length === 0) game.removePlane(joinPlane);
+  if (availablePorts.length === 0){
+    // !!! сделать через возврат в deck (кроме card-plane)
+    // -- game.getStore().plane[itemId].moveToTarget(gameDeck);
+    game.removePlane(joinPlane);
+  }
 
   return { status: 'ok' };
 };

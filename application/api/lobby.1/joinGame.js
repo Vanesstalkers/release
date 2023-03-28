@@ -2,24 +2,20 @@
   access: 'public',
   method: async ({ gameId }) => {
     try {
-      const game = domain.db.data.game[gameId];
-      const player = await game.userJoin({ userId: context.userId });
-      const playerId = player._id;
-
-      const session = domain.db.data.session.get(context.client);
-      const user = domain.db.data.user[session.userId];
-      user.game = gameId;
-      user.player = playerId;
-      context.game = gameId;
-      context.player = playerId;
+      const game = lib.repository.getCollection('game').get(gameId);
+      const { _id: playerId } = await game.userJoin({ userId: context.client.userId });
+      context.gameId = gameId.toString();
+      context.playerId = playerId.toString();
 
       await game.broadcastData();
-
-      await db.mongo.updateOne('user', user._id, { $set: user });
-      domain.db.broadcast({ room: 'user-' + user._id, data: { user: { [user._id]: user } } });
       context.client.emit('session/joinGame', { gameId, playerId });
+      lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, playerList: game.getPlayerList() });
+      // lib.broadcaster.pubClient.publish(
+      //   `lobby-main`,
+      //   JSON.stringify({ eventName: 'updateGame', eventData: { _id: game._id, playerList: game.getPlayerList() } })
+      // );
 
-      return 'ok';
+      return { status: 'ok' };
     } catch (err) {
       console.log(err);
       return { status: 'err', message: err.message };

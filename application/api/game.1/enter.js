@@ -2,19 +2,18 @@
   access: 'public',
   method: async ({ gameId }) => {
     try {
-      const gameData = await db.mongo.findOne('game', gameId);
-      if (!gameData) throw new Error('Game not found');
-      if (gameData.finished) throw new Error('Game finished');
-      const game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
-      domain.db.data.game[gameId] = game;
-
-      lib.broadcaster.subscribe({ context, room: game });
+      const userId = context.client.userId;
+      const game = lib.repository.getCollection('game').get(gameId);
+      if (!game) throw new Error('Game not found');
+      if (game.finished) throw new Error('Game finished');
 
       const data = game.prepareFakeData({
-        userId: context.client.userId,
+        userId,
         data: { ...game.store, game: { [gameId]: { ...game, store: undefined } } },
       });
       context.client.emit('db/smartUpdated', data);
+
+      lib.broadcaster.subscribe({ room: `game-${gameId}`, client: context.client });
 
       return { status: 'ok' };
     } catch (err) {

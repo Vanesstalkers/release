@@ -38,12 +38,13 @@
   }
 
   async broadcastData() {
+    const gameId = this._id;
     const changes = this.getChanges();
     if (Object.keys(changes).length) {
       const $set = {};
       for (const [col, ids] of Object.entries(changes)) {
         if (col === 'game') {
-          Object.assign($set, changes.game[this._id]);
+          Object.assign($set, changes.game[gameId]);
         } else {
           for (const [id, value] of Object.entries(ids)) {
             if (value.fake) continue;
@@ -55,10 +56,11 @@
       }
 
       delete $set._id;
-      await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(this._id) }, { $set });
-
-      lib.broadcaster.publish({ room: this, data: changes });
+      await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
     }
+
+    this.clearChanges();
+    return changes;
   }
   prepareFakeData({ data, userId }) {
     const result = {};
@@ -96,7 +98,7 @@
       addPlane: [],
       eventTrigger: [],
     };
-    this.availablePorts = data.availablePorts;
+    this.availablePorts = data.availablePorts || [];
 
     if (data.playerMap) {
       data.playerList = [];
@@ -385,7 +387,7 @@
     this.addPlane(plane);
 
     await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-    if (this.availablePorts) {
+    if (this.availablePorts.length === 0) {
       // plane удаляется в getPlanePortsAvailability
       return; // все зоны стыковки заняты - новые блоки добавляться не будут
     }
@@ -399,7 +401,7 @@
     targetPort.updateDirect(targetPortDirect);
     this.linkPlanes({ joinPort, targetPort });
 
-    this.set('availablePorts', null);
+    this.set('availablePorts', []);
 
     let availableZoneCount = 0;
     for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
@@ -412,9 +414,8 @@
       this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
       this.getActivePlayer().getObjects({ className: 'Dice' }).length;
 
-    console.log('availableZoneCount=', availableZoneCount, dominoCount);
     if (availableZoneCount > dominoCount) {
-      game.updateStatus();
+      this.updateStatus();
       return { status: 'ok', gameFinished: true };
     }
   }
@@ -462,7 +463,7 @@
               targetPort.updateDirect(targetPortDirect);
               this.linkPlanes({ joinPort, targetPort });
 
-              this.set('availablePorts', null);
+              this.set('availablePorts', []);
             }
           }
         }
@@ -544,7 +545,7 @@
       await api.game.action({
         name: 'endRound',
         data: { timerOverdue: true },
-        customContext: { gameId: this._id, userId: player.userId },
+        customContext: { gameId: this._id, playerId: player._id },
       });
     }
   }
@@ -552,5 +553,12 @@
     const player = this.getActivePlayer();
     player.set('timerEndTime', null);
     player.set('timerUpdateTime', Date.now());
+  }
+
+  secureBroadcast(data, broadcastClients) {
+    for (const client of broadcastClients) {
+      const broadcastData = this.prepareFakeData({ userId: client.userId, data });
+      client.emit('db/smartUpdated', broadcastData);
+    }
   }
 });

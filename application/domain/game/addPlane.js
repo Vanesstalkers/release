@@ -3,7 +3,7 @@ async (game, { joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => 
   const joinPlane = joinPort.getParent();
   const targetPort = game.getObjectById(targetPortId);
 
-  game.set('availablePorts', null);
+  game.set('availablePorts', []);
 
   // тут нужна проверка getAvailablePortsToJoinPlane
 

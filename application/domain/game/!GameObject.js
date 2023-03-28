@@ -49,6 +49,7 @@
     this.set(objKey, { ...(this[objKey] || {}), ...value });
   }
   delete(objKey, key) {
+    // !!! переделать на удаление через null
     delete this[objKey][key];
     this.set(objKey, { ...this[objKey] });
   }

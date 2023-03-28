@@ -67,6 +67,7 @@
         side.set('value', undefined);
       }
       for (const linkCode of Object.values(side.links)) {
+        // !!! тут не обновляется card-plane
         this.getGame().getObjectByCode(linkCode).updateExpectedValues();
       }
     });

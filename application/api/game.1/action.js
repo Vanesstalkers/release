@@ -3,18 +3,16 @@
   method: async ({
     name: eventName,
     data: eventData = {},
-    customContext: { gameId: processGameId, userId: processUserId } = {},
+    customContext: { gameId: processGameId, playerId: processPlayerId } = {},
   }) => {
     try {
-      const gameId = context.game || processGameId;
-      const userId = context.userId || processUserId;
-      const user = await db.mongo.findOne('user', userId);
-      const gameData = await db.mongo.findOne('game', gameId);
-      const game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
+      const gameId = context.gameId || processGameId;
+      const playerId = context.playerId || processPlayerId;
+      // lib.broadcaster.pubClient.publish(`game-${gameId}`, JSON.stringify({ eventName, eventData }));
+      const game = lib.repository.getCollection('game').get(gameId);
       const activePlayer = game.getActivePlayer();
-      game.clearChanges();
 
-      if (user.player.toString() !== activePlayer._id.toString() && eventName !== 'leaveGame')
+      if (playerId.toString() !== activePlayer._id.toString() && eventName !== 'leaveGame')
         throw new Error('Игрок не может совершить это действие, так как сейчас не его ход');
       if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
         throw new Error('Игрок не может совершая действие в этот ход');
@@ -23,7 +21,11 @@
       const result = await event(game, eventData);
       const { clientCustomUpdates } = result;
 
-      await game.broadcastData();
+      const changes = await game.broadcastData();
+      lib.broadcaster.pubClient.publish(
+        `game-${gameId}`,
+        JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
+      );
       if (clientCustomUpdates) context.client.emit('db/smartUpdated', clientCustomUpdates);
       return result;
     } catch (err) {
