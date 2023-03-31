@@ -1,8 +1,8 @@
 ({
   host: '0.0.0.0',
-  balancer: 8000,
+  balancer: 8800,
   protocol: 'http',
-  ports: [8001/* , 8002 */],
+  ports: [8801/* , 8802 */],
   nagle: false,
   timeouts: {
     bind: 2000,
