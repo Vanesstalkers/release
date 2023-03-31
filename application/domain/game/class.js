@@ -499,8 +499,7 @@
         await domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
-        lib.timers.timerDelete(this);
-        this.set('status', 'finished');
+        lib.repository.getCollection('lobby').get('main').removeGame({ _id: this._id });
         break;
     }
   }

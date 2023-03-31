@@ -80,6 +80,15 @@
     const gameId = _id.toString();
     this.games.delete(gameId);
     this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
+
+    const game = lib.repository.getCollection('game').get(gameId);
+    lib.timers.timerDelete(game);
+    game.set('status', 'finished');
+    const changes = await game.broadcastData();
+    lib.broadcaster.pubClient.publish(
+      `game-${gameId}`,
+      JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
+    );
   }
   async updateGame({ _id, ...data }) {
     const gameId = _id.toString();

@@ -30,13 +30,13 @@
 
       if (gameId) {
         const gameLoaded = await db.redis.hget('games', gameId);
-        if (!gameLoaded) {
+        let game;
+        if (gameLoaded) {
+          game = lib.repository.getCollection('game').get(gameId);
+        } else {
           const gameData = await db.mongo.findOne('game', gameId);
-          if (!gameData) {
-            context.gameId = null;
-            context.playerId = null;
-          } else {
-            const game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
+          if (gameData) {
+            game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
             if (game.status !== 'finished') {
               lib.timers.timerRestart(game, { extraTime: 0 }); // перезапустит таймер с временем активного игрока (фича)
               lib.repository.getCollection('game').set(gameId, game);
@@ -52,11 +52,14 @@
               //     eventData: { _id: gameId, round: game.round, status: game.status, playerList: game.getPlayerList() },
               //   })
               // );
-
-              context.client.emit('session/joinGame', { gameId, playerId });
-              // ,
             }
           }
+        }
+        if (game && game.status !== 'finished') {
+          context.client.emit('session/joinGame', { gameId, playerId });
+        } else {
+          context.gameId = null;
+          context.playerId = null;
         }
       }
 
