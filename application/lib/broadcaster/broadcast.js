@@ -1,9 +1,8 @@
-({ room: roomName, data }) => {
+({ room: roomName, data, secureData = {} }) => {
   const { getRoom } = lib.broadcaster;
   const room = getRoom(roomName);
   for (const client of room.clients) {
-    const broadcastData = data;
-    // !!! тут могут быть кастомные данные для конкретных userId
-    client.emit('db/smartUpdated', broadcastData);
+    client.emit('db/smartUpdated', data);
+    if (secureData[client.userId]) client.emit('db/smartUpdated', secureData[client.userId]);
   }
 };

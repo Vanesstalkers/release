@@ -17,14 +17,14 @@ async () => {
   });
   subClient.on('message', async (channel, message) => {
     const messageData = JSON.parse(message);
-    const { data, directUser, broadcast } = messageData;
+    const { data, secureData, directUser, broadcast } = messageData;
     if (directUser) {
       const { emitType } = messageData;
       const { client } = lib.broadcaster.subscribers.get(directUser);
       if (client) client.emit(emitType, { ...data });
     } else if (broadcast === true) {
       // рассылки из broadcastClass-объектов (тип рассылки db/smartUpdated)
-      lib.broadcaster.broadcast({ room: channel, data });
+      lib.broadcaster.broadcast({ room: channel, data, secureData });
     } else {
       // входящие для broadcastClass-объектов
       const { instance, clients } = lib.broadcaster.rooms.get(channel);

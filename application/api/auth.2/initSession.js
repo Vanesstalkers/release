@@ -36,6 +36,7 @@
         }
         Object.assign(sessionData, session.data);
       }
+      lib.repository.restore('user', sessionData.userId, user);
 
       context.client.userId = sessionData.userId;
       context.client.startSession(token, sessionData); // данные попадут в context (в следующих вызовах)
@@ -44,8 +45,7 @@
         api.auth.provider.saveSession(token, null, { online: false });
       });
 
-      // !!! перенести отсюда
-      return { token, gameId: sessionData.gameId, playerId: sessionData.playerId };
+      return { token, userId: sessionData.userId };
     } catch (err) {
       console.log(err);
       return { status: 'err', message: err.message };

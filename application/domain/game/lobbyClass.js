@@ -22,12 +22,28 @@
     return Object.fromEntries(Object.entries(Object.fromEntries(this.games)).map(([id]) => [id, {}]));
   }
   getSingleGame(game) {
-    return { _id: game._id, round: game.round, status: game.status, playerList: game.getPlayerList() };
+    return { _id: game._id, round: game.round, status: game.status, playerList: game.playerList };
   }
 
-  joinLobby({ token, wid, userId }) {
+  async joinLobby({ token, wid, userId }) {
     this.sessions.add(userId);
-    this.broadcast({ lobby: { [this.id]: { userList: [...this.sessions] } } });
+    const repoUser = lib.repository.user[userId];
+    const { helper = null } = repoUser;
+
+    this.broadcast(
+      {
+        lobby: { [this.id]: { userList: [...this.sessions] } },
+      },
+      // secureData
+      helper
+        ? {
+            [userId]: {
+              user: { [userId]: { helper } },
+            },
+          }
+        : {}
+    );
+
     lib.broadcaster.pubClient.publish(
       `worker-${wid}`,
       JSON.stringify({ emitType: 'db/smartUpdated', directUser: userId, data: this.getData() })
