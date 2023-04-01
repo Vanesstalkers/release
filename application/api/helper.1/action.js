@@ -9,8 +9,12 @@
       if (tutorial) {
         if (currentTutorial.active) throw new Error('Another tutorial is active');
         if (!domain.game[tutorial]) throw new Error('Tutorial not found');
-        repoUser.currentTutorial = { active: tutorial, step: 0 };
-        const helper = Object.values(domain.game[tutorial]).find(({ initialStep }) => initialStep);
+        const helper = step
+          ? Object.entries(domain.game[tutorial]).find(([key]) => key === step)[1]
+          : Object.values(domain.game[tutorial]).find(({ initialStep }) => initialStep);
+        if (!helper) throw new Error('Tutorial initial step not found');
+        repoUser.currentTutorial = { active: tutorial };
+
         lib.repository.user[userId].helper = helper;
       } else if (currentTutorial.active) {
         if (action === 'exit') {

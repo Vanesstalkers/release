@@ -13,12 +13,10 @@
         if (err) throw err;
       });
       await lib.repository.getCollection('lobby').get('main').joinLobby({ token, wid: application.worker.id, userId });
-      const activeHelper = lib.repository.getCollection('user').get(userId).helper;
       // lib.broadcaster.pubClient.publish(
       //   `lobby-main`,
       //   JSON.stringify({ eventName: 'joinLobby', eventData: { token, wid: application.worker.id, userId } })
       // );
-      if (activeHelper) context.client.emit('db/smartUpdated', { user: { [userId]: { helper: activeHelper } } });
 
       context.client.events.close.push(() => {
         lib.repository.getCollection('lobby').get('main').leaveLobby({ token, userId });
