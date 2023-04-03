@@ -13,6 +13,7 @@ async () => {
     });
   }
   for (const fn of db.mongo.handlers.afterStart) {
-    if (typeof fn === 'function') fn();
+    if (typeof fn === 'function')
+      await fn()
   }
 };

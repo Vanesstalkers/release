@@ -24,15 +24,17 @@
       } else {
         session = await api.auth.provider.restoreSession(token);
         if (session?.online) throw new Error('Session dublicates');
+        if (session) {
+          user = await api.auth.provider.getUser({ _id: session.data.userId });
+          if (!user) session = null;
+          else api.auth.provider.saveSession(token, null, { online: true });
+        }
         if (!session) {
           login = 'demo' + Math.random();
           user = await api.auth.provider.registerUser(login, '');
           sessionData.userId = user._id.toString();
           await api.auth.provider.createSession(token, sessionData, { ip: context.client.ip, online: true });
           session = { data: sessionData };
-        } else {
-          api.auth.provider.saveSession(token, null, { online: true });
-          user = await api.auth.provider.getUser({ _id: session.data.userId });
         }
         Object.assign(sessionData, session.data);
       }

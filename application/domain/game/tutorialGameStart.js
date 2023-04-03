@@ -4,11 +4,10 @@
     text: 'Приветствую на портале обучающих настольных игр для бизнеса. Я могу провести небольшую экскурсию по сайту.',
     buttons: [
       { text: 'Продолжай', step: 'games' },
-      { text: 'Я разберусь', step: 'exit', exit: true },
+      { text: 'Я разберусь', action: 'exit' },
     ],
   },
   games: {
-    pos: 'bottom-left',
     text: 'Тут список игр',
     active: '.menu-item.list',
     buttons: [{ text: 'Дальше', step: 'rates' }],

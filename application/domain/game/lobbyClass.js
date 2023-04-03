@@ -1,22 +1,29 @@
 (class Lobby extends lib.broadcaster.class(lib.repository.class(class {})) {
   sessions = new Set();
   games = new Map();
+  chat = [];
   constructor({ id }) {
     super({ col: 'lobby', id });
     this.id = id;
-
     // for (const [name, method] of Object.entries(domain.game.methods)) {
     //   if (name === 'parent') continue;
     //   this[name] = method;
     // }
   }
   getData() {
-    const gameMap = {};
+    const gameMap = {},
+      userMap = {};
     for (const [id, game] of this.games) gameMap[id] = this.getSingleGame(game);
+    for (const id of this.sessions) userMap[id] = this.getSingleUser(lib.repository.user[id]);
     return {
-      lobby: { [this.id]: { userList: [...this.sessions], gameMap: this.getGamesMap() } },
+      lobby: { [this.id]: { userMap: this.getUsersMap(), gameMap: this.getGamesMap() } },
       game: gameMap,
+      user: userMap,
+      chat: this.getChatMap(),
     };
+  }
+  getChatMap() {
+    return Object.fromEntries(this.chat.slice(-10).map((msg) => [`${msg.time}-${msg._id}`, msg]));
   }
   getGamesMap() {
     return Object.fromEntries(Object.entries(Object.fromEntries(this.games)).map(([id]) => [id, {}]));
@@ -24,16 +31,34 @@
   getSingleGame(game) {
     return { _id: game._id, round: game.round, status: game.status, playerList: game.playerList };
   }
+  getUsersMap() {
+    return Object.fromEntries([...this.sessions].map((id) => [id, {}]));
+  }
+  getSingleUser(user) {
+    return { _id: user._id, name: user.name, login: user.login };
+  }
 
+  async restoreChat() {
+    const msgList = await db.mongo.find('chat');
+    for (const msg of msgList) {
+      this.chat.push(msg);
+    }
+  }
+  async updateChat({ text, user }) {
+    const time = Date.now();
+    const insertData = { text, user, time };
+    const { _id } = await db.mongo.insertOne('chat', insertData);
+    insertData._id = _id;
+    this.chat.push(insertData);
+    this.broadcast({ chat: { [`${time}-${_id}`]: insertData } });
+  }
   async joinLobby({ token, wid, userId }) {
     this.sessions.add(userId);
     const repoUser = lib.repository.user[userId];
     const { helper = null } = repoUser;
 
     this.broadcast(
-      {
-        lobby: { [this.id]: { userList: [...this.sessions] } },
-      },
+      this.getData(),
       // secureData
       helper
         ? {
@@ -51,7 +76,10 @@
   }
   leaveLobby({ token, userId }) {
     this.sessions.delete(userId);
-    this.broadcast({ lobby: { [this.id]: { userList: [...this.sessions] } } });
+    this.broadcast(this.getData());
+  }
+  async updateUser({ userId }) {
+    this.broadcast({ user: { [userId]: this.getSingleUser(lib.repository.user[userId]) } });
   }
   async createGame({ type, userId }) {
     const gameJSON = domain.game.exampleJSON[type];

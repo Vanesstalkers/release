@@ -87,9 +87,12 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
 
   const card = await game.smartMoveRandomCard({ target: cardDeckActive });
   if (card && game.settings.acceptAutoPlayRoundStartCard === true) await card.play();
-
-  game.set('round', game.round + 1);
-  lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
+  
+  // игра могла закончиться по результатам добавления новых plane на игровое поле
+  if (game.status !== 'finished') { 
+    game.set('round', game.round + 1);
+    lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
+  }
 
   return { status: 'ok' };
 };
