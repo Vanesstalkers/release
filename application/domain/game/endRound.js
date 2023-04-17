@@ -10,7 +10,10 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
     return { status: 'ok' };
   }
 
-  if (game.status !== 'inProcess') throw new Error('Действие запрещено');
+  if (game.status !== 'inProcess') {
+    console.log('game', { status: game.status, id: game._id });
+    throw new Error('Действие запрещено');
+  }
 
   if (timerOverdue || game.activeEvent) await game.callEventHandlers({ handler: 'timerOverdue' });
 
@@ -91,8 +94,10 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   // игра могла закончиться по результатам добавления новых plane на игровое поле
   if (game.status !== 'finished') { 
     game.set('round', game.round + 1);
+    lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, round: game.round });
     lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
   }
+
 
   return { status: 'ok' };
 };

@@ -3,11 +3,13 @@
   method: async ({ text }) => {
     try {
       const userId = context.client.userId;
+      const { name } = lib.repository.user[userId];
+      if (!name) throw new Error('User name must not be empty');
 
       await lib.repository
         .getCollection('lobby')
         .get('main')
-        .updateChat({ text, user: { id: userId, name: lib.repository.user[userId].name } });
+        .updateChat({ text, user: { id: userId, name } });
 
       return { status: 'ok' };
     } catch (err) {

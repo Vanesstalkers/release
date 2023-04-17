@@ -8,11 +8,16 @@
       if (game.finished) throw new Error('Game finished');
 
       const repoUser = lib.repository.user[userId];
-      const { helper = null } = repoUser;
+      let { helper = null, finishedTutorials = {} } = repoUser;
       const data = game.prepareFakeData({
         userId,
         data: { ...game.store, game: { [gameId]: { ...game, store: undefined } } },
       });
+      if (!helper && !finishedTutorials['tutorialGameStart']) {
+        helper = Object.values(domain.game['tutorialGameStart']).find(({ initialStep }) => initialStep);
+        repoUser.currentTutorial = { active: 'tutorialGameStart' };
+        repoUser.helper = helper;
+      }
       if (helper) data.user = { [userId]: { helper } };
       context.client.emit('db/smartUpdated', data);
 

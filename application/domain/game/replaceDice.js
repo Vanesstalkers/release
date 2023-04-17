@@ -32,6 +32,7 @@ async (game, { diceId, zoneId }) => {
       if (!releaseItem.release) finalRelease = false;
     }
     if (finalRelease) {
+      game.setWinner({ player });
       game.updateStatus();
       return { status: 'ok', gameFinished: true };
     }

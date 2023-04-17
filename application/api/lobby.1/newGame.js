@@ -22,6 +22,6 @@
     //   })
     // );
 
-    return { status: 'ok' };
+    return { status: 'ok', gameId };
   },
 });

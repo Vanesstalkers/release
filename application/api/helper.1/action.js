@@ -4,7 +4,7 @@
     try {
       const userId = context.client.userId;
       const repoUser = lib.repository.user[userId];
-      const { currentTutorial = {} } = repoUser;
+      const { currentTutorial = {}, finishedTutorials = {} } = repoUser;
 
       if (tutorial) {
         if (currentTutorial.active) throw new Error('Another tutorial is active');
@@ -18,6 +18,7 @@
         lib.repository.user[userId].helper = helper;
       } else if (currentTutorial.active) {
         if (action === 'exit') {
+          lib.repository.user[userId].finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
           lib.repository.user[userId].helper = null;
           lib.repository.user[userId].currentTutorial = {};
         } else {
@@ -26,6 +27,7 @@
             lib.repository.user[userId].helper = nextStep;
             lib.repository.user[userId].currentTutorial = { ...currentTutorial, step };
           } else {
+            lib.repository.user[userId].finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
             lib.repository.user[userId].helper = null;
             lib.repository.user[userId].currentTutorial = {};
           }

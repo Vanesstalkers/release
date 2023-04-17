@@ -2,6 +2,10 @@
   sessions = new Set();
   games = new Map();
   chat = [];
+  topPlayers = {
+    1: { games: 100, win: 55 },
+    2: { games: 20, win: 19 },
+  };
   constructor({ id }) {
     super({ col: 'lobby', id });
     this.id = id;
@@ -20,7 +24,11 @@
       game: gameMap,
       user: userMap,
       chat: this.getChatMap(),
+      topPlayers: this.getTopPlayersMap(),
     };
+  }
+  getTopPlayersMap() {
+    return this.topPlayers;
   }
   getChatMap() {
     return Object.fromEntries(this.chat.slice(-10).map((msg) => [`${msg.time}-${msg._id}`, msg]));
@@ -55,7 +63,12 @@
   async joinLobby({ token, wid, userId }) {
     this.sessions.add(userId);
     const repoUser = lib.repository.user[userId];
-    const { helper = null } = repoUser;
+    let { helper = null, finishedTutorials = {} } = repoUser;
+    if (!helper && !finishedTutorials['tutorialLobbyStart']) {
+      helper = Object.values(domain.game['tutorialLobbyStart']).find(({ initialStep }) => initialStep);
+      repoUser.currentTutorial = { active: 'tutorialLobbyStart' };
+      repoUser.helper = helper;
+    }
 
     this.broadcast(
       this.getData(),
@@ -104,7 +117,7 @@
       game: { [gameId]: gameData },
     });
   }
-  async removeGame({ _id }) {
+  async removeGame({ _id, canceledByUser }) {
     const gameId = _id.toString();
     this.games.delete(gameId);
     this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
@@ -117,12 +130,33 @@
       `game-${gameId}`,
       JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
     );
+
+    const afterGameHelpers = {};
+    const playerList = game.getObjects({ className: 'Player' });
+    for (const player of playerList) {
+      const { userId } = player;
+      const repoUser = lib.repository.user[userId];
+      const type = canceledByUser
+        ? userId === canceledByUser
+          ? 'lose'
+          : 'cancel'
+        : userId === game.winUserId
+        ? 'win'
+        : 'lose';
+      const helper = domain.game['tutorialGameEnd'][type];
+      afterGameHelpers[userId] = { user: { [userId]: { helper } } };
+      repoUser.currentTutorial = { active: 'tutorialGameEnd' };
+      repoUser.helper = helper;
+    }
+    this.broadcast(null, afterGameHelpers);
   }
   async updateGame({ _id, ...data }) {
     const gameId = _id.toString();
     const game = this.games.get(gameId);
-    Object.assign(game, data);
-    this.broadcast({ game: { [gameId]: data } });
+    if (game) {
+      Object.assign(game, data);
+      this.broadcast({ game: { [gameId]: data } });
+    }
   }
   async restoreGame(gameData) {
     const game = await new domain.game.class({ _id: gameData._id }).fromJSON(gameData);

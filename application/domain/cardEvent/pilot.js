@@ -23,7 +23,7 @@
     },
     endRound: async function ({ game }) {
       const player = game.getActivePlayer();
-      if (!game.availablePorts) {
+      if (!game.availablePorts.length) {
         const planeDeck = player.getObjectByCode('Deck[plane]');
         const plane = planeDeck.getObjects({ className: 'Plane' })[0];
         if (plane) await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });

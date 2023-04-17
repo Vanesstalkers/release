@@ -500,8 +500,17 @@
         break;
       case 'inProcess':
         lib.repository.getCollection('lobby').get('main').removeGame({ _id: this._id });
-        break;
+        return; // обновлять игру не нужно, так как она удалена
     }
+
+    lib.repository.getCollection('lobby').get('main').updateGame({ _id: this._id, status: this.status });
+  }
+  async setWinner({ player }) {
+    this.set('winUserId', player.userId);
+    // const playerList = this.getObjects({ className: 'Player' });
+    // for (const player of playerList) {
+
+    // }
   }
 
   async callHandler({ handler, data = {} }) {
@@ -541,11 +550,15 @@
     if (this.finished) return clearInterval(timerId);
     if (player.timerEndTime < Date.now()) {
       clearInterval(timerId);
-      await api.game.action({
-        name: 'endRound',
-        data: { timerOverdue: true },
-        customContext: { gameId: this._id, playerId: player._id },
-      });
+      if (this.status === 'inProcess') {
+        await api.game.action({
+          name: 'endRound',
+          data: { timerOverdue: true },
+          customContext: { gameId: this._id, playerId: player._id },
+        });
+      } else {
+        lib.timers.timerDelete(this);
+      }
     }
   }
   onTimerDelete({ timerId }) {
