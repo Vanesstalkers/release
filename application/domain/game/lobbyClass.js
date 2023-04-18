@@ -63,23 +63,26 @@
   async joinLobby({ token, wid, userId }) {
     this.sessions.add(userId);
     const repoUser = lib.repository.user[userId];
-    let { helper = null, finishedTutorials = {} } = repoUser;
+    let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
     if (!helper && !finishedTutorials['tutorialLobbyStart']) {
       helper = Object.values(domain.game['tutorialLobbyStart']).find(({ initialStep }) => initialStep);
+      // helperLinks = {
+      //   'menu-top': { selector: '.menu-item.top', tutorial: 'tutorialLobbyStart', type: 'lobby' },
+      //   'menu-chat': { selector: '.menu-item.chat', tutorial: 'tutorialMenu', type: 'lobby' },
+      // };
       repoUser.currentTutorial = { active: 'tutorialLobbyStart' };
       repoUser.helper = helper;
+      repoUser.helperLinks = helperLinks;
     }
 
     this.broadcast(
       this.getData(),
       // secureData
-      helper
-        ? {
-            [userId]: {
-              user: { [userId]: { helper } },
-            },
-          }
-        : {}
+      {
+        [userId]: {
+          user: { [userId]: { helper, helperLinks } },
+        },
+      }
     );
 
     lib.broadcaster.pubClient.publish(

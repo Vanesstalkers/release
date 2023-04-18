@@ -8,6 +8,8 @@
       this.activeTimers[owner._id] = setInterval(async () => {
         if (typeof owner.onTimerTick === 'function') await owner.onTimerTick({ timerId, data });
       }, 1000);
+    } else {
+      console.log('!!! fake timer', owner);
     }
   },
   timerDelete(owner) {
