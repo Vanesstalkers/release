@@ -10,11 +10,20 @@ async (game, { diceId, zoneId }) => {
   if (dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу');
 
   const deletedDices = game.getDeletedDices();
-  const replacedDice = deletedDices.find((dice) => dice.getParent() == zone);
+  const replacedDice = deletedDices.find((dice) => {
+    const diceZone = dice.getParent();
+    const plane = diceZone.getParent();
+    const isBridgeZone = plane.matches({ className: 'Bridge' });
+    const nearZones = diceZone.getNearZones();
+    return diceZone == zone || (isBridgeZone && nearZones.includes(zone));
+  });
   const remainDeletedDices = deletedDices.filter((dice) => dice != replacedDice);
   if (!replacedDice && remainDeletedDices.length)
     throw new Error('Добавлять новые костяшки можно только взамен временно удаленных');
 
+  if (replacedDice && zone !== replacedDice.getParent()) {
+    replacedDice.assign('relatedPlacement', { [dice._id]: dice });
+  }
   dice.moveToTarget(zone);
   dice.set('placedAtRound', game.round);
   game.markNew(dice); // у других игроков в хранилище нет данных об этом dice

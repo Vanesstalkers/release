@@ -10,9 +10,22 @@ async (game, { diceId }) => {
 
   game.disableChanges();
   {
+    const deletedDices = game.getDeletedDices();
+    const deletedDicesZones = deletedDices.reduce((result, dice) => {
+      const zone = dice.getParent();
+      result = result.concat(zone);
+      if (zone.findParent({ className: 'Bridge' })) result = result.concat(...zone.getNearZones());
+      return result;
+    }, []);
     game.getZonesAvailability(dice).forEach((status, zone) => {
       if (zone != currentZone) {
-        availableZones[zone._id] = { available: status };
+        if (deletedDicesZones.length) {
+          if (deletedDicesZones.includes(zone)) {
+            availableZones[zone._id] = { available: status };
+          }
+        } else {
+          availableZones[zone._id] = { available: status };
+        }
       }
     });
   }

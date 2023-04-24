@@ -48,13 +48,20 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   const cardDeckActive = game.getObjectByCode('Deck[card_active]');
 
   // если есть временно удаленные dice, то восстанавливаем состояние до их удаления
-  game.getDeletedDices().forEach((dice) => {
+  for (const dice of game.getDeletedDices()) {
     const zone = dice.getParent();
 
     // уже успели заменить один из удаленных dice - возвращаем его в руку player закончившего ход
     // (!!! если появятся новые источники размещения dice в zone, то этот код нужно переписать)
     const alreadyPlacedDice = zone.getNotDeletedItem();
     if (alreadyPlacedDice) alreadyPlacedDice.moveToTarget(prevPlayerHand);
+
+    // была размещена костяшка на прилегающую к Bridge зону
+    if (dice.relatedPlacement) {
+      for (const relatedDice of Object.values(dice.relatedPlacement)) {
+        relatedDice.moveToTarget(prevPlayerHand);
+      }
+    }
 
     dice.set('deleted', null);
     zone.updateValues();
@@ -72,7 +79,7 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
         }
       }
     }
-  });
+  }
 
   if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
     if (!prevPlayer.eventData.disablePlayerHandLimit) {
@@ -90,14 +97,13 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
 
   const card = await game.smartMoveRandomCard({ target: cardDeckActive });
   if (card && game.settings.acceptAutoPlayRoundStartCard === true) await card.play();
-  
+
   // игра могла закончиться по результатам добавления новых plane на игровое поле
-  if (game.status !== 'finished') { 
+  if (game.status !== 'finished') {
     game.set('round', game.round + 1);
     lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, round: game.round });
     lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
   }
-
 
   return { status: 'ok' };
 };

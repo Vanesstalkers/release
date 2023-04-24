@@ -67,14 +67,28 @@
         side.set('value', undefined);
       }
       for (const linkCode of Object.values(side.links)) {
-        // !!! тут не обновляется card-plane
         this.getGame().getObjectByCode(linkCode).updateExpectedValues();
       }
     });
   }
+  getNearZones() {
+    const game = this.getGame();
+    const zones = [];
+    for (const side of this.sideList) {
+      for (const linkCode of Object.values(side.links)) {
+        zones.push(game.getObjectByCode(linkCode).getParent());
+      }
+    }
+    return zones;
+  }
   removeItem(itemToRemove) {
     this.delete('itemMap', itemToRemove._id);
     this.updateValues();
+  }
+  getDeletedItem() {
+    return Object.keys(this.itemMap)
+      .map((_id) => this.getStore().dice[_id])
+      .find((dice) => dice.deleted);
   }
   getNotDeletedItem() {
     return Object.keys(this.itemMap)

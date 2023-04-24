@@ -9,10 +9,17 @@
 
       const repoUser = lib.repository.user[userId];
       let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
-      const data = game.prepareFakeData({
-        userId,
-        data: { ...game.store, game: { [gameId]: { ...game, store: undefined } } },
-      });
+      let data;
+      try {
+        data = game.prepareFakeData({
+          userId,
+          data: { ...game.store, game: { [gameId]: { ...game, store: undefined } } },
+        });
+      } catch (err) {
+        // !!! нужно выяснить, в каких случаях возникают проблемы с первичным наполнением игры
+        await game.updateStatus();
+        throw err;
+      }
       if (!helper && !finishedTutorials['tutorialGameStart']) {
         // helper = Object.values(domain.game['tutorialGameStart']).find(({ initialStep }) => initialStep);
         // helperLinks = {
