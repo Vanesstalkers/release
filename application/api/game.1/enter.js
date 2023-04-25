@@ -9,6 +9,32 @@
 
       const repoUser = lib.repository.user[userId];
       let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
+
+      const startTutorial = Object.keys(game.playerMap).length > 1 ? 'tutorialGameStart' : 'tutorialGameSingleStart';
+      if (!helper && !finishedTutorials[startTutorial]) {
+        helper = Object.values(domain.game[startTutorial]).find(({ initialStep }) => initialStep);
+        repoUser.helper = helper;
+        repoUser.currentTutorial = { active: startTutorial };
+        lib.timers.timerRestart(game, { time: 60 });
+      }
+      if (Object.keys(helperLinks).length === 0) {
+        helperLinks = {
+          handPlanes: {
+            selector: '.hand-planes',
+            tutorial: 'tutorialGameLinks',
+            type: 'game',
+            pos: { top: true, left: true },
+          },
+          cardActive: {
+            selector: '[code="Deck[card_active]"] .card-event',
+            tutorial: 'tutorialGameLinks',
+            type: 'game',
+            pos: { top: false, left: true },
+          },
+        };
+        repoUser.helperLinks = helperLinks;
+      }
+
       let data;
       try {
         data = game.prepareFakeData({
@@ -20,16 +46,7 @@
         await game.updateStatus();
         throw err;
       }
-      if (!helper && !finishedTutorials['tutorialGameStart']) {
-        // helper = Object.values(domain.game['tutorialGameStart']).find(({ initialStep }) => initialStep);
-        // helperLinks = {
-        //   'game1': { selector: '.player.iam .player-hands', tutorial: 'tutorialLobbyStart', type: 'game' },
-        //   'game2': { selector: '.deck-active', tutorial: 'tutorialMenu', type: 'game' },
-        // };
-        // repoUser.currentTutorial = { active: 'tutorialGameStart' };
-        repoUser.helper = helper;
-        repoUser.helperLinks = helperLinks;
-      }
+
       data.user = { [userId]: { helper, helperLinks } };
       context.client.emit('db/smartUpdated', data);
 

@@ -9,6 +9,7 @@
       if (tutorial) {
         if (currentTutorial.active) throw new Error('Another tutorial is active');
         if (!domain.game[tutorial]) throw new Error('Tutorial not found');
+        if(usedLink && !step) step = usedLink;
         const helper = step
           ? Object.entries(domain.game[tutorial]).find(([key]) => key === step)[1]
           : Object.values(domain.game[tutorial]).find(({ initialStep }) => initialStep);
