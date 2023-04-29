@@ -19,6 +19,12 @@
       }
       if (Object.keys(helperLinks).length === 0) {
         helperLinks = {
+          planeControls: {
+            selector: '.gameplane-controls',
+            tutorial: 'tutorialGameLinks',
+            type: 'game',
+            pos: { top: false, left: false },
+          },
           handPlanes: {
             selector: '.hand-planes',
             tutorial: 'tutorialGameLinks',

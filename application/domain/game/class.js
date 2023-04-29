@@ -380,43 +380,46 @@
     }
     if (!this.isSinglePlayer()) return;
     const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-    const plane = gamePlaneDeck.getRandomItem();
-    if (!plane) return;
+    let plane;
+    while ((plane = gamePlaneDeck.getRandomItem())) {
+      console.log('plane._id=', plane._id);
+      gamePlaneDeck.removeItem(plane);
+      this.addPlane(plane);
 
-    gamePlaneDeck.removeItem(plane);
-    this.addPlane(plane);
+      await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+      if (this.availablePorts.length === 0) continue;
 
-    await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-    if (this.availablePorts.length === 0) {
-      // plane удаляется в getPlanePortsAvailability
-      return; // все зоны стыковки заняты - новые блоки добавляться не будут
-    }
+      const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+      const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
 
-    const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-    const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+      const joinPort = this.getObjectById(joinPortId);
+      joinPort.updateDirect(joinPortDirect);
+      const targetPort = this.getObjectById(targetPortId);
+      targetPort.updateDirect(targetPortDirect);
+      this.linkPlanes({ joinPort, targetPort });
 
-    const joinPort = this.getObjectById(joinPortId);
-    joinPort.updateDirect(joinPortDirect);
-    const targetPort = this.getObjectById(targetPortId);
-    targetPort.updateDirect(targetPortDirect);
-    this.linkPlanes({ joinPort, targetPort });
+      this.set('availablePorts', []);
 
-    this.set('availablePorts', []);
+      let availableZoneCount = 0;
+      for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
+        availableZoneCount += plane
+          .getObjects({ className: 'Zone' })
+          .filter((zone) => !zone.getNotDeletedItem()).length;
+      }
+      for (const bridge of this.getObjects({ className: 'Bridge', directParent: this })) {
+        availableZoneCount += bridge
+          .getObjects({ className: 'Zone' })
+          .filter((zone) => !zone.getNotDeletedItem()).length;
+      }
+      const dominoCount =
+        this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
+        this.getActivePlayer().getObjects({ className: 'Dice' }).length;
 
-    let availableZoneCount = 0;
-    for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
-      availableZoneCount += plane.getObjects({ className: 'Zone' }).filter((zone) => !zone.getNotDeletedItem()).length;
-    }
-    for (const bridge of this.getObjects({ className: 'Bridge', directParent: this })) {
-      availableZoneCount += bridge.getObjects({ className: 'Zone' }).filter((zone) => !zone.getNotDeletedItem()).length;
-    }
-    const dominoCount =
-      this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
-      this.getActivePlayer().getObjects({ className: 'Dice' }).length;
-
-    if (availableZoneCount > dominoCount) {
-      this.updateStatus();
-      return { status: 'ok', gameFinished: true };
+      if (availableZoneCount > dominoCount) {
+        this.updateStatus();
+        return { status: 'ok', gameFinished: true };
+      }
+      return;
     }
   }
 
