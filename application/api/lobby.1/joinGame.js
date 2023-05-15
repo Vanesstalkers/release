@@ -7,11 +7,7 @@
       context.gameId = gameId.toString();
       context.playerId = playerId.toString();
 
-      const changes = await game.broadcastData();
-      lib.broadcaster.pubClient.publish(
-        `game-${gameId}`,
-        JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
-      );
+      await game.broadcastData();
       
       context.client.emit('session/joinGame', { gameId, playerId });
       lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, playerList: game.getPlayerList() });

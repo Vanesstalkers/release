@@ -1,4 +1,6 @@
-(class Game extends domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject'])) {
+(class Game extends lib.broadcaster.class(
+  domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject']))
+) {
   #changes = {};
   #disableChanges = false;
   store = {};
@@ -59,8 +61,12 @@
       await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
     }
 
+    lib.broadcaster.pubClient.publish(
+      `game-${gameId}`,
+      JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
+    );
+
     this.clearChanges();
-    return changes;
   }
   prepareFakeData({ data, userId }) {
     const result = {};
@@ -382,7 +388,6 @@
     const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
     let plane;
     while ((plane = gamePlaneDeck.getRandomItem())) {
-      console.log('plane._id=', plane._id);
       gamePlaneDeck.removeItem(plane);
       this.addPlane(plane);
 

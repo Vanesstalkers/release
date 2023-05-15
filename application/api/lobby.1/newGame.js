@@ -4,12 +4,11 @@
     const gameJSON = domain.game.exampleJSON[type];
     if (!gameJSON) return;
     const gameData = lib.utils.structuredClone(gameJSON);
-    const game = await new domain.game.class().fromJSON(gameData, { newGame: true });
-    const insertOne = await db.mongo.insertOne('game', game);
-    const gameId = insertOne._id.toString();
-    game._id = gameId;
+    const _id = db.mongo.ObjectID();
+    const gameId = _id.toString();
+    const game = await new domain.game.class({ _id }).fromJSON(gameData, { newGame: true });
+    await db.mongo.insertOne('game', game);
     lib.repository.getCollection('game').set(gameId, game);
-    lib.broadcaster.addChannel({ name: `game-${gameId}`, instance: game });
     lib.repository
       .getCollection('lobby')
       .get('main')

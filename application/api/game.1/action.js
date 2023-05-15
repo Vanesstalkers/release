@@ -20,12 +20,7 @@
       const event = domain.game[eventName];
       const result = await event(game, eventData);
       const { clientCustomUpdates } = result;
-
-      const changes = await game.broadcastData();
-      lib.broadcaster.pubClient.publish(
-        `game-${gameId}`,
-        JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
-      );
+      await game.broadcastData();
       if (clientCustomUpdates) context.client.emit('db/smartUpdated', clientCustomUpdates);
       return result;
     } catch (err) {

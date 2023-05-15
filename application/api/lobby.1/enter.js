@@ -34,7 +34,6 @@
             if (game.status !== 'finished') {
               lib.timers.timerRestart(game, { extraTime: 0 }); // перезапустит таймер с временем активного игрока (фича)
               lib.repository.getCollection('game').set(gameId, game);
-              lib.broadcaster.addChannel({ name: `game-${gameId}`, instance: game });
               lib.repository
                 .getCollection('lobby')
                 .get('main')

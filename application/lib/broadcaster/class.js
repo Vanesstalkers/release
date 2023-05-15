@@ -1,13 +1,18 @@
 (Base) =>
   class extends Base {
     channelName;
-    constructor(data) {
-      const { col, id } = data;
-      super(data);
+    constructor(data, config = {}) {
+      let { col, id } = data;
+      if (data._id) id = data._id;
+      if (config.col) col = config.col;
+      super(data, config);
       this.channelName = `${col}-${id}`;
       lib.broadcaster.addChannel({ name: this.channelName, instance: this });
     }
-    broadcast(data, secureData) {
-      lib.broadcaster.pubClient.publish(this.channelName, JSON.stringify({ data, secureData, broadcast: true }));
+    broadcast(data, secureData, { emitType } = {}) {
+      lib.broadcaster.pubClient.publish(
+        this.channelName,
+        JSON.stringify({ data, secureData, broadcast: true, emitType })
+      );
     }
   };

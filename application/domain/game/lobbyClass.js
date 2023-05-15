@@ -97,20 +97,6 @@
   async updateUser({ userId }) {
     this.broadcast({ user: { [userId]: this.getSingleUser(lib.repository.user[userId]) } });
   }
-  async createGame({ type, userId }) {
-    const gameJSON = domain.game.exampleJSON[type];
-    if (!gameJSON) return;
-    const gameData = lib.utils.structuredClone(gameJSON);
-    const game = await new domain.game.class().fromJSON(gameData, { newGame: true });
-    const insertOne = await db.mongo.insertOne('game', game);
-    game._id = insertOne._id;
-    this.games.set(game._id.toString(), game);
-
-    this.broadcast({
-      lobby: { [this.id]: { gameMap: this.getGamesMap() } },
-      game: { [game._id]: this.getSingleGame(game) },
-    });
-  }
   async addGame(gameData) {
     const gameId = gameData._id.toString();
     await db.redis.hset('games', gameId, true);
@@ -128,11 +114,7 @@
     const game = lib.repository.getCollection('game').get(gameId);
     lib.timers.timerDelete(game);
     game.set('status', 'finished');
-    const changes = await game.broadcastData();
-    lib.broadcaster.pubClient.publish(
-      `game-${gameId}`,
-      JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
-    );
+    await game.broadcastData();
 
     const afterGameHelpers = {};
     const playerList = game.getObjects({ className: 'Player' });
@@ -160,9 +142,5 @@
       Object.assign(game, data);
       this.broadcast({ game: { [gameId]: data } });
     }
-  }
-  async restoreGame(gameData) {
-    const game = await new domain.game.class({ _id: gameData._id }).fromJSON(gameData);
-    this.games.set(game._id.toString(), game);
   }
 });
