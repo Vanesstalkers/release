@@ -45,7 +45,7 @@
       try {
         data = game.prepareFakeData({
           userId,
-          data: { ...game.store, game: { [gameId]: { ...game, store: undefined } } },
+          data: { ...game.store, game: { [gameId]: { ...game, store: undefined } }, logs: game.logs },
         });
       } catch (err) {
         // !!! нужно выяснить, в каких случаях возникают проблемы с первичным наполнением игры

@@ -2,13 +2,17 @@
   access: 'public',
   method: async ({ gameId }) => {
     try {
+      const { userId } = context.client;
       const game = lib.repository.getCollection('game').get(gameId);
-      const { _id: playerId } = await game.userJoin({ userId: context.client.userId });
+
+      game.log({ msg: `Игрок {{player}} присоединился к игре.`, userId });
+
+      const { _id: playerId } = await game.userJoin({ userId });
       context.gameId = gameId.toString();
       context.playerId = playerId.toString();
 
       await game.broadcastData();
-      
+
       context.client.emit('session/joinGame', { gameId, playerId });
       lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, playerList: game.getPlayerList() });
       // lib.broadcaster.pubClient.publish(

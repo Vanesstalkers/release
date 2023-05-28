@@ -15,7 +15,33 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
     throw new Error('Действие запрещено');
   }
 
-  if (timerOverdue || game.activeEvent) await game.callEventHandlers({ handler: 'timerOverdue' });
+  // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
+  const prevPlayer = game.getActivePlayer();
+  const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
+
+  if (game.round > 0) {
+    if (timerOverdue) {
+      game.log({
+        msg: `Игрок {{player}} не успел завершить все действия за отведенное время, и раунд №${game.round} завершился автоматически.`,
+        userId: prevPlayer.userId,
+      });
+    } else {
+      game.log({
+        msg: `Игрок {{player}} закончил раунд №${game.round}.`,
+        userId: prevPlayer.userId,
+      });
+    }
+  }
+
+  if (timerOverdue || game.activeEvent) {
+    // таймер закончился или нажата кнопка окончания раунда при не завершенном активном событии
+
+    if (game.activeEvent) {
+      const source = game.getObjectById(game.activeEvent.sourceId);
+      game.log(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
+    }
+    await game.callEventHandlers({ handler: 'timerOverdue' });
+  }
 
   if (game.activeEvent)
     throw new Error(
@@ -28,10 +54,6 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   game.clearEventHandlers();
 
   // ЛОГИКА НАЧАЛА НОВОГО РАУНДА
-
-  // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
-  const prevPlayer = game.getActivePlayer();
-  const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
 
   prevPlayer.delete('eventData', 'actionsDisabled');
   const singlePlayerSkipTurn = game.isSinglePlayer() && prevPlayer.eventData.skipTurn;
@@ -48,13 +70,18 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   const cardDeckActive = game.getObjectByCode('Deck[card_active]');
 
   // если есть временно удаленные dice, то восстанавливаем состояние до их удаления
-  for (const dice of game.getDeletedDices()) {
+  const deletedDices = game.getDeletedDices();
+  let restoreAlreadyPlacedDice = false;
+  for (const dice of deletedDices) {
     const zone = dice.getParent();
 
     // уже успели заменить один из удаленных dice - возвращаем его в руку player закончившего ход
     // (!!! если появятся новые источники размещения dice в zone, то этот код нужно переписать)
     const alreadyPlacedDice = zone.getNotDeletedItem();
-    if (alreadyPlacedDice) alreadyPlacedDice.moveToTarget(prevPlayerHand);
+    if (alreadyPlacedDice) {
+      alreadyPlacedDice.moveToTarget(prevPlayerHand);
+      restoreAlreadyPlacedDice = true;
+    }
 
     // была размещена костяшка на прилегающую к Bridge зону
     if (dice.relatedPlacement) {
@@ -80,10 +107,24 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
       }
     }
   }
+  if (deletedDices.length) {
+    game.log({
+      msg:
+        `Найдены удаленные, но не замененные костяшки. Вся группа удаленных костяшек была восстановлена на свои места.` +
+        (restoreAlreadyPlacedDice
+          ? ` Те костяшки, которые уже были размещены взамен этой группы, были возвращены обратно в руку игрока {{player}}.`
+          : ''),
+      userId: prevPlayer.userId,
+    });
+  }
 
   if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
     if (!prevPlayer.eventData.disablePlayerHandLimit) {
       prevPlayerHand.moveAllItems({ target: gameDominoDeck });
+      game.log({
+        msg: `У игрока {{player}} превышено максимальное количество костяшек в руке на конец хода. Все его костяшки сброшены в колоду.`,
+        userId: prevPlayer.userId,
+      });
     }
   }
   prevPlayer.delete('eventData', 'disablePlayerHandLimit');
@@ -95,14 +136,22 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
     card.moveToTarget(cardDeckDrop);
   }
 
+  const newRoundNumber = game.round + 1;
+  const newRoundLogEvents = [];
+  newRoundLogEvents.push(`Начало раунда №${newRoundNumber}.`);
+
   const card = await game.smartMoveRandomCard({ target: cardDeckActive });
-  if (card && game.settings.acceptAutoPlayRoundStartCard === true) await card.play();
+  if (card && game.settings.acceptAutoPlayRoundStartCard === true) {
+    await card.play();
+    newRoundLogEvents.push(`Активировано ежедневное событие "${card.title}".`);
+  }
 
   // игра могла закончиться по результатам добавления новых plane на игровое поле
   if (game.status !== 'finished') {
-    game.set('round', game.round + 1);
+    game.set('round', newRoundNumber);
     lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, round: game.round });
     lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
+    for (const logEvent of newRoundLogEvents) game.log(logEvent);
   }
 
   return { status: 'ok' };

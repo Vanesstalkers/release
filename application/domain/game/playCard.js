@@ -7,5 +7,8 @@ async (game, { cardId }) => {
   await card.play();
   const cardDeckDrop = game.getObjectByCode('Deck[card_active]');
   card.moveToTarget(cardDeckDrop);
+
+  game.log(`Пользователь {{player}} активировал событие "${card.title}".`);
+
   return { status: 'ok' };
 };

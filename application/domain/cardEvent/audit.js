@@ -6,13 +6,18 @@
     }
   },
   handlers: {
-    eventTrigger: async function ({ game, target }) {
-      const hand = target.getObjectByCode('Deck[domino]');
-      for (const dice of hand.getObjects({ className: 'Dice' })) {
+    eventTrigger: async function ({ game, target: targetPlayer }) {
+      game.log({
+        msg: `Игрок {{player}} стал целью события "${this.title}".`,
+        userId: targetPlayer.userId,
+      });
+
+      const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
+      for (const dice of targetPlayerHand.getObjects({ className: 'Dice' })) {
         dice.set('visible', true);
         game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
       }
-      hand.set('itemMap', hand.itemMap); // инициирует рассылку изменений с пересчетом видимости
+      targetPlayerHand.set('itemMap', targetPlayerHand.itemMap); // инициирует рассылку изменений с пересчетом видимости
 
       game.set('activeEvent', null);
       for (const player of game.getObjects({ className: 'Player' })) {

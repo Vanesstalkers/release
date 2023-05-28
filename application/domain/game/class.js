@@ -2,6 +2,7 @@
   domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject']))
 ) {
   #changes = {};
+  #logs = {};
   #disableChanges = false;
   store = {};
   playerMap = {};
@@ -26,6 +27,20 @@
     if (!this.#changes[col]) this.#changes[col] = {};
     this.#changes[col][_id] = obj;
   }
+  log(data) {
+    if (typeof data === 'string') data = { msg: data };
+    if (!data.time) data.time = Date.now();
+
+    if (data.msg.includes('{{player}}')) {
+      const userId = data.userId || this.getActivePlayer().userId;
+      const logUser = lib.repository['user'][userId];
+      const logUserTitle = logUser.name || logUser.login;
+      data.msg = data.msg.replace(/{{player}}/g, `"${logUserTitle}"`);
+    }
+
+    const id = (Date.now() + Math.random()).toString().replace('.', '_');
+    this.#logs[id] = data;
+  }
   getChanges() {
     return this.#changes;
   }
@@ -37,26 +52,32 @@
   }
   clearChanges() {
     this.#changes = {};
+    this.#logs = {};
   }
 
   async broadcastData() {
     const gameId = this._id;
+    const $set = {};
+
     const changes = this.getChanges();
-    if (Object.keys(changes).length) {
-      const $set = {};
-      for (const [col, ids] of Object.entries(changes)) {
-        if (col === 'game') {
-          Object.assign($set, changes.game[gameId]);
-        } else {
-          for (const [id, value] of Object.entries(ids)) {
-            if (value.fake) continue;
-            for (const [key, val] of Object.entries(value)) {
-              $set[`store.${col}.${id}.${key}`] = val;
-            }
+    for (const [col, ids] of Object.entries(changes)) {
+      if (col === 'game') {
+        Object.assign($set, changes.game[gameId]);
+      } else {
+        for (const [id, value] of Object.entries(ids)) {
+          if (value.fake) continue;
+          for (const [key, val] of Object.entries(value)) {
+            $set[`store.${col}.${id}.${key}`] = val;
           }
         }
       }
+    }
 
+    if (Object.keys(this.#logs).length) {
+      Object.assign($set, Object.fromEntries(Object.entries(this.#logs).map(([key, data]) => [`logs.${key}`, data])));
+      Object.assign(this.logs, this.#logs);
+    }
+    if (Object.keys($set).length) {
       delete $set._id;
       await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
     }
@@ -65,6 +86,7 @@
       `game-${gameId}`,
       JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
     );
+    this.broadcast({ logs: this.#logs }, {}, { emitType: 'db/smartUpdated' });
 
     this.clearChanges();
   }
@@ -92,6 +114,7 @@
 
   async fromJSON(data, { newGame } = {}) {
     if (data.store) this.store = data.store;
+    this.logs = data.logs || {};
     this.addTime = data.addTime;
     this.settings = data.settings;
     this.status = data.status || 'waitForPlayers';
@@ -196,6 +219,10 @@
         // актуально только для событий в течение хода игрока, инициированных не им самим
         activePlayer.delete('eventData', 'skipTurn');
       } else {
+        this.log({
+          msg: `Игрок {{player}} получает дополнительный ход.`,
+          userId: activePlayer.userId,
+        });
         return activePlayer;
       }
     }
@@ -208,6 +235,10 @@
       newActivePlayer = player;
     } else {
       while (newActivePlayer.eventData.skipTurn) {
+        this.log({
+          msg: `Игрок {{player}} пропускает ход.`,
+          userId: newActivePlayer.userId,
+        });
         newActivePlayer.delete('eventData', 'skipTurn');
         activePlayerIndex++;
         newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];

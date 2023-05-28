@@ -4,6 +4,7 @@
   constructor(data, { parent }) {
     super(data, { col: 'card', parent });
 
+    this.title = data.title;
     this.name = data.name;
     this.played = data.played;
     this.#events = domain.cardEvent[this.name];

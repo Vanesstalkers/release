@@ -13,6 +13,11 @@
   },
   handlers: {
     eventTrigger: async function ({ game, target: targetPlayer }) {
+      game.log({
+        msg: `Игрок {{player}} стал целью события "${this.title}".`,
+        userId: targetPlayer.userId,
+      });
+
       const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
       const gameDeck = game.getObjectByCode('Deck[domino]');
 

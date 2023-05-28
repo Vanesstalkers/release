@@ -35,13 +35,23 @@
       return { timerOverdueOff: true };
     },
     endRound: async function ({ game }) {
+      const restoredDices = {};
       for (const dside of game.getObjects({ className: 'DiceSide' })) {
         if (dside.eventData.fakeValue) {
           dside.set('value', dside.eventData.fakeValue.realValue);
           dside.delete('eventData', 'fakeValue');
           const zoneParent = dside.findParent({ className: 'Zone' });
-          if (zoneParent) zoneParent.updateValues();
+          if (zoneParent) {
+            zoneParent.updateValues();
+            // не пишем в лог сообщение о костяшках в руке, чтобы соперники не узнали об их наличии
+            const dice = dside.getParent();
+            restoredDices[dice._id] = dice;
+          }
         }
+      }
+      for (const dice of Object.values(restoredDices)) {
+        const diceTitle = dice.sideList.map((side) => side.value).join('-');
+        game.log(`Костяшка "${diceTitle}" восстановила свои значения, измененные событием "Костыль".`);
       }
     },
     timerOverdue: async function ({ game }) {

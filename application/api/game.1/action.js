@@ -6,7 +6,7 @@
     customContext: { gameId: processGameId, playerId: processPlayerId } = {},
   }) => {
     try {
-      const gameId = context.gameId || processGameId;
+      const gameId = (context.gameId || processGameId).toString();
       const playerId = context.playerId || processPlayerId;
       // lib.broadcaster.pubClient.publish(`game-${gameId}`, JSON.stringify({ eventName, eventData }));
       const game = lib.repository.getCollection('game').get(gameId);
@@ -20,6 +20,7 @@
       const event = domain.game[eventName];
       const result = await event(game, eventData);
       const { clientCustomUpdates } = result;
+      
       await game.broadcastData();
       if (clientCustomUpdates) context.client.emit('db/smartUpdated', clientCustomUpdates);
       return result;
