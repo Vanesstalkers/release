@@ -1,5 +1,5 @@
 ({
-  init: async function ({ game, player }) {
+  init: function ({ game, player }) {
     let diceFound = false;
     for (const deck of player.getObjects({ className: 'Deck' })) {
       if (deck.type !== 'domino') continue;
@@ -13,7 +13,7 @@
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
   },
   handlers: {
-    eventTrigger: async function ({ game, player, target, fakeValue = 0, skipFakeValueSet }) {
+    eventTrigger: function ({ game, player, target, fakeValue = 0, skipFakeValueSet }) {
       if (fakeValue === undefined) return;
       if (!skipFakeValueSet) {
         if (!target) return;
@@ -34,7 +34,7 @@
 
       return { timerOverdueOff: true };
     },
-    endRound: async function ({ game }) {
+    endRound: function ({ game }) {
       const restoredDices = {};
       for (const dside of game.getObjects({ className: 'DiceSide' })) {
         if (dside.eventData.fakeValue) {
@@ -53,8 +53,8 @@
         game.log(`Костяшка "${dice.getTitle()}" восстановила свои значения, измененные событием "Костыль".`);
       }
     },
-    timerOverdue: async function ({ game }) {
-      await domain.cardEvent['crutch'].handlers.eventTrigger.call(this, {
+    timerOverdue: function ({ game }) {
+      domain.cardEvent['crutch'].handlers.eventTrigger.call(this, {
         game,
         player: game.getActivePlayer(),
         skipFakeValueSet: true,

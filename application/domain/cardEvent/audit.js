@@ -1,12 +1,12 @@
 ({
-  init: async function ({ game }) {
+  init: function ({ game }) {
     game.set('activeEvent', { sourceId: this._id });
     for (const player of game.getObjects({ className: 'Player' })) {
       player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
     }
   },
   handlers: {
-    eventTrigger: async function ({ game, target: targetPlayer }) {
+    eventTrigger: function ({ game, target: targetPlayer }) {
       game.log({
         msg: `Игрок {{player}} стал целью события "${this.title}".`,
         userId: targetPlayer.userId,
@@ -26,12 +26,12 @@
 
       return { timerOverdueOff: true };
     },
-    timerOverdue: async function ({ game }) {
+    timerOverdue: function ({ game }) {
       const player = game.getActivePlayer();
-      await domain.cardEvent['audit'].handlers.eventTrigger.call(this, {
-        game,
-        target: game.getObjects({ className: 'Player' }).find((p) => p !== player),
-      });
+      const target = game.isSinglePlayer()
+        ? player
+        : game.getObjects({ className: 'Player' }).find((p) => p !== player);
+      domain.cardEvent['audit'].handlers.eventTrigger.call(this, { game, target });
     },
   },
 });

@@ -1,4 +1,4 @@
-async (game, { count }) => {
+(game, { count }) => {
   const player = game.getActivePlayer();
   const playerHand = player.getObjectByCode('Deck[card]');
   const deck = game.getObjectByCode('Deck[card]');

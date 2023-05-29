@@ -12,7 +12,7 @@
       lib.broadcaster.subClient.subscribe(`lobby-main`, (err, count) => {
         if (err) throw err;
       });
-      await lib.repository.getCollection('lobby').get('main').joinLobby({ token, wid: application.worker.id, userId });
+      lib.repository.getCollection('lobby').get('main').joinLobby({ token, wid: application.worker.id, userId });
       // lib.broadcaster.pubClient.publish(
       //   `lobby-main`,
       //   JSON.stringify({ eventName: 'joinLobby', eventData: { token, wid: application.worker.id, userId } })
@@ -30,7 +30,7 @@
         } else {
           const gameData = await db.mongo.findOne('game', gameId);
           if (gameData) {
-            game = await new domain.game.class({ _id: gameId }).fromJSON(gameData);
+            game = new domain.game.class({ _id: gameId }).fromJSON(gameData);
             if (game.status !== 'finished') {
               lib.timers.timerRestart(game, { extraTime: 0 }); // перезапустит таймер с временем активного игрока (фича)
               lib.repository.getCollection('game').set(gameId, game);

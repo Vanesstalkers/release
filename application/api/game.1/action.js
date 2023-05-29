@@ -18,7 +18,7 @@
         throw new Error('Игрок не может совершать действия в этот ход');
 
       const event = domain.game[eventName];
-      const result = await event(game, eventData);
+      const result = event(game, eventData);
       const { clientCustomUpdates } = result;
       
       await game.broadcastData();

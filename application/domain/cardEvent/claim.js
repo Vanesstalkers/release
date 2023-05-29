@@ -1,8 +1,8 @@
 ({
-  init: async function ({ game, player }) {
+  init: function ({ game, player }) {
     if (game.isSinglePlayer()) {
       const target = game.getActivePlayer();
-      await domain.cardEvent['claim'].handlers.eventTrigger.call(this, { game, target });
+      domain.cardEvent['claim'].handlers.eventTrigger.call(this, { game, target });
       return { removeHandlers: true };
     } else {
       game.set('activeEvent', { sourceId: this._id });
@@ -12,7 +12,7 @@
     }
   },
   handlers: {
-    eventTrigger: async function ({ game, target: targetPlayer }) {
+    eventTrigger: function ({ game, target: targetPlayer }) {
       game.log({
         msg: `Игрок {{player}} стал целью события "${this.title}".`,
         userId: targetPlayer.userId,
@@ -30,12 +30,12 @@
 
       return { timerOverdueOff: true };
     },
-    timerOverdue: async function ({ game }) {
+    timerOverdue: function ({ game }) {
       const player = game.getActivePlayer();
-      await domain.cardEvent['claim'].handlers.eventTrigger.call(this, {
-        game,
-        target: game.getObjects({ className: 'Player' }).find((p) => p !== player),
-      });
+      const target = game.isSinglePlayer()
+        ? player
+        : game.getObjects({ className: 'Player' }).find((p) => p !== player);
+      domain.cardEvent['claim'].handlers.eventTrigger.call(this, { game, target });
     },
   },
 });

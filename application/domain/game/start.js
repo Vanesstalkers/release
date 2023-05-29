@@ -5,7 +5,7 @@ async () => {
     new lobbyClass({ id: 'main' });
 
     db.mongo.handlers.afterStart.push(async () => {
-      const lobby = await lib.repository.getCollection('lobby').get('main');
+      const lobby = lib.repository.getCollection('lobby').get('main');
       await lobby.restoreChat();
     });
   }

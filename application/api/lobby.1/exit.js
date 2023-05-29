@@ -6,13 +6,6 @@
     //   `lobby-main`,
     //   JSON.stringify({ eventName: 'leaveLobby', eventData: { token, userId } })
     // );
-
-    // domain.db.updateSubscriberRooms({
-    //   client: context.client,
-    //   accessType: 'lobby',
-    // });
-    //domain.lobby.unsubscribe({ client: context.client });
-
     return 'ok';
   },
 });

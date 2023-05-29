@@ -1,5 +1,5 @@
 ({
-  init: async function ({ game }) {
+  init: function ({ game }) {
     game.set('activeEvent', { sourceId: this._id });
     for (const plane of game.getObjects({ className: 'Plane', directParent: game })) {
       if (plane.isCardPlane()) continue;
@@ -7,7 +7,7 @@
     }
   },
   handlers: {
-    eventTrigger: async function ({ game, target }) {
+    eventTrigger: function ({ game, target }) {
       if (!target) return;
 
       const deck = game.getObjectByCode('Deck[domino]');
@@ -22,8 +22,8 @@
       }
       return { timerOverdueOff: true };
     },
-    timerOverdue: async function ({ game }) {
-      await domain.cardEvent['dream'].handlers.eventTrigger.call(this, {
+    timerOverdue: function ({ game }) {
+      domain.cardEvent['dream'].handlers.eventTrigger.call(this, {
         game,
         target: game.getObjects({ className: 'Plane', directParent: game }).find((plane) => !plane.isCardPlane()),
       });

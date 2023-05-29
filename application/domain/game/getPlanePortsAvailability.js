@@ -1,4 +1,4 @@
-async (game, { joinPlaneId }) => {
+(game, { joinPlaneId }) => {
   const availablePorts = [];
   const joinPlane = game.getObjectById(joinPlaneId);
 
@@ -24,7 +24,7 @@ async (game, { joinPlaneId }) => {
     if (game.status === 'prepareStart') {
       planeParent.removeItem(joinPlane, { deleteFromStorage: true });
       game.addPlane(joinPlane);
-      await game.callEventHandlers({ handler: 'addPlane' });
+      game.callEventHandlers({ handler: 'addPlane' });
     } else {
       if (!joinPlane.customClass.includes('card-plane')) {
         const planeDeck = game.getObjectByCode('Deck[plane]');

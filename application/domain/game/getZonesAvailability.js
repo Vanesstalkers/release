@@ -1,4 +1,4 @@
-async (game, { diceId }) => {
+(game, { diceId }) => {
   if (game.activeEvent)
     throw new Error(
       game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'

@@ -93,8 +93,9 @@
       if (item) item.moveToTarget(target);
     }
   }
-  getRandomItem() {
-    const itemIds = Object.keys(this.itemMap);
+  getRandomItem({ skipArray = [] } = {}) {
+    const itemIds = Object.keys(this.itemMap).filter((_id) => !skipArray.includes(_id));
+    if (itemIds.length === 0) return null;
     const id = itemIds[Math.floor(Math.random() * itemIds.length)];
     const store = this.getFlattenStore();
     return store[id];

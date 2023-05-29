@@ -7,7 +7,7 @@
 
       game.log({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 
-      const { _id: playerId } = await game.userJoin({ userId });
+      const { _id: playerId } = game.userJoin({ userId });
       context.gameId = gameId.toString();
       context.playerId = playerId.toString();
 

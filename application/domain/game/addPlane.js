@@ -1,4 +1,4 @@
-async (game, { joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => {
+(game, { joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => {
   const joinPort = game.getObjectById(joinPortId);
   const joinPlane = joinPort.getParent();
   const targetPort = game.getObjectById(targetPortId);
@@ -24,7 +24,7 @@ async (game, { joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => 
     joinPlane.getParent().removeItem(joinPlane, { deleteFromStorage: true });
     game.addPlane(joinPlane);
 
-    await game.callEventHandlers({ handler: 'addPlane' });
+    game.callEventHandlers({ handler: 'addPlane' });
     return { status: 'ok' };
   } else {
     return { status: 'err', message: 'Блок игрового поля не может быть добавлен к этой зоне интеграции' };

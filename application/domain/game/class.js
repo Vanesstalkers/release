@@ -112,7 +112,7 @@
     return result;
   }
 
-  async fromJSON(data, { newGame } = {}) {
+  fromJSON(data, { newGame } = {}) {
     if (data.store) this.store = data.store;
     this.logs = data.logs || {};
     this.addTime = data.addTime;
@@ -198,11 +198,11 @@
   getPlayerByUserId(id) {
     return this.getPlayerList().find((player) => player.userId === id);
   }
-  async userJoin({ userId }) {
+  userJoin({ userId }) {
     const player = this.getFreePlayerSlot();
     player.set('ready', true);
     player.set('userId', userId);
-    if (!this.getFreePlayerSlot()) await this.updateStatus();
+    if (!this.getFreePlayerSlot()) this.updateStatus();
     return player;
   }
   getFreePlayerSlot() {
@@ -234,14 +234,22 @@
       if (player.eventData.skipTurn) player.delete('eventData', 'skipTurn');
       newActivePlayer = player;
     } else {
-      while (newActivePlayer.eventData.skipTurn) {
-        this.log({
-          msg: `Игрок {{player}} пропускает ход.`,
-          userId: newActivePlayer.userId,
-        });
-        newActivePlayer.delete('eventData', 'skipTurn');
-        activePlayerIndex++;
-        newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
+      if (this.isSinglePlayer()) {
+        newActivePlayer.delete('eventData', 'actionsDisabled');
+        if (newActivePlayer.eventData.skipTurn) {
+          newActivePlayer.delete('eventData', 'skipTurn');
+          newActivePlayer.assign('eventData', { actionsDisabled: true });
+        }
+      } else {
+        while (newActivePlayer.eventData.skipTurn) {
+          this.log({
+            msg: `Игрок {{player}} пропускает ход.`,
+            userId: newActivePlayer.userId,
+          });
+          newActivePlayer.delete('eventData', 'skipTurn');
+          activePlayerIndex++;
+          newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
+        }
       }
     }
 
@@ -398,18 +406,18 @@
     return result;
   }
 
-  async smartMoveRandomCard({ target }) {
+  smartMoveRandomCard({ target }) {
     const deck = this.getObjectByCode('Deck[card]');
     let card = deck.getRandomItem();
     if (card) card.moveToTarget(target);
     else {
-      await this.restoreCardsFromDrop();
+      this.restoreCardsFromDrop();
       card = deck.getRandomItem();
       if (card) card.moveToTarget(target);
     }
     return card;
   }
-  async restoreCardsFromDrop() {
+  restoreCardsFromDrop() {
     const deck = this.getObjectByCode('Deck[card]');
     const deckDrop = this.getObjectByCode('Deck[card_drop]');
     for (const card of deckDrop.getObjects({ className: 'Card' })) {
@@ -417,13 +425,17 @@
     }
     if (!this.isSinglePlayer()) return;
     const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-    let plane;
-    while ((plane = gamePlaneDeck.getRandomItem())) {
+    let plane,
+      skipArray = [];
+    while ((plane = gamePlaneDeck.getRandomItem({ skipArray }))) {
+      if(plane === null) return; // если перебор закончился, то getRandomItem вернет null
+      skipArray.push(plane._id.toString());
+
+      domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+      if (this.availablePorts.length === 0) continue;
+
       gamePlaneDeck.removeItem(plane);
       this.addPlane(plane);
-
-      await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-      if (this.availablePorts.length === 0) continue;
 
       const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
       const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
@@ -469,11 +481,11 @@
       [handler]: this.eventHandlers[handler].filter((_id) => _id !== source._id.toString()),
     });
   }
-  async callEventHandlers({ handler, data }) {
+  callEventHandlers({ handler, data }) {
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     for (const sourceId of this.eventHandlers[handler]) {
       const source = this.getObjectById(sourceId);
-      const { saveHandler, timerOverdueOff } = (await source.callHandler({ handler, data })) || {};
+      const { saveHandler, timerOverdueOff } = source.callHandler({ handler, data }) || {};
       if (!saveHandler) this.deleteEventHandler({ handler, source });
       if (timerOverdueOff) this.deleteEventHandler({ handler: 'timerOverdue', source });
     }
@@ -481,7 +493,7 @@
   clearEventHandlers() {
     for (const handler of Object.keys(this.eventHandlers)) this.assign('eventHandlers', { [handler]: [] });
   }
-  async updateStatus() {
+  updateStatus() {
     const playerList = this.getObjects({ className: 'Player' });
     switch (this.status) {
       case 'waitForPlayers':
@@ -492,7 +504,7 @@
             gamePlaneDeck.removeItem(plane);
             this.addPlane(plane);
             if (i > 0) {
-              await domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+              domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
               const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
               const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
 
@@ -521,7 +533,7 @@
           this.addEventHandler({ handler: 'addPlane', source: this });
           lib.timers.timerRestart(this);
         } else {
-          await this.updateStatus();
+          this.updateStatus();
         }
         break;
       case 'prepareStart':
@@ -535,7 +547,7 @@
         }
 
         this.set('status', 'inProcess');
-        await domain.game.endRound(this, { forceActivePlayer: playerList[0] });
+        domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
         lib.repository.getCollection('lobby').get('main').removeGame({ _id: this._id });
@@ -544,7 +556,7 @@
 
     lib.repository.getCollection('lobby').get('main').updateGame({ _id: this._id, status: this.status });
   }
-  async setWinner({ player }) {
+  setWinner({ player }) {
     this.set('winUserId', player.userId);
     // const playerList = this.getObjects({ className: 'Player' });
     // for (const player of playerList) {
@@ -552,7 +564,7 @@
     // }
   }
 
-  async callHandler({ handler, data = {} }) {
+  callHandler({ handler, data = {} }) {
     const player = this.getActivePlayer();
     switch (handler) {
       case 'addPlane':
@@ -566,7 +578,7 @@
             lib.timers.timerRestart(this);
             return { saveHandler: true };
           } else {
-            await this.updateStatus();
+            this.updateStatus();
             return { timerOverdueOff: true };
           }
         }
@@ -583,14 +595,14 @@
     }
     player.set('timerUpdateTime', Date.now());
   }
-  async onTimerTick({ timerId, data: { time = null } = {} }) {
+  onTimerTick({ timerId, data: { time = null } = {} }) {
     const player = this.getActivePlayer();
     console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки
     if (this.finished) return clearInterval(timerId);
     if (player.timerEndTime < Date.now()) {
       clearInterval(timerId);
       if (this.status === 'inProcess') {
-        await api.game.action({
+        api.game.action({
           name: 'endRound',
           data: { timerOverdue: true },
           customContext: { gameId: this._id, playerId: player._id },

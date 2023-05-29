@@ -1,5 +1,5 @@
 ({
-  init: async function ({ game, player }) {
+  init: function ({ game, player }) {
     player.set('eventData', { disablePlayerHandLimit: true });
   },
 });

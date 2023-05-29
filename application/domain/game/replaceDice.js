@@ -1,4 +1,4 @@
-async (game, { diceId, zoneId }) => {
+(game, { diceId, zoneId }) => {
   if (game.activeEvent)
     throw new Error(
       game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
@@ -30,7 +30,7 @@ async (game, { diceId, zoneId }) => {
   if (zone.checkForRelease()) {
     const player = game.getActivePlayer();
     const playerCardDeck = player.getObjectByCode('Deck[card]');
-    await game.smartMoveRandomCard({ target: playerCardDeck });
+    game.smartMoveRandomCard({ target: playerCardDeck });
     lib.timers.timerRestart(game, { extraTime: game.settings.timerReleasePremium });
 
     let finalRelease = true;
@@ -59,7 +59,7 @@ async (game, { diceId, zoneId }) => {
     });
   }
 
-  await game.callEventHandlers({ handler: 'replaceDice' });
+  game.callEventHandlers({ handler: 'replaceDice' });
 
   return { status: 'ok' };
 };

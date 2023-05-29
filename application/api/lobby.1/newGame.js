@@ -6,7 +6,7 @@
     const gameData = lib.utils.structuredClone(gameJSON);
     const _id = db.mongo.ObjectID();
     const gameId = _id.toString();
-    const game = await new domain.game.class({ _id }).fromJSON(gameData, { newGame: true });
+    const game = new domain.game.class({ _id }).fromJSON(gameData, { newGame: true });
     await db.mongo.insertOne('game', game);
     lib.repository.getCollection('game').set(gameId, game);
     lib.repository

@@ -1,11 +1,11 @@
-async (game, { timerOverdue, forceActivePlayer } = {}) => {
+(game, { timerOverdue, forceActivePlayer } = {}) => {
   if (game.status === 'prepareStart') {
     const player = game.getActivePlayer();
 
     const plane = player.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' })[0];
-    await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+    domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
     const availablePort = game.availablePorts[0];
-    await domain.game.addPlane(game, { ...availablePort });
+    domain.game.addPlane(game, { ...availablePort });
 
     return { status: 'ok' };
   }
@@ -40,7 +40,7 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
       const source = game.getObjectById(game.activeEvent.sourceId);
       game.log(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
     }
-    await game.callEventHandlers({ handler: 'timerOverdue' });
+    game.callEventHandlers({ handler: 'timerOverdue' });
   }
 
   if (game.activeEvent)
@@ -50,17 +50,10 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
 
   // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
 
-  await game.callEventHandlers({ handler: 'endRound' });
+  game.callEventHandlers({ handler: 'endRound' });
   game.clearEventHandlers();
 
   // ЛОГИКА НАЧАЛА НОВОГО РАУНДА
-
-  prevPlayer.delete('eventData', 'actionsDisabled');
-  const singlePlayerSkipTurn = game.isSinglePlayer() && prevPlayer.eventData.skipTurn;
-  if (singlePlayerSkipTurn) {
-    prevPlayer.delete('eventData', 'skipTurn');
-    prevPlayer.assign('eventData', { actionsDisabled: true });
-  }
 
   // player которому передают ход
   const activePlayer = game.changeActivePlayer({ player: forceActivePlayer });
@@ -140,9 +133,9 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   const newRoundLogEvents = [];
   newRoundLogEvents.push(`Начало раунда №${newRoundNumber}.`);
 
-  const card = await game.smartMoveRandomCard({ target: cardDeckActive });
+  const card = game.smartMoveRandomCard({ target: cardDeckActive });
   if (card && game.settings.acceptAutoPlayRoundStartCard === true) {
-    await card.play();
+    card.play();
     newRoundLogEvents.push(`Активировано ежедневное событие "${card.title}".`);
   }
 
@@ -150,7 +143,7 @@ async (game, { timerOverdue, forceActivePlayer } = {}) => {
   if (game.status !== 'finished') {
     game.set('round', newRoundNumber);
     lib.repository.getCollection('lobby').get('main').updateGame({ _id: game._id, round: game.round });
-    lib.timers.timerRestart(game, singlePlayerSkipTurn ? { time: 5 } : {});
+    lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
     for (const logEvent of newRoundLogEvents) game.log(logEvent);
   }
 

@@ -1,5 +1,5 @@
 ({
-  init: async function ({ game, player }) {
+  init: function ({ game, player }) {
     let diceFound = false;
     const deck = player.getObjectByCode('Deck[domino]');
     for (const dice of deck.getObjects({ className: 'Dice' })) {
@@ -9,10 +9,10 @@
     if (diceFound) game.set('activeEvent', { sourceId: this._id });
   },
   handlers: {
-    eventTrigger: async function ({ game, player: activePlayer, target }) {
+    eventTrigger: function ({ game, player: activePlayer, target }) {
       if (!target) return;
 
-      async function complete({ game, dice }) {
+      function complete({ game, dice }) {
         game.set('activeEvent', null);
         dice.set('activeEvent', null);
         for (const player of game.getObjects({ className: 'Player' })) {
@@ -36,11 +36,11 @@
 
         if (game.isSinglePlayer()) {
           target.moveToTarget(game.getObjectByCode('Deck[domino]'));
-          return await complete({ game, dice: target });
+          return complete({ game, dice: target });
         } else {
           const players = game.getObjects({ className: 'Player' });
           if (players.length === 2) {
-            await domain.cardEvent['give_project'].handlers.eventTrigger.call(this, {
+            domain.cardEvent['give_project'].handlers.eventTrigger.call(this, {
               game,
               player: activePlayer,
               target: players.find((p) => p !== activePlayer),
@@ -50,29 +50,33 @@
           }
         }
       } else {
-        game.log({
-          msg: `Игрок {{player}} стал целью события "${this.title}".`,
-          userId: target.userId,
-        });
-
-        const playerHand = target.getObjectByCode('Deck[domino]');
         const dice = game.getObjectById(game.activeEvent.targetDiceId);
-        dice.moveToTarget(playerHand);
-        return await complete({ game, dice });
+        const targetDeck = target.getObjectByCode('Deck[domino]');
+        if (target.matches({ className: 'Player' })) {
+          game.log({
+            msg: `Игрок {{player}} стал целью события "${this.title}".`,
+            userId: target.userId,
+          });
+        }
+        dice.moveToTarget(targetDeck);
+        return complete({ game, dice });
       }
     },
-    timerOverdue: async function ({ game }) {
+    timerOverdue: function ({ game }) {
       const player = game.getActivePlayer();
       if (!game.activeEvent?.targetDiceId) {
         const targetDice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
         if (targetDice) game.assign('activeEvent', { targetDiceId: targetDice._id });
+        const deck = player.getObjectByCode('Deck[domino]');
+        for (const dice of deck.getObjects({ className: 'Dice' })) {
+          dice.set('activeEvent', null);
+        }
       }
       if (game.activeEvent?.targetDiceId) {
-        await domain.cardEvent['give_project'].handlers.eventTrigger.call(this, {
-          game,
-          player,
-          target: game.getObjects({ className: 'Player' }).find((p) => p !== player),
-        });
+        const target = game.isSinglePlayer()
+          ? game
+          : game.getObjects({ className: 'Player' }).find((p) => p !== player);
+        domain.cardEvent['give_project'].handlers.eventTrigger.call(this, { game, player, target });
       }
     },
   },

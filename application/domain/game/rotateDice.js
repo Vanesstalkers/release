@@ -1,4 +1,4 @@
-async (game, { diceId }) => {
+(game, { diceId }) => {
   const dice = game.getObjectById(diceId);
   const zone = dice.getParent();
   const checkItemCanBeRotated = zone.checkItemCanBeRotated();

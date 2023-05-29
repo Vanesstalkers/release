@@ -60,7 +60,7 @@
     this.chat.push(insertData);
     this.broadcast({ chat: { [`${time}-${_id}`]: insertData } });
   }
-  async joinLobby({ token, wid, userId }) {
+  joinLobby({ token, wid, userId }) {
     this.sessions.add(userId);
     const repoUser = lib.repository.user[userId];
     let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
@@ -94,7 +94,7 @@
     this.sessions.delete(userId);
     this.broadcast(this.getData());
   }
-  async updateUser({ userId }) {
+  updateUser({ userId }) {
     this.broadcast({ user: { [userId]: this.getSingleUser(lib.repository.user[userId]) } });
   }
   async addGame(gameData) {
@@ -135,7 +135,7 @@
     }
     this.broadcast(null, afterGameHelpers);
   }
-  async updateGame({ _id, ...data }) {
+  updateGame({ _id, ...data }) {
     const gameId = _id.toString();
     const game = this.games.get(gameId);
     if (game) {

@@ -2,7 +2,7 @@
   config: {
     playOneTime: true,
   },
-  init: async function ({ game, player }) {
+  init: function ({ game, player }) {
     const gameDeck = game.getObjectByCode('Deck[plane]');
     const deck = player.getObjectByCode('Deck[plane]');
 
@@ -12,7 +12,7 @@
     }
   },
   handlers: {
-    addPlane: async function ({ game, player }) {
+    addPlane: function ({ game, player }) {
       const gameDeck = game.getObjectByCode('Deck[plane]');
       const deck = player.getObjectByCode('Deck[plane]');
       const itemIds = Object.keys(deck.itemMap);
@@ -21,19 +21,19 @@
       }
       return { timerOverdueOff: true };
     },
-    endRound: async function ({ game }) {
+    endRound: function ({ game }) {
       const player = game.getActivePlayer();
       if (!game.availablePorts.length) {
         const planeDeck = player.getObjectByCode('Deck[plane]');
         const plane = planeDeck.getObjects({ className: 'Plane' })[0];
-        if (plane) await domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+        if (plane) domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
       }
       const availablePort = game.availablePorts[0];
-      if (availablePort) await domain.game.addPlane(game, { ...availablePort });
-      await domain.cardEvent['pilot'].handlers.addPlane({ game, player });
+      if (availablePort) domain.game.addPlane(game, { ...availablePort });
+      domain.cardEvent['pilot'].handlers.addPlane({ game, player });
     },
-    timerOverdue: async function ({ game }) {
-      await domain.cardEvent['pilot'].handlers.endRound({ game });
+    timerOverdue: function ({ game }) {
+      domain.cardEvent['pilot'].handlers.endRound({ game });
     },
   },
 });
