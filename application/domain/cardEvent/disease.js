@@ -11,8 +11,13 @@
     }
   },
   handlers: {
-    eventTrigger: async function ({ game, target }) {
-      target.assign('eventData', { skipTurn: true });
+    eventTrigger: async function ({ game, target: targetPlayer }) {
+      game.log({
+        msg: `Игрок {{player}} стал целью события "${this.title}".`,
+        userId: targetPlayer.userId,
+      });
+
+      targetPlayer.assign('eventData', { skipTurn: true });
       game.set('activeEvent', null);
       for (const player of game.getObjects({ className: 'Player' })) {
         player.set('activeEvent', null);
@@ -21,7 +26,7 @@
     },
     timerOverdue: async function ({ game }) {
       const player = game.getActivePlayer();
-      await domain.cardEvent['disease'].handlers.eventTrigger({
+      await domain.cardEvent['disease'].handlers.eventTrigger.call(this, {
         game,
         target: game.getObjects({ className: 'Player' }).find((p) => p !== player),
       });

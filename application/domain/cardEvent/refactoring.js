@@ -40,6 +40,11 @@
         }
       }
 
+      game.log({
+        msg: `Игрок {{player}} забрал со стола костяшку "${dice.getTitle()}".`,
+        userId: activePlayer.userId,
+      });
+
       return { timerOverdueOff: true };
     },
     endRound: async function ({ game }) {
@@ -50,7 +55,7 @@
     timerOverdue: async function ({ game }) {
       async function eventTrigger(dice) {
         const player = game.getActivePlayer();
-        await domain.cardEvent['refactoring'].handlers.eventTrigger({ game, player, target: dice });
+        await domain.cardEvent['refactoring'].handlers.eventTrigger.call(this, { game, player, target: dice });
       }
 
       for (const plane of game.getObjects({ className: 'Plane' })) {

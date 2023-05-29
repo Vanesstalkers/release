@@ -38,6 +38,9 @@
     return { visibleId, preparedData };
   }
 
+  getTitle(){
+    return this.sideList.map((side) => side.value).join('-');
+  }
   moveToTarget(target) {
     const currentParent = this.getParent();
     currentParent.removeItem(this); // сначала удаляем, чтобы не помешать размещению на соседней зоне

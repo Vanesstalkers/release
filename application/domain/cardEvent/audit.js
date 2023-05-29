@@ -28,7 +28,7 @@
     },
     timerOverdue: async function ({ game }) {
       const player = game.getActivePlayer();
-      await domain.cardEvent['audit'].handlers.eventTrigger({
+      await domain.cardEvent['audit'].handlers.eventTrigger.call(this, {
         game,
         target: game.getObjects({ className: 'Player' }).find((p) => p !== player),
       });

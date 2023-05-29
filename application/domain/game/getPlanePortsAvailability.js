@@ -20,15 +20,18 @@ async (game, { joinPlaneId }) => {
 
   game.set('availablePorts', availablePorts);
   if (availablePorts.length === 0) {
+    const planeParent = joinPlane.getParent();
     if (game.status === 'prepareStart') {
-      joinPlane.getParent().removeItem(joinPlane);
-      joinPlane.getParent().deleteFromObjectStorage(joinPlane);
+      planeParent.removeItem(joinPlane, { deleteFromStorage: true });
       game.addPlane(joinPlane);
       await game.callEventHandlers({ handler: 'addPlane' });
     } else {
-      // // !!! сделать через возврат в deck (кроме card-plane)
-      // // -- game.getStore().plane[itemId].moveToTarget(gameDeck);
-      game.removePlane(joinPlane);
+      if (!joinPlane.customClass.includes('card-plane')) {
+        const planeDeck = game.getObjectByCode('Deck[plane]');
+        joinPlane.moveToTarget(planeDeck);
+      } else {
+        planeParent.removeItem(joinPlane, { deleteFromStorage: true });
+      }
     }
   }
 

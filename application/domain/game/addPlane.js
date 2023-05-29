@@ -5,15 +5,28 @@ async (game, { joinPortId, targetPortId, targetPortDirect, joinPortDirect }) => 
 
   game.set('availablePorts', []);
 
-  // тут нужна проверка getAvailablePortsToJoinPlane
+  game.disableChanges();
+  const targetPortIsAvailable =
+    game
+      .getAvailablePortsToJoinPlane({ joinPort })
+      .find(
+        (item) =>
+          item.targetPortId === targetPort._id &&
+          item.joinPortDirect === joinPortDirect &&
+          item.targetPortDirect === targetPortDirect
+      ) !== undefined;
+  game.enableChanges();
 
-  joinPort.updateDirect(joinPortDirect);
-  targetPort.updateDirect(targetPortDirect);
-  game.linkPlanes({ joinPort, targetPort });
-  joinPlane.getParent().removeItem(joinPlane);
-  joinPlane.getParent().deleteFromObjectStorage(joinPlane);
-  game.addPlane(joinPlane);
+  if (targetPortIsAvailable) {
+    joinPort.updateDirect(joinPortDirect);
+    targetPort.updateDirect(targetPortDirect);
+    game.linkPlanes({ joinPort, targetPort });
+    joinPlane.getParent().removeItem(joinPlane, { deleteFromStorage: true });
+    game.addPlane(joinPlane);
 
-  await game.callEventHandlers({ handler: 'addPlane' });
-  return { status: 'ok' };
+    await game.callEventHandlers({ handler: 'addPlane' });
+    return { status: 'ok' };
+  } else {
+    return { status: 'err', message: 'Блок игрового поля не может быть добавлен к этой зоне интеграции' };
+  }
 };

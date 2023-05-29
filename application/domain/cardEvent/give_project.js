@@ -38,9 +38,23 @@
           target.moveToTarget(game.getObjectByCode('Deck[domino]'));
           return await complete({ game, dice: target });
         } else {
-          return { saveHandler: true };
+          const players = game.getObjects({ className: 'Player' });
+          if (players.length === 2) {
+            await domain.cardEvent['give_project'].handlers.eventTrigger.call(this, {
+              game,
+              player: activePlayer,
+              target: players.find((p) => p !== activePlayer),
+            });
+          } else {
+            return { saveHandler: true };
+          }
         }
       } else {
+        game.log({
+          msg: `Игрок {{player}} стал целью события "${this.title}".`,
+          userId: target.userId,
+        });
+
         const playerHand = target.getObjectByCode('Deck[domino]');
         const dice = game.getObjectById(game.activeEvent.targetDiceId);
         dice.moveToTarget(playerHand);
@@ -51,13 +65,10 @@
       const player = game.getActivePlayer();
       if (!game.activeEvent?.targetDiceId) {
         const targetDice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
-        if (targetDice) {
-          await domain.cardEvent['give_project'].handlers.eventTrigger({ game, player, target: targetDice });
-        }
-        if (game.isSinglePlayer()) return;
+        if (targetDice) game.assign('activeEvent', { targetDiceId: targetDice._id });
       }
-      if (game.activeEvent.targetDiceId) {
-        await domain.cardEvent['give_project'].handlers.eventTrigger({
+      if (game.activeEvent?.targetDiceId) {
+        await domain.cardEvent['give_project'].handlers.eventTrigger.call(this, {
           game,
           player,
           target: game.getObjects({ className: 'Player' }).find((p) => p !== player),

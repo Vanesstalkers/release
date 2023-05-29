@@ -23,7 +23,7 @@
       return { timerOverdueOff: true };
     },
     timerOverdue: async function ({ game }) {
-      await domain.cardEvent['dream'].handlers.eventTrigger({
+      await domain.cardEvent['dream'].handlers.eventTrigger.call(this, {
         game,
         target: game.getObjects({ className: 'Plane', directParent: game }).find((plane) => !plane.isCardPlane()),
       });

@@ -78,8 +78,9 @@
     this.assign('itemMap', { [item._id]: {} });
     return true;
   }
-  removeItem(itemToRemove) {
+  removeItem(itemToRemove, { deleteFromStorage = false } = {}) {
     this.delete('itemMap', itemToRemove._id);
+    if (deleteFromStorage) this.deleteFromObjectStorage(itemToRemove);
   }
   moveAllItems({ target }) {
     const store = this.getFlattenStore();

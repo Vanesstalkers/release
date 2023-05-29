@@ -43,6 +43,12 @@
         }
         player.set('activeEvent', null);
       }
+
+      game.log({
+        msg: `Игрок {{player}} стал целью события "${this.title}".`,
+        userId: targetPlayer.userId,
+      });
+
       return { timerOverdueOff: true };
     },
     timerOverdue: async function ({ game }) {
@@ -51,7 +57,7 @@
       for (const player of game.getObjects({ className: 'Player' }).filter((p) => p !== activePlayer)) {
         const dice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
         if (dice) {
-          await domain.cardEvent['take_project'].handlers.eventTrigger({
+          await domain.cardEvent['take_project'].handlers.eventTrigger.call(this, {
             game,
             player: activePlayer,
             targetId: dice.fakeId,

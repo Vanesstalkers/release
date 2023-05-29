@@ -50,12 +50,11 @@
         }
       }
       for (const dice of Object.values(restoredDices)) {
-        const diceTitle = dice.sideList.map((side) => side.value).join('-');
-        game.log(`Костяшка "${diceTitle}" восстановила свои значения, измененные событием "Костыль".`);
+        game.log(`Костяшка "${dice.getTitle()}" восстановила свои значения, измененные событием "Костыль".`);
       }
     },
     timerOverdue: async function ({ game }) {
-      await domain.cardEvent['crutch'].handlers.eventTrigger({
+      await domain.cardEvent['crutch'].handlers.eventTrigger.call(this, {
         game,
         player: game.getActivePlayer(),
         skipFakeValueSet: true,
