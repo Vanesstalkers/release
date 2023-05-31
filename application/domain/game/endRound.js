@@ -12,7 +12,7 @@
 
   if (game.status !== 'inProcess') {
     console.log('game', { status: game.status, id: game._id });
-    throw new Error('Действие запрещено');
+    throw new Error('Действие запрещено.');
   }
 
   // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)

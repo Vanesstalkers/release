@@ -4,7 +4,7 @@
     try {
       const userId = context.client.userId;
       const { name } = lib.repository.user[userId];
-      if (!name) throw new Error('User name must not be empty');
+      if (!name) throw new Error('Имя должно отличаться от пустой строки');
 
       await lib.repository
         .getCollection('lobby')

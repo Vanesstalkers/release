@@ -4,10 +4,14 @@
       game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
     );
 
+  const player = game.getActivePlayer();
   const dice = game.getObjectById(diceId);
   const zone = game.getObjectById(zoneId);
 
-  if (dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу');
+  const diceIsInHand = dice.findParent({ directParent: player });
+  if (!diceIsInHand) throw new Error('Костяшка должна находиться в руке.');
+
+  if (dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу.');
 
   const deletedDices = game.getDeletedDices();
   const replacedDice = deletedDices.find((dice) => {
@@ -19,7 +23,7 @@
   });
   const remainDeletedDices = deletedDices.filter((dice) => dice != replacedDice);
   if (!replacedDice && remainDeletedDices.length)
-    throw new Error('Добавлять новые костяшки можно только взамен временно удаленных');
+    throw new Error('Добавлять новые костяшки можно только взамен временно удаленных.');
 
   if (replacedDice && zone !== replacedDice.getParent()) {
     replacedDice.assign('relatedPlacement', { [dice._id]: dice });
@@ -28,7 +32,6 @@
   dice.set('placedAtRound', game.round);
   game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
   if (zone.checkForRelease()) {
-    const player = game.getActivePlayer();
     const playerCardDeck = player.getObjectByCode('Deck[card]');
     game.smartMoveRandomCard({ target: playerCardDeck });
     lib.timers.timerRestart(game, { extraTime: game.settings.timerReleasePremium });

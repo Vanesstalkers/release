@@ -15,7 +15,7 @@
   },
 
   async createSession(token, data, fields = {}) {
-    if (!data.userId) throw new Error('userId not exists');
+    if (!data.userId) throw new Error('Пользователь не найден.');
     if (fields.online !== undefined) {
       await db.redis.hset('online', token, fields.online ? 1 : 0);
       delete fields.online;

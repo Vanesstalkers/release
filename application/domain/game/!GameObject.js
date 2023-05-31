@@ -126,10 +126,11 @@
   getParentList() {
     return this.#parentList;
   }
-  findParent({ className } = {}) {
+  findParent({ className, directParent = false } = {}) {
     let parent = this.getParent();
     while (parent) {
       if (className && parent.constructor.name === className) return parent;
+      if (directParent && parent === directParent) return parent;
       parent = parent.getParent();
     }
     return null;

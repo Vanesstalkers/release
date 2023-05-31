@@ -7,7 +7,7 @@
       const { currentTutorial = {}, helperLinks = {}, finishedTutorials = {} } = repoUser;
 
       if (tutorial) {
-        if (currentTutorial.active) throw new Error('Another tutorial is active');
+        if (currentTutorial.active) throw new Error('Другое обучение уже активно в настоящий момент.');
         if (!domain.game[tutorial]) throw new Error('Tutorial not found');
         if(usedLink && !step) step = usedLink;
         const helper = step

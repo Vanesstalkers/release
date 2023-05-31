@@ -237,6 +237,10 @@
       if (this.isSinglePlayer()) {
         newActivePlayer.delete('eventData', 'actionsDisabled');
         if (newActivePlayer.eventData.skipTurn) {
+          this.log({
+            msg: `Игрок {{player}} пропускает ход.`,
+            userId: newActivePlayer.userId,
+          });
           newActivePlayer.delete('eventData', 'skipTurn');
           newActivePlayer.assign('eventData', { actionsDisabled: true });
         }

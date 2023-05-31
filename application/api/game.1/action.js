@@ -13,9 +13,9 @@
       const activePlayer = game.getActivePlayer();
 
       if (playerId.toString() !== activePlayer._id.toString() && eventName !== 'leaveGame')
-        throw new Error('Игрок не может совершить это действие, так как сейчас не его ход');
+        throw new Error('Игрок не может совершить это действие, так как сейчас не его ход.');
       if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
-        throw new Error('Игрок не может совершать действия в этот ход');
+        throw new Error('Игрок не может совершать действия в этот ход.');
 
       const event = domain.game[eventName];
       const result = event(game, eventData);

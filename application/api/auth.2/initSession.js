@@ -11,19 +11,19 @@
           login = 'demo' + Math.random();
           user = await api.auth.provider.registerUser(login, '');
         } else {
-          if (!login || !password) throw new Error('Incorrect login or password');
+          if (!login || !password) throw new Error('Неправильный логин или пароль.');
           user = await api.auth.provider.getUser({ login });
-          if (!user) throw new Error('Incorrect login or password');
+          if (!user) throw new Error('Неправильный логин или пароль.');
           const { password: hash } = user;
           const valid = await metarhia.metautil.validatePassword(password, hash);
-          if (!valid) throw new Error('Incorrect login or password');
+          if (!valid) throw new Error('Неправильный логин или пароль.');
         }
         sessionData.userId = user._id.toString();
         await api.auth.provider.createSession(token, sessionData, { ip: context.client.ip, online: true });
         session = { data: sessionData };
       } else {
         session = await api.auth.provider.restoreSession(token);
-        if (session?.online) throw new Error('Session dublicates');
+        if (session?.online) throw new Error('Дубликат сессии. Выйдите с сайта в других окнах браузера.');
         if (session) {
           user = await api.auth.provider.getUser({ _id: session.data.userId });
           if (!user) session = null;

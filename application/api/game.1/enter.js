@@ -4,8 +4,8 @@
     try {
       const userId = context.client.userId;
       const game = lib.repository.getCollection('game').get(gameId);
-      if (!game) throw new Error('Game not found');
-      if (game.finished) throw new Error('Game finished');
+      if (!game) throw new Error('Игра не найдена.');
+      if (game.finished) throw new Error('Игра уже завершена.');
 
       const repoUser = lib.repository.user[userId];
       let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
