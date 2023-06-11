@@ -1,5 +1,14 @@
-(class Game extends lib.broadcaster.class(
-  domain.game['!hasPlane'](domain.game['!hasDeck'](domain.game['!GameObject']))
+(class Lobby extends lib.store.class(
+  domain.game['!hasPlane'](
+    // hasPlane
+    domain.game['!hasDeck'](
+      // hasDeck
+      domain.game['!GameObject'] //GameObject
+    )
+  ),
+  {
+    broadcastEnabled: true,
+  }
 ) {
   #changes = {};
   #logs = {};
@@ -33,7 +42,7 @@
 
     if (data.msg.includes('{{player}}')) {
       const userId = data.userId || this.getActivePlayer().userId;
-      const logUser = lib.repository['user'][userId];
+      const logUser = lib.store('user').get(userId);
       const logUserTitle = logUser.name || logUser.login;
       data.msg = data.msg.replace(/{{player}}/g, `"${logUserTitle}"`);
     }
@@ -432,7 +441,7 @@
     let plane,
       skipArray = [];
     while ((plane = gamePlaneDeck.getRandomItem({ skipArray }))) {
-      if(plane === null) return; // если перебор закончился, то getRandomItem вернет null
+      if (plane === null) return; // если перебор закончился, то getRandomItem вернет null
       skipArray.push(plane._id.toString());
 
       domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
@@ -554,11 +563,11 @@
         domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
-        lib.repository.getCollection('lobby').get('main').removeGame({ _id: this._id });
+        lib.store('lobby').get('main').removeGame({ _id: this._id });
         return; // обновлять игру не нужно, так как она удалена
     }
 
-    lib.repository.getCollection('lobby').get('main').updateGame({ _id: this._id, status: this.status });
+    lib.store('lobby').get('main').updateGame({ _id: this._id, status: this.status });
   }
   setWinner({ player }) {
     this.set('winUserId', player.userId);

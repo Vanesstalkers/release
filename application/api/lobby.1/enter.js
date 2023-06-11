@@ -8,18 +8,25 @@
         gameId,
         playerId,
       } = context;
-      lib.broadcaster.subscribe({ room: 'lobby-main', client: context.client });
-      lib.broadcaster.subClient.subscribe(`lobby-main`, (err, count) => {
-        if (err) throw err;
-      });
-      lib.repository.getCollection('lobby').get('main').joinLobby({ token, wid: application.worker.id, userId });
-      // lib.broadcaster.pubClient.publish(
-      //   `lobby-main`,
-      //   JSON.stringify({ eventName: 'joinLobby', eventData: { token, wid: application.worker.id, userId } })
-      // );
+
+      const user = lib.store('user').get(userId);
+      user.subscribe(`lobby-main`);
+      lib.store.broadcaster.publishAction(`lobby-main`, 'joinLobby', { id: user.getId(), name: user.name });
+
+      let { helper = null, helperLinks = {}, finishedTutorials = {} } = user;
+      if (!helper && !finishedTutorials['tutorialLobbyStart']) {
+        helper = Object.values(domain.game['tutorialLobbyStart']).find(({ initialStep }) => initialStep);
+        // helperLinks = {
+        //   'menu-top': { selector: '.menu-item.top', tutorial: 'tutorialLobbyStart', type: 'lobby' },
+        //   'menu-chat': { selector: '.menu-item.chat', tutorial: 'tutorialMenu', type: 'lobby' },
+        // };
+        user.currentTutorial = { active: 'tutorialLobbyStart' };
+        user.helper = helper;
+        user.helperLinks = helperLinks;
+      }
 
       context.client.events.close.push(() => {
-        
+        lib.store.broadcaster.publishAction(`lobby-main`, 'leaveLobby', { id: user.getId() });
       });
 
       if (gameId) {
@@ -34,10 +41,8 @@
             if (game.status !== 'finished') {
               lib.timers.timerRestart(game, { extraTime: 0 }); // перезапустит таймер с временем активного игрока (фича)
               lib.repository.getCollection('game').set(gameId, game);
-              lib.repository
-                .getCollection('lobby')
-                .get('main')
-                .addGame({ _id: gameId, round: game.round, status: game.status, playerList: game.getPlayerList() });
+              const lobby = lib.store('lobby').get('main');
+              lobby.addGame({ _id: gameId, round: game.round, status: game.status, playerList: game.getPlayerList() });
               // lib.broadcaster.pubClient.publish(
               //   `lobby-main`,
               //   JSON.stringify({
@@ -56,6 +61,7 @@
         }
       }
 
+      await user.saveState();
       return { status: 'ok' };
     } catch (err) {
       console.log(err);

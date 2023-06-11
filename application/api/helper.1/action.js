@@ -3,13 +3,13 @@
   method: async ({ action, step, tutorial, usedLink }) => {
     try {
       const userId = context.client.userId;
-      const repoUser = lib.repository.user[userId];
+      const repoUser = lib.store('user').get(userId);
       const { currentTutorial = {}, helperLinks = {}, finishedTutorials = {} } = repoUser;
 
       if (tutorial) {
         if (currentTutorial.active) throw new Error('Другое обучение уже активно в настоящий момент.');
         if (!domain.game[tutorial]) throw new Error('Tutorial not found');
-        if(usedLink && !step) step = usedLink;
+        if (usedLink && !step) step = usedLink;
         const helper = step
           ? Object.entries(domain.game[tutorial]).find(([key]) => key === step)[1]
           : Object.values(domain.game[tutorial]).find(({ initialStep }) => initialStep);
@@ -44,6 +44,7 @@
         user: { [userId]: { helper: repoUser.helper, helperLinks: repoUser.helperLinks } },
       });
 
+      await repoUser.saveState();
       return { status: 'ok' };
     } catch (err) {
       console.log(err);

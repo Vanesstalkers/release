@@ -1,13 +1,13 @@
 ({
   access: 'public',
-  method: ({ userName }) => {
+  method: async ({ name }) => {
     try {
       const userId = context.client.userId;
-      const repoUser = lib.repository.user[userId];
-      repoUser.name = userName;
+      const user = lib.store('user').get(userId);
 
-      lib.repository.getCollection('lobby').get('main').updateUser({ userId });
+      user.name = name;
 
+      await user.saveState();
       return { status: 'ok' };
     } catch (err) {
       console.log(err);

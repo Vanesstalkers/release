@@ -42,11 +42,7 @@
     types.forEach((type) => {
       if (item instanceof type) {
         result = type(item);
-      } else if (
-        item &&
-        typeof item === 'object' &&
-        item._bsontype === 'ObjectID'
-      ) {
+      } else if (item && typeof item === 'object' && item._bsontype === 'ObjectID') {
         result = db.mongo.ObjectID(item.toString());
       }
     });
@@ -94,28 +90,22 @@
   isObjectID(value) {
     return value && typeof value === 'object' && value._bsontype === 'ObjectID';
   },
+  isPlainObj(value) {
+    return value?.constructor?.prototype?.hasOwnProperty('isPrototypeOf');
+  },
 
-  flatten(objectOrArray, prefix = '', formatter = (k) => k) {
-    const nestedFormatter = (k) => '.' + k;
-
-    const nestElement = (prev, value, key) =>
-      (lib.utils.isObjectID(value) ?
-        {
-          ...prev,
-          ...lib.utils.flatten(
-            value,
-            `${prefix}${formatter(key)}`,
-            nestedFormatter
-          ),
-        } :
-        { ...prev, ...{ [`${prefix}${formatter(key)}`]: value } });
-
-    return Array.isArray(objectOrArray) ?
-      objectOrArray.reduce(nestElement, {}) :
-      Object.keys(objectOrArray).reduce(
-        (prev, element) => nestElement(prev, objectOrArray[element], element),
-        {}
+  flatten(obj, keys = []) {
+    const acc = {};
+    const baseKey = Object.values(keys).join('.');
+    if (baseKey) acc[baseKey] = {};
+    return Object.keys(obj).reduce((acc, key) => {
+      return Object.assign(
+        acc,
+        lib.utils.isPlainObj(obj[key])
+          ? lib.utils.flatten(obj[key], keys.concat(key))
+          : { [keys.concat(key).join('.')]: lib.utils.isObjectID(obj[key]) ? obj[key].toString() : obj[key] }
       );
+    }, acc);
   },
 
   unflatten(data) {
@@ -123,13 +113,7 @@
     for (const i in data) {
       const keys = i.split('.');
       keys.reduce(
-        (r, e, j) =>
-          r[e] ||
-          (r[e] = isNaN(Number(keys[j + 1])) ?
-            keys.length - 1 === j ?
-              data[i] :
-              {} :
-            []),
+        (r, e, j) => r[e] || (r[e] = isNaN(Number(keys[j + 1])) ? (keys.length - 1 === j ? data[i] : {}) : []),
         result
       );
     }
@@ -139,10 +123,7 @@
   sumPropertiesOfObjects(arrayOfObjects, allowProps = []) {
     return arrayOfObjects.reduce((result, item) => {
       for (const key in item) {
-        if (
-          item[key] &&
-          (allowProps.length === 0 || allowProps.includes(key))
-        ) {
+        if (item[key] && (allowProps.length === 0 || allowProps.includes(key))) {
           result[key] = (result[key] || 0) + item[key];
         }
       }
@@ -162,12 +143,9 @@
       const value = sourceObject[key];
       const tmpObjectPropValue =
         //!sourceObjectIsArray && // для массивов не придумал ничего лучше, чем обновлять их целиком
-        !lib.utils.isObjectID(value) &&
-        value !== null &&
-        typeof value === 'object' ?
-          lib.utils.addDeepProxyChangesWatcher(value, [...path, key], storage)
-            .proxy :
-          value;
+        !lib.utils.isObjectID(value) && value !== null && typeof value === 'object'
+          ? lib.utils.addDeepProxyChangesWatcher(value, [...path, key], storage).proxy
+          : value;
 
       if (Array.isArray(tmpObject)) tmpObject.push(tmpObjectPropValue);
       else tmpObject[key] = tmpObjectPropValue;
@@ -184,11 +162,7 @@
             value !== null &&
             typeof value === 'object'
           ) {
-            target[name] = lib.utils.addDeepProxyChangesWatcher(
-              value,
-              [...path, name],
-              storage
-            ).proxy;
+            target[name] = lib.utils.addDeepProxyChangesWatcher(value, [...path, name], storage).proxy;
           } else {
             target[name] = value;
           }
@@ -256,5 +230,5 @@
 
   structuredClone(data) {
     return JSON.parse(JSON.stringify(data));
-  }
+  },
 });

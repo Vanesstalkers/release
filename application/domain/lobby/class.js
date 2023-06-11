@@ -1,34 +1,93 @@
-(class Lobby extends lib.broadcaster.class(lib.repository.class(class {})) {
-  sessions = new Set();
-  games = new Map();
-  chat = [];
-  topPlayers = {
-    1: { games: 100, win: 55 },
-    2: { games: 20, win: 19 },
+(class Lobby extends lib.store.class(class {}, { broadcastEnabled: true }) {
+  store = {
+    user: {},
+    games: {},
   };
+  users = {};
+  chat = [];
+  rankings = {};
   constructor({ id }) {
     super({ col: 'lobby', id });
-    this.id = id;
+
     // for (const [name, method] of Object.entries(domain.game.methods)) {
     //   if (name === 'parent') continue;
     //   this[name] = method;
     // }
   }
+  async load() {
+    // const msgList = await db.mongo.find('chat');
+    // for (const msg of msgList) this.chat.push(msg);
+
+    // this.rankings = {
+    //   topPlayers: {
+    //     title: 'topPlayers',
+    //     active: true,
+    //     list: [
+    //       { games: 100, win: 55 },
+    //       { games: 20, win: 19 },
+    //     ],
+    //   },
+    //   topFreelancers: {
+    //     title: 'topFreelancers',
+    //     list: [],
+    //   },
+    //   richestPlayers: {
+    //     title: 'richestPlayers',
+    //     list: [],
+    //   },
+    // };
+    this.fixState();
+    return this;
+  }
+
+  async processData(data) {
+    function assignIdMap(target, sourceMap) {
+      Object.keys(sourceMap).forEach((id) => {
+        Object.entries(sourceMap[id]).forEach(([k, v]) => {
+          const props = k.split('.');
+          if (!target[id]) target[id] = {};
+          let itemPart = target[id];
+          for (let i = 0; i < props.length - 1; i++) {
+            if (!itemPart[props[i]]) itemPart[props[i]] = {};
+            itemPart = itemPart[props[i]];
+          }
+          itemPart[props[props.length - 1]] = v;
+        });
+      });
+    }
+
+    const store = this.store;
+    Object.entries(data).forEach(([key, map]) => {
+      switch (key) {
+        case 'user':
+          assignIdMap(this.users, map);
+          break;
+        default:
+          if (!store[key]) store[key] = {};
+          assignIdMap(store[key], map);
+      }
+    });
+
+    await this.saveState();
+  }
+  // broadcastData(data, config) {
+  //   Object.getPrototypeOf(Object.getPrototypeOf(this)).broadcastData.call(this, data, config);
+  // }
   getData() {
+    console.log('getData this.users=', this.users);
     const gameMap = {},
       userMap = {};
     for (const [id, game] of this.games) gameMap[id] = this.getSingleGame(game);
-    for (const id of this.sessions) userMap[id] = this.getSingleUser(lib.repository.user[id]);
+    // for (const id of this.users) userMap[id] = {}; /* this.getSingleUser(lib.repository.user[id]) */
     return {
-      lobby: { [this.id]: { userMap: this.getUsersMap(), gameMap: this.getGamesMap() } },
+      lobby: {
+        [this.id]: { userMap: this.getUsersMap(), gameMap: this.getGamesMap() },
+      },
       game: gameMap,
-      user: userMap,
+      user: this.users,
       chat: this.getChatMap(),
-      topPlayers: this.getTopPlayersMap(),
+      ranking: this.rankings,
     };
-  }
-  getTopPlayersMap() {
-    return this.topPlayers;
   }
   getChatMap() {
     return Object.fromEntries(this.chat.slice(-10).map((msg) => [`${msg.time}-${msg._id}`, msg]));
@@ -40,18 +99,12 @@
     return { _id: game._id, round: game.round, status: game.status, playerList: game.playerList };
   }
   getUsersMap() {
-    return Object.fromEntries([...this.sessions].map((id) => [id, {}]));
+    return Object.fromEntries([...this.users].map((id) => [id, {}]));
   }
   getSingleUser(user) {
     return { _id: user._id, name: user.name, login: user.login };
   }
 
-  async restoreChat() {
-    const msgList = await db.mongo.find('chat');
-    for (const msg of msgList) {
-      this.chat.push(msg);
-    }
-  }
   async updateChat({ text, user }) {
     const time = Date.now();
     const insertData = { text, user, time };
@@ -60,42 +113,14 @@
     this.chat.push(insertData);
     this.broadcast({ chat: { [`${time}-${_id}`]: insertData } });
   }
-  joinLobby({ token, wid, userId }) {
-    this.sessions.add(userId);
-    const repoUser = lib.repository.user[userId];
-    let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
-    if (!helper && !finishedTutorials['tutorialLobbyStart']) {
-      helper = Object.values(domain.game['tutorialLobbyStart']).find(({ initialStep }) => initialStep);
-      // helperLinks = {
-      //   'menu-top': { selector: '.menu-item.top', tutorial: 'tutorialLobbyStart', type: 'lobby' },
-      //   'menu-chat': { selector: '.menu-item.chat', tutorial: 'tutorialMenu', type: 'lobby' },
-      // };
-      repoUser.currentTutorial = { active: 'tutorialLobbyStart' };
-      repoUser.helper = helper;
-      repoUser.helperLinks = helperLinks;
-    }
-
-    this.broadcast(
-      this.getData(),
-      // secureData
-      {
-        [userId]: {
-          user: { [userId]: { helper, helperLinks } },
-        },
-      }
-    );
-
-    lib.broadcaster.pubClient.publish(
-      `worker-${wid}`,
-      JSON.stringify({ emitType: 'db/smartUpdated', directUser: userId, data: this.getData() })
-    );
+  async joinLobby({ id, name }) {
+    this.users[id] = { name };
+    this.subscribe(`user-${id}`, { rule: 'fields', fields: ['name', 'test.name'] });
+    await this.saveState();
   }
-  leaveLobby({ token, userId }) {
-    this.sessions.delete(userId);
-    this.broadcast(this.getData());
-  }
-  updateUser({ userId }) {
-    this.broadcast({ user: { [userId]: this.getSingleUser(lib.repository.user[userId]) } });
+  async leaveLobby({ id }) {
+    this.users[id] = null;
+    await this.saveState();
   }
   async addGame(gameData) {
     const gameId = gameData._id.toString();
@@ -120,7 +145,7 @@
     const playerList = game.getObjects({ className: 'Player' });
     for (const player of playerList) {
       const { userId } = player;
-      const repoUser = lib.repository.user[userId];
+      const repoUser = lib.store('user').get(userId);
       const type = canceledByUser
         ? userId === canceledByUser
           ? 'lose'
