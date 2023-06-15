@@ -87,6 +87,12 @@
     return result;
   },
 
+  setDeep(obj, path, value) {
+    const [head, ...rest] = path.split('.');
+    obj[head] = rest.length ? lib.utils.setDeep(obj[head], rest.join('.'), value) : value;
+    return obj;
+  },
+
   isObjectID(value) {
     return value && typeof value === 'object' && value._bsontype === 'ObjectID';
   },

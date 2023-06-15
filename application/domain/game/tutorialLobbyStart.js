@@ -24,6 +24,7 @@
     buttons: [{ text: 'Дальше', step: 'playground' }],
   },
   playground: {
+    pos: 'top-right',
     text: 'В этом блоке можно присоединиться к игре, либо начать новую. Сейчас доступны варианты игры на 1,2 и 3 игроков.',
     active: '.menu-item.game',
     buttons: [{ text: 'Дальше', step: 'exit' }],

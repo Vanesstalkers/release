@@ -6,7 +6,7 @@
   users = {};
   chat = [];
   rankings = {};
-  constructor({ id }) {
+  constructor({ id } = {}) {
     super({ col: 'lobby', id });
 
     // for (const [name, method] of Object.entries(domain.game.methods)) {
@@ -70,9 +70,6 @@
 
     await this.saveState();
   }
-  // broadcastData(data, config) {
-  //   Object.getPrototypeOf(Object.getPrototypeOf(this)).broadcastData.call(this, data, config);
-  // }
   getData() {
     console.log('getData this.users=', this.users);
     const gameMap = {},
@@ -113,13 +110,17 @@
     this.chat.push(insertData);
     this.broadcast({ chat: { [`${time}-${_id}`]: insertData } });
   }
-  async joinLobby({ id, name }) {
-    this.users[id] = { name };
-    this.subscribe(`user-${id}`, { rule: 'fields', fields: ['name', 'test.name'] });
+  async joinLobby({ sessionId, userId, name }) {
+    if (!this.users[userId]) {
+      this.users[userId] = { name, sessions: [] };
+      this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name'] });
+    }
+    this.users[userId].sessions.push(sessionId);
     await this.saveState();
   }
-  async leaveLobby({ id }) {
-    this.users[id] = null;
+  async leaveLobby({ sessionId, userId }) {
+    this.users[userId].sessions = this.users[userId].sessions.filter((id) => id !== sessionId);
+    if (this.users[userId].sessions.length === 0) this.users[userId] = null;
     await this.saveState();
   }
   async addGame(gameData) {

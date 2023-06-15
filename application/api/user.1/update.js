@@ -2,8 +2,7 @@
   access: 'public',
   method: async ({ name }) => {
     try {
-      const userId = context.client.userId;
-      const user = lib.store('user').get(userId);
+      const user = lib.store('user').get(context.userId);
 
       user.name = name;
 

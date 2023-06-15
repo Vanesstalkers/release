@@ -1,45 +1,45 @@
 ({
   access: 'public',
-  method: async ({ token, demo, login, password }) => {
+  method: async ({ token, windowTabId, demo, login, password }) => {
     try {
-      let session;
-      const sessionData = {};
-      const user = new lib.user.class({ client: context.client });
-      if (!token) {
-        token = api.auth.provider.generateToken();
-        if (demo) {
-          await user.create({}, { demo: true });
-        } else {
-          await user.login({ login, password });
+      console.log('application.worker.id=', application.worker.id);
+
+      const session = new lib.user.session({ client: context.client });
+      if (token) {
+        await session.load({ fromDB: { query: { token, windowTabId } } });
+        if (session.loadError()) {
+          await session.load({ fromDB: { query: { token } } }, { initStoreDisabled: true });
+          if (session.loadError()) token = null;
+          else await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
         }
-        sessionData.userId = user.getId();
-        await api.auth.provider.createSession(token, sessionData, { ip: context.client.ip, online: true });
-        session = { data: sessionData };
-      } else {
-        session = await api.auth.provider.restoreSession(token);
-        if (session?.online) throw new Error('Дубликат сессии. Выйдите с сайта в других окнах браузера.');
-        if (session) {
-          await user.load({ fromDB: { id: session.data.userId } });
-          if (user.loadError()) session = null;
-          else api.auth.provider.saveSession(token, null, { online: true });
-        }
-        if (!session) {
-          await user.create({}, { demo: true });
-          sessionData.userId = user.getId();
-          await api.auth.provider.createSession(token, sessionData, { ip: context.client.ip, online: true });
-          session = { data: sessionData };
-        }
-        Object.assign(sessionData, session.data);
       }
 
-      context.client.userId = sessionData.userId;
-      context.client.startSession(token, sessionData); // данные попадут в context (в следующих вызовах)
+      if (login || password !== undefined) {
+        await session.login({ login, password, windowTabId });
+      } else {
+        if (!token) {
+          if (demo) {
+            const user = await new lib.user.class().create({}, { demo });
+            if (user.loadError()) throw new Error('Ошибка создания демо-пользователя');
+            const userId = user.id();
+            await session.create({ userId, userLogin: user.login, token: user.token, windowTabId });
+          } else throw new Error('Требуется авторизация');
+          // else return { status: 'ok', need_login: true };
+        }
+      }
+
+      const sessionData = {};
+      sessionData.sessionId = session.id();
+      sessionData.userId = session.userId;
+      context.client.startSession(session.token, {
+        sessionId: session.id(),
+        userId: session.userId,
+      }); // данные попадут в context (в следующих вызовах)
       context.client.events.close.push(() => {
-        console.log(`session disconnected (token=${token}`);
-        api.auth.provider.saveSession(token, null, { online: false });
+        console.log(`session disconnected (token=${session.token}`);
       });
 
-      return { token, userId: sessionData.userId };
+      return { token: session.token, userId: session.userId };
     } catch (err) {
       console.log(err);
       return { status: 'err', message: err.message };

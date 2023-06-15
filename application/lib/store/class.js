@@ -6,17 +6,15 @@
           #channelName;
           #channel;
           #client;
-          #selfBroadcastData;
           constructor(data = {}) {
-            const { col, id, client, selfBroadcastData } = data;
+            const { col, id, client } = data;
             super(data);
             this.#client = client;
-            this.#selfBroadcastData = selfBroadcastData;
             if (id) this.initChannel({ col, id });
           }
           initChannel({ col, id } = {}) {
-            if (!col) col = this.getCol();
-            if (!id) id = this.getId();
+            if (!col) col = this.col();
+            if (!id) id = this.id();
             if (!col || !id) throw new Error(`Required is not exist (col=${col}, id=${id})`);
 
             this.#channelName = `${col}-${id}`;
@@ -24,13 +22,13 @@
 
             // !!! тут нужно восстановить информацию о себе у старых подписчиков
           }
-          getClient() {
+          client() {
             return this.#client;
           }
-          getChannel() {
+          channel() {
             return this.#channel;
           }
-          getChannelName() {
+          channelName() {
             return this.#channelName;
           }
           processAction(data) {
@@ -48,10 +46,10 @@
           }
           addSubscriber({ subscriber: subscriberChannel, accessConfig = {} }) {
             this.#channel.subscribers.set(subscriberChannel, { accessConfig });
-            this.broadcastData(this.getDataState(), { customChannel: subscriberChannel });
+            this.broadcastData(this.dataState(), { customChannel: subscriberChannel });
           }
           broadcastData(data, { customChannel } = {}) {
-            const wrapPublishData = (data) => ({ [this.getCol()]: { [this.getId()]: data } });
+            const wrapPublishData = (data) => ({ [this.col()]: { [this.id()]: data } });
 
             for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
               if (!customChannel || subscriberChannel === customChannel) {
@@ -71,9 +69,6 @@
                 lib.store.broadcaster.publishData(subscriberChannel, publishData);
               }
             }
-            if (this.#selfBroadcastData) {
-              if (!customChannel || this.#channelName === customChannel) this.processData(wrapPublishData(data));
-            }
           }
         };
 
@@ -90,6 +85,10 @@
       this.#col = col;
       if (id) this.initStore(id);
     }
+    getProtoParent() {
+      return Object.getPrototypeOf(Object.getPrototypeOf(this));
+    }
+
     initStore(id) {
       this.#id = id.toString();
       lib.store(this.#col).set(this.#id, this);
@@ -97,7 +96,8 @@
     loadError() {
       return this.#loadError;
     }
-    async load({ fromData = null, fromDB = {} }) {
+    async load({ fromData = null, fromDB = {} }, { initStoreDisabled = false } = {}) {
+      this.#loadError = null;
       if (fromData) {
         Object.assign(this, fromData);
       } else {
@@ -109,9 +109,9 @@
             this.#loadError = true;
           } else {
             Object.assign(this, dbData);
-            if (!this.#id) {
+            if (!this.#id && !initStoreDisabled) {
               this.initStore(dbData._id);
-              if (!this.getChannel()) this.initChannel();
+              if (!this.channel()) this.initChannel();
             }
           }
         }
@@ -120,32 +120,64 @@
       this.fixState();
       return this;
     }
-    async create(initialData) {
-      const { _id } = await db.mongo.insertOne(this.#col, initialData);
-      if (!_id) {
+    async create(initialData = {}) {
+      try {
+        const { _id } = await db.mongo.insertOne(this.#col, initialData);
+
+        if (!_id) {
+          this.#loadError = true;
+        } else {
+          Object.assign(this, initialData);
+          this.initStore(_id);
+          if (!this.channel()) this.initChannel();
+        }
+        if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
+        this.fixState();
+        return this;
+      } catch (err) {
+        console.log(err);
         this.#loadError = true;
-      } else {
-        Object.assign(this, initialData);
-        this.initStore(_id);
-        if (!this.getChannel()) this.initChannel();
+        return this;
       }
-      if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
-      this.fixState();
-      return this;
     }
 
-    getId() {
+    id() {
       return this.#id;
     }
-    getCol() {
+    col() {
       return this.#col;
     }
-    getDataState() {
+    dataState() {
       return this.#dataState;
     }
-    fixState({ changes } = {}) {
-      if (changes) Object.assign(this.#dataState, changes);
-      else this.#dataState = lib.utils.flatten(this);
+    set(key, value) {
+      const baseValue = {};
+      // если обновляется объект, то ищем все старые вложенные ключи и обнуляем их
+      if (typeof value === 'object') {
+        const findKey = `${key}.`;
+        for (const key of Object.keys(this.dataState())) {
+          if (key.indexOf(findKey) === 0) {
+            const updateKey = key.replace(findKey, '');
+            if (updateKey.includes('.')) delete baseValue[updateKey];
+            else baseValue[updateKey] = null;
+          }
+        }
+      }
+      // тут происходит замена обнуленных вложенных ключей на новые значения
+      this[key] = { ...baseValue, ...value };
+    }
+    fixState(changes) {
+      if (changes) {
+        for (const [key, value] of Object.entries(changes)) {
+          if (value === null) {
+            const findKey = `${key}.`;
+            for (const key of Object.keys(this.#dataState)) {
+              if (key.indexOf(findKey) === 0) delete this.#dataState[key];
+            }
+            delete this.#dataState[key];
+          } else this.#dataState[key] = value;
+        }
+      } else this.#dataState = lib.utils.flatten(this);
     }
 
     lockState() {
@@ -161,7 +193,11 @@
       const changes = {};
       const restoredKeys = [];
       for (const [key, value] of Object.entries(currentState)) {
-        if (value !== this.#dataState[key] && value?.toString() !== this.#dataState[key]?.toString()) {
+        if (
+          value !== this.#dataState[key] &&
+          ((!Array.isArray(value) && value?.toString() !== this.#dataState[key]?.toString()) || // проверка для объектов '{}'
+            (Array.isArray(value) && JSON.stringify(value) !== JSON.stringify(this.#dataState[key]))) // проверять массивы можно только тут, иначе они передаются по ссылке и значение в #dataState всегда совпадает currentState
+        ) {
           changes[key] = value;
           if (this.#dataState[key] === null) restoredKeys.push(key);
         } else {
@@ -170,7 +206,6 @@
           }
         }
       }
-
       return changes;
     }
 
@@ -178,17 +213,22 @@
       const changes = this.getChanges();
       if (!Object.keys(changes).length) return;
       if (this.#id.length === 24) {
-        const $set = {};
-        // защита от ошибки MongoServerError: Updating the path 'XXX.YYY' would create a conflict at 'XXX'
+        const $update = { $set: {}, $unset: {} };
         const changeKeys = Object.keys(changes);
         changeKeys.forEach((key, idx) => {
-          if (changeKeys[idx + 1]?.indexOf(`${key}.`) !== 0) $set[key] = changes[key];
+          // защита от ошибки MongoServerError: Updating the path 'XXX.YYY' would create a conflict at 'XXX'
+          if (changeKeys[idx + 1]?.indexOf(`${key}.`) !== 0) {
+            if (changes[key] === null) $update.$unset[key] = '';
+            else $update.$set[key] = changes[key];
+          }
         });
-        await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, { $set });
+        if (Object.keys($update.$set).length === 0) delete $update.$set;
+        if (Object.keys($update.$unset).length === 0) delete $update.$unset;
+        await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, $update);
       }
       if (typeof this.broadcastData === 'function') this.broadcastData(changes);
 
-      this.fixState({ changes });
+      this.fixState(changes);
     }
   };
 };

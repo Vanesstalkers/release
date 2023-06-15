@@ -2,9 +2,9 @@
   access: 'public',
   method: async ({ action, step, tutorial, usedLink }) => {
     try {
-      const userId = context.client.userId;
-      const repoUser = lib.store('user').get(userId);
-      const { currentTutorial = {}, helperLinks = {}, finishedTutorials = {} } = repoUser;
+      const user = lib.store('user').get(context.userId);
+      let { currentTutorial, helperLinks = {}, finishedTutorials = {} } = user;
+      if (!currentTutorial) currentTutorial = {};
 
       if (tutorial) {
         if (currentTutorial.active) throw new Error('Другое обучение уже активно в настоящий момент.');
@@ -14,37 +14,33 @@
           ? Object.entries(domain.game[tutorial]).find(([key]) => key === step)[1]
           : Object.values(domain.game[tutorial]).find(({ initialStep }) => initialStep);
         if (!helper) throw new Error('Tutorial initial step not found');
-        repoUser.currentTutorial = { active: tutorial };
+        user.currentTutorial = { active: tutorial };
 
-        repoUser.helper = helper;
+        user.helper = helper;
         if (usedLink) {
-          repoUser.helperLinks = { ...helperLinks, [usedLink]: { ...helperLinks[usedLink], used: true } };
+          user.helperLinks = { ...helperLinks, [usedLink]: { ...helperLinks[usedLink], used: true } };
         }
       } else if (currentTutorial.active) {
         if (action === 'exit') {
-          repoUser.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
-          repoUser.helper = null;
-          repoUser.currentTutorial = {};
+          user.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
+          user.helper = null;
+          user.currentTutorial = null;
         } else {
           const nextStep = domain.game[currentTutorial.active][step];
           if (nextStep) {
-            repoUser.helper = nextStep;
-            repoUser.currentTutorial = { ...currentTutorial, step };
+            user.set('helper', nextStep);
+            user.currentTutorial = { ...currentTutorial, step };
           } else {
-            repoUser.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
-            repoUser.helper = null;
-            repoUser.currentTutorial = {};
+            user.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
+            user.helper = null;
+            user.currentTutorial = null;
           }
         }
       } else {
-        repoUser.helper = null;
+        user.helper = null;
       }
 
-      context.client.emit('db/smartUpdated', {
-        user: { [userId]: { helper: repoUser.helper, helperLinks: repoUser.helperLinks } },
-      });
-
-      await repoUser.saveState();
+      await user.saveState();
       return { status: 'ok' };
     } catch (err) {
       console.log(err);
