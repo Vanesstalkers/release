@@ -8,12 +8,13 @@
   }
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);
-    if (this.loadError()) return this;
 
     const userOnline = await db.redis.hget('users', this.userLogin, { json: true });
     if (!userOnline) {
-      const user = await new lib.user.class().load({ fromDB: { id: this.userId } });
-      if (user.loadError()) return this;
+      await new lib.user.mainClass().load({ fromDB: { id: this.userId } }).catch((err) => {
+        if (err === 'not_found') throw new Error('Session user not found');
+        else throw err;
+      });
       // вызов в initChannel при создании сессии не отработал, так как канала `user-${this.userId}` еще не было
       this.subscribe(`user-${this.userId}`);
     }
@@ -22,15 +23,19 @@
   }
   async login({ login, password, windowTabId }) {
     if (!login || password === undefined) throw new Error('Неправильный логин или пароль.');
-    const userOnline = await db.redis.hget('users', login, { json: true });
+    let userOnline = await db.redis.hget('users', login, { json: true });
     if (!userOnline) {
-      const user = await new lib.user.class().load({
-        fromDB: { query: { login } },
-      });
-      if (user.loadError()) throw new Error('Неправильный логин или пароль.');
+      const user = await new lib.user.mainClass()
+        .load({
+          fromDB: { query: { login } },
+        })
+        .catch((err) => {
+          if (err === 'not_found') throw new Error('Неправильный логин или пароль.');
+          else throw err;
+        });
       const valid = await metarhia.metautil.validatePassword(password, user.password);
       if (!valid) throw new Error('Неправильный логин или пароль.');
-      userOnline.id = user.id;
+      userOnline = { id: user.id(), token: user.token };
     } else {
       const valid = await metarhia.metautil.validatePassword(password, userOnline.password);
       if (!valid) throw new Error('Неправильный логин или пароль.');

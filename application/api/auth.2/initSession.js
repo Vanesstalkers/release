@@ -6,12 +6,18 @@
 
       const session = new lib.user.session({ client: context.client });
       if (token) {
-        await session.load({ fromDB: { query: { token, windowTabId } } });
-        if (session.loadError()) {
-          await session.load({ fromDB: { query: { token } } }, { initStoreDisabled: true });
-          if (session.loadError()) token = null;
-          else await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
-        }
+        await session.load({ fromDB: { query: { token, windowTabId } } }).catch((err) => {
+          if (err !== 'not_found') throw err;
+        });
+        await session
+          .load({ fromDB: { query: { token } } }, { initStoreDisabled: true })
+          .then(async () => {
+            await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
+          })
+          .catch((err) => {
+            if (err !== 'not_found') throw err;
+            token = null;
+          });
       }
 
       if (login || password !== undefined) {
@@ -19,8 +25,10 @@
       } else {
         if (!token) {
           if (demo) {
-            const user = await new lib.user.class().create({}, { demo });
-            if (user.loadError()) throw new Error('Ошибка создания демо-пользователя');
+            const user = await new lib.user.mainClass().create({}, { demo }).catch((err) => {
+              if (err === 'not_created') throw new Error('Ошибка создания демо-пользователя');
+              else throw err;
+            });
             const userId = user.id();
             await session.create({ userId, userLogin: user.login, token: user.token, windowTabId });
           } else throw new Error('Требуется авторизация');

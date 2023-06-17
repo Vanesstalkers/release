@@ -87,6 +87,9 @@
     return result;
   },
 
+  getDeep(source, splittedPath){
+    return splittedPath.reduce((result, part) => result?.[part] || null, source);
+  },
   setDeep(obj, path, value) {
     const [head, ...rest] = path.split('.');
     obj[head] = rest.length ? lib.utils.setDeep(obj[head], rest.join('.'), value) : value;

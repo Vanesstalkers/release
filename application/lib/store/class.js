@@ -1,5 +1,5 @@
 (Base, { broadcastEnabled = false } = {}) => {
-  const extClass =
+  const protoClass =
     broadcastEnabled === false
       ? Base
       : class extends Base {
@@ -72,11 +72,10 @@
           }
         };
 
-  return class extends extClass {
+  return class extends protoClass {
     #id;
     #col;
     #dataState = {};
-    #loadError = null;
     #lockedStateJSON = null;
 
     constructor(data = {}) {
@@ -86,18 +85,18 @@
       if (id) this.initStore(id);
     }
     getProtoParent() {
-      return Object.getPrototypeOf(Object.getPrototypeOf(this));
+      let parent = this;
+      while (protoClass.prototype.isPrototypeOf(Object.getPrototypeOf(parent))) {
+        parent = Object.getPrototypeOf(parent);
+      }
+      return parent;
     }
 
     initStore(id) {
       this.#id = id.toString();
       lib.store(this.#col).set(this.#id, this);
     }
-    loadError() {
-      return this.#loadError;
-    }
     async load({ fromData = null, fromDB = {} }, { initStoreDisabled = false } = {}) {
-      this.#loadError = null;
       if (fromData) {
         Object.assign(this, fromData);
       } else {
@@ -106,7 +105,7 @@
         if (query) {
           const dbData = await db.mongo.findOne(this.#col, query);
           if (dbData === null) {
-            this.#loadError = true;
+            throw 'not_found';
           } else {
             Object.assign(this, dbData);
             if (!this.#id && !initStoreDisabled) {
@@ -125,7 +124,7 @@
         const { _id } = await db.mongo.insertOne(this.#col, initialData);
 
         if (!_id) {
-          this.#loadError = true;
+          throw 'not_created';
         } else {
           Object.assign(this, initialData);
           this.initStore(_id);
@@ -135,9 +134,7 @@
         this.fixState();
         return this;
       } catch (err) {
-        console.log(err);
-        this.#loadError = true;
-        return this;
+        throw err;
       }
     }
 

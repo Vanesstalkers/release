@@ -20,13 +20,12 @@
 
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);
-    if (this.loadError()) return this;
 
     if (!(await db.redis.hget('users', this.login)))
       await db.redis.hset(
         'users',
         this.login,
-        { id: this.id, password: this.password, token: this.token },
+        { id: this.id(), password: this.password, token: this.token },
         { json: true }
       );
 
