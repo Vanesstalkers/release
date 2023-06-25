@@ -7,17 +7,25 @@
       const session = new lib.user.session({ client: context.client });
       if (token) {
         await session.load({ fromDB: { query: { token, windowTabId } } }).catch((err) => {
-          if (err !== 'not_found') throw err;
+          if (err !== 'not_found') throw err; // любая ошибка, кроме ожидаемой "not_found"
         });
-        await session
+        const sessionLoadResult = await session
           .load({ fromDB: { query: { token } } }, { initStoreDisabled: true })
-          .then(async () => {
-            await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
+          .then(async (res) => {
+            if (res.reconnect) {
+              return { ...res };
+            } else {
+              await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
+            }
           })
           .catch((err) => {
-            if (err !== 'not_found') throw err;
+            if (err !== 'not_found') throw err; // любая ошибка, кроме ожидаемой "not_found"
             token = null;
           });
+        if (sessionLoadResult?.reconnect) {
+          sessionLoadResult.reconnect.ports = [config.server.balancer].concat(config.server.ports);
+          return { reconnect: sessionLoadResult.reconnect };
+        }
       }
 
       if (login || password !== undefined) {

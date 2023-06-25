@@ -12,23 +12,31 @@
 
     await this.getProtoParent().create.call(this, { login, password, token });
 
-    if (!(await db.redis.hget('users', login)))
-      await db.redis.hset('users', login, { id: this.id(), password, token }, { json: true });
+    const initiatedUser = await db.redis.hget('users', this.login);
+    if (!initiatedUser) await this.addUserToCache();
 
     return this;
   }
 
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);
-
-    if (!(await db.redis.hget('users', this.login)))
-      await db.redis.hset(
-        'users',
-        this.login,
-        { id: this.id(), password: this.password, token: this.token },
-        { json: true }
-      );
-
+    const initiatedUser = await db.redis.hget('users', this.login);
+    if (!initiatedUser) await this.addUserToCache();
     return this;
+  }
+
+  async addUserToCache() {
+    await db.redis.hset(
+      'users',
+      this.login,
+      {
+        id: this.id(),
+        password: this.password,
+        token: this.token,
+        workerId: application.worker.id,
+        port: application.server.port,
+      },
+      { json: true }
+    );
   }
 });

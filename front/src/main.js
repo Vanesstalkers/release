@@ -17,7 +17,7 @@ window.vuex = store;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
-  
+
   router.beforeEach((to, from, next) => {
     const currentGame = localStorage.getItem('currentGame');
     store.commit('setSimple', { store: {} });
@@ -32,7 +32,7 @@ const init = async () => {
   window.app = new Vue({
     router,
     store,
-    render: function(h) {
+    render: function (h) {
       return h(App);
     },
   });
@@ -46,14 +46,14 @@ const init = async () => {
 
   await metacom.load('auth', 'lobby', 'game', 'helper', 'db', 'session', 'user', 'action');
 
-  api.db.on('updated', data => {
+  api.db.on('updated', (data) => {
     store.dispatch('setData', data);
   });
-  api.db.on('smartUpdated', data => {
+  api.db.on('smartUpdated', (data) => {
     store.dispatch('setStore', data);
   });
 
-  api.session.on('joinGame', data => {
+  api.session.on('joinGame', (data) => {
     localStorage.setItem('currentGame', data.gameId);
     store.dispatch('setSimple', { sessionPlayerId: data.playerId });
     router.push({ path: `/game/${data.gameId}` });
@@ -66,7 +66,15 @@ const init = async () => {
   localStorage.removeItem('currentGame');
   const token = localStorage.getItem('metarhia.session.token');
   const session = await api.auth.initSession({ token, windowTabId: window.name, demo: true });
-  const { token: sessionToken, userId } = session;
+
+  const { token: sessionToken, userId, reconnect } = session;
+  if (reconnect) {
+    const { workerId, ports } = reconnect;
+    const port = ports[workerId.substring(1) * 1 - 1];
+    location.href = `${location.origin}?port=${port}`;
+    return;
+  }
+
   if (!sessionToken) throw new Error('Ошибка инициализации сессии');
   if (token !== sessionToken) localStorage.setItem('metarhia.session.token', sessionToken);
   if (userId) {
@@ -102,7 +110,7 @@ const init = async () => {
   window.addEventListener('resize', checkDevice);
   checkDevice();
 
-  document.addEventListener('click', async event => {
+  document.addEventListener('click', async (event) => {
     if (event.target.classList.contains('active-event')) {
       await api.game.action({
         name: 'eventTrigger',
@@ -111,7 +119,7 @@ const init = async () => {
     }
   });
 
-  new MutationObserver(function(mutationsList, observer) {
+  new MutationObserver(function (mutationsList, observer) {
     for (const mutation of mutationsList) {
       if (mutation.type === 'childList') {
       } else if (mutation.type === 'attributes') {
@@ -130,7 +138,7 @@ const init = async () => {
         Object.entries(store.getters.getHelperLinks).map(([code, link]) => [
           code,
           window.app.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
-        ]),
+        ])
       ),
     });
   }).observe(document.querySelector('body'), {

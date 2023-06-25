@@ -17,6 +17,10 @@
       });
       // вызов в initChannel при создании сессии не отработал, так как канала `user-${this.userId}` еще не было
       this.subscribe(`user-${this.userId}`);
+    } else {
+      if (userOnline.workerId !== application.worker.id) {
+        return { reconnect: { workerId: userOnline.workerId, port: userOnline.port } };
+      }
     }
 
     return this;
