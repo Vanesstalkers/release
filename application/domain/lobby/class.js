@@ -1,10 +1,7 @@
 (class Lobby extends lib.store.class(class {}, { broadcastEnabled: true }) {
-  store = {
-    user: {},
-    games: {},
-  };
   users = {};
-  chat = [];
+  games = {};
+  chat = {};
   rankings = {};
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
@@ -15,8 +12,8 @@
     // }
   }
   async load() {
-    // const msgList = await db.mongo.find('chat');
-    // for (const msg of msgList) this.chat.push(msg);
+    const msgList = await db.mongo.find('chat', { parent: this.storeId() }, { limit: 3, sort: [['_id', -1]] });
+    for (const msg of msgList) this.chat[msg._id] = msg;
 
     // this.rankings = {
     //   topPlayers: {
@@ -37,9 +34,14 @@
     //   },
     // };
     this.fixState();
+    console.log(`Lobby "${this.storeId()}" loaded.`);
     return this;
   }
 
+  /**
+   * Сохраняет данные при получении обновлений
+   * @param {*} data
+   */
   async processData(data) {
     function assignIdMap(target, sourceMap) {
       Object.keys(sourceMap).forEach((id) => {
@@ -62,6 +64,9 @@
         case 'user':
           assignIdMap(this.users, map);
           break;
+        case 'game':
+          assignIdMap(this.games, map);
+          break;
         default:
           if (!store[key]) store[key] = {};
           assignIdMap(store[key], map);
@@ -70,45 +75,45 @@
 
     await this.saveState();
   }
-  getData() {
-    console.log('getData this.users=', this.users);
-    const gameMap = {},
-      userMap = {};
-    for (const [id, game] of this.games) gameMap[id] = this.getSingleGame(game);
-    // for (const id of this.users) userMap[id] = {}; /* this.getSingleUser(lib.repository.user[id]) */
-    return {
-      lobby: {
-        [this.id]: { userMap: this.getUsersMap(), gameMap: this.getGamesMap() },
-      },
-      game: gameMap,
-      user: this.users,
-      chat: this.getChatMap(),
-      ranking: this.rankings,
-    };
-  }
-  getChatMap() {
-    return Object.fromEntries(this.chat.slice(-10).map((msg) => [`${msg.time}-${msg._id}`, msg]));
-  }
+  // getData() {
+  //   console.log('getData this.users=', this.users);
+  //   const gameMap = {},
+  //     userMap = {};
+  //   for (const [id, game] of this.games) gameMap[id] = this.getSingleGame(game);
+  //   // for (const id of this.users) userMap[id] = {}; /* this.getSingleUser(lib.repository.user[id]) */
+  //   return {
+  //     lobby: {
+  //       [this.id]: { userMap: this.getUsersMap(), gameMap: this.getGamesMap() },
+  //     },
+  //     game: gameMap,
+  //     user: this.users,
+  //     chat: this.getChatMap(),
+  //     ranking: this.rankings,
+  //   };
+  // }
+  // getChatMap() {
+  //   return Object.fromEntries(this.chat.slice(-10).map((msg) => [`${msg.time}-${msg._id}`, msg]));
+  // }
   getGamesMap() {
     return Object.fromEntries(Object.entries(Object.fromEntries(this.games)).map(([id]) => [id, {}]));
   }
-  getSingleGame(game) {
-    return { _id: game._id, round: game.round, status: game.status, playerList: game.playerList };
-  }
-  getUsersMap() {
-    return Object.fromEntries([...this.users].map((id) => [id, {}]));
-  }
-  getSingleUser(user) {
-    return { _id: user._id, name: user.name, login: user.login };
-  }
+  // getSingleGame(game) {
+  //   return { _id: game._id, round: game.round, status: game.status, playerList: game.playerList };
+  // }
+  // getUsersMap() {
+  //   return Object.fromEntries([...this.users].map((id) => [id, {}]));
+  // }
+  // getSingleUser(user) {
+  //   return { _id: user._id, name: user.name, login: user.login };
+  // }
 
   async updateChat({ text, user }) {
     const time = Date.now();
-    const insertData = { text, user, time };
+    const insertData = { text, user, time, parent: this.storeId() };
     const { _id } = await db.mongo.insertOne('chat', insertData);
     insertData._id = _id;
-    this.chat.push(insertData);
-    this.broadcast({ chat: { [`${time}-${_id}`]: insertData } });
+    this.chat[_id] = insertData;
+    await this.saveState();
   }
   async joinLobby({ sessionId, userId, name }) {
     if (!this.users[userId]) {
@@ -124,13 +129,11 @@
     await this.saveState();
   }
   async addGame(gameData) {
-    const gameId = gameData._id.toString();
-    await db.redis.hset('games', gameId, true);
-    this.games.set(gameId, gameData);
-    this.broadcast({
-      lobby: { [this.id]: { gameMap: this.getGamesMap() } },
-      game: { [gameId]: gameData },
-    });
+    const gameId = gameData.id;
+    // this.games[gameId] = gameData;
+    this.games[gameId] = {};
+    this.subscribe(`game-${gameId}`, { rule: 'fields', fields: ['round', 'status', 'playerMap'] });
+    await this.saveState();
   }
   async removeGame({ _id, canceledByUser }) {
     const gameId = _id.toString();
@@ -162,11 +165,11 @@
     this.broadcast(null, afterGameHelpers);
   }
   updateGame({ _id, ...data }) {
-    const gameId = _id.toString();
-    const game = this.games.get(gameId);
-    if (game) {
-      Object.assign(game, data);
-      this.broadcast({ game: { [gameId]: data } });
-    }
+    // const gameId = _id.toString();
+    // const game = this.games.get(gameId);
+    // if (game) {
+    //   Object.assign(game, data);
+    //   this.broadcast({ game: { [gameId]: data } });
+    // }
   }
 });

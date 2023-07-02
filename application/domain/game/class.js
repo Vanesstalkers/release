@@ -1,24 +1,17 @@
-(class Lobby extends lib.store.class(
-  domain.game['!hasPlane'](
-    // hasPlane
-    domain.game['!hasDeck'](
-      // hasDeck
-      domain.game['!GameObject'] //GameObject
-    )
-  ),
-  {
-    broadcastEnabled: true,
-  }
-) {
+(class Game extends lib.game.class() {
   #changes = {};
-  #logs = {};
+  // #logs = {};
   #disableChanges = false;
-  store = {};
-  playerMap = {};
+  // store = {};
+  // playerMap = {};
   bridgeMap = {};
 
   constructor(data = {}) {
-    super(data, { col: 'game' });
+    super();
+    Object.assign(this, {
+      ...domain.game['@hasDeck'].decorators,
+      ...domain.game['@hasPlane'].decorators,
+    });
 
     this.setGame(this);
     delete this.code; // мешается в ZoneSide.links + в принципе не нужен
@@ -36,20 +29,20 @@
     if (!this.#changes[col]) this.#changes[col] = {};
     this.#changes[col][_id] = obj;
   }
-  log(data) {
-    if (typeof data === 'string') data = { msg: data };
-    if (!data.time) data.time = Date.now();
+  // log(data) {
+  //   if (typeof data === 'string') data = { msg: data };
+  //   if (!data.time) data.time = Date.now();
 
-    if (data.msg.includes('{{player}}')) {
-      const userId = data.userId || this.getActivePlayer().userId;
-      const logUser = lib.store('user').get(userId);
-      const logUserTitle = logUser.name || logUser.login;
-      data.msg = data.msg.replace(/{{player}}/g, `"${logUserTitle}"`);
-    }
+  //   if (data.msg.includes('{{player}}')) {
+  //     const userId = data.userId || this.getActivePlayer().userId;
+  //     const logUser = lib.store('user').get(userId);
+  //     const logUserTitle = logUser.name || logUser.login;
+  //     data.msg = data.msg.replace(/{{player}}/g, `"${logUserTitle}"`);
+  //   }
 
-    const id = (Date.now() + Math.random()).toString().replace('.', '_');
-    this.#logs[id] = data;
-  }
+  //   const id = (Date.now() + Math.random()).toString().replace('.', '_');
+  //   this.#logs[id] = data;
+  // }
   getChanges() {
     return this.#changes;
   }
@@ -61,44 +54,44 @@
   }
   clearChanges() {
     this.#changes = {};
-    this.#logs = {};
+    // this.#logs = {};
   }
 
-  async broadcastData() {
-    const gameId = this._id;
-    const $set = {};
+  // async broadcastData() {
+  //   const gameId = this._id;
+  //   const $set = {};
 
-    const changes = this.getChanges();
-    for (const [col, ids] of Object.entries(changes)) {
-      if (col === 'game') {
-        Object.assign($set, changes.game[gameId]);
-      } else {
-        for (const [id, value] of Object.entries(ids)) {
-          if (value.fake) continue;
-          for (const [key, val] of Object.entries(value)) {
-            $set[`store.${col}.${id}.${key}`] = val;
-          }
-        }
-      }
-    }
+  //   const changes = this.getChanges();
+  //   for (const [col, ids] of Object.entries(changes)) {
+  //     if (col === 'game') {
+  //       Object.assign($set, changes.game[gameId]);
+  //     } else {
+  //       for (const [id, value] of Object.entries(ids)) {
+  //         if (value.fake) continue;
+  //         for (const [key, val] of Object.entries(value)) {
+  //           $set[`store.${col}.${id}.${key}`] = val;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    if (Object.keys(this.#logs).length) {
-      Object.assign($set, Object.fromEntries(Object.entries(this.#logs).map(([key, data]) => [`logs.${key}`, data])));
-      Object.assign(this.logs, this.#logs);
-    }
-    if (Object.keys($set).length) {
-      delete $set._id;
-      await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
-    }
+  //   if (Object.keys(this.#logs).length) {
+  //     Object.assign($set, Object.fromEntries(Object.entries(this.#logs).map(([key, data]) => [`logs.${key}`, data])));
+  //     Object.assign(this.logs, this.#logs);
+  //   }
+  //   if (Object.keys($set).length) {
+  //     delete $set._id;
+  //     await db.mongo.updateOne('game', { _id: db.mongo.ObjectID(gameId) }, { $set });
+  //   }
 
-    lib.broadcaster.pubClient.publish(
-      `game-${gameId}`,
-      JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
-    );
-    this.broadcast({ logs: this.#logs }, {}, { emitType: 'db/smartUpdated' });
+  //   lib.broadcaster.pubClient.publish(
+  //     `game-${gameId}`,
+  //     JSON.stringify({ eventName: 'secureBroadcast', eventData: changes })
+  //   );
+  //   this.broadcast({ logs: this.#logs }, {}, { emitType: 'db/smartUpdated' });
 
-    this.clearChanges();
-  }
+  //   this.clearChanges();
+  // }
   prepareFakeData({ data, userId }) {
     const result = {};
     const player = this.getPlayerByUserId(userId);
@@ -200,77 +193,77 @@
       player.addDeck(item, { deckItemClass });
     }
   }
-  getPlayerList() {
-    const store = this.getStore();
-    return Object.keys(this.playerMap).map((_id) => store.player[_id]);
-  }
-  getPlayerByUserId(id) {
-    return this.getPlayerList().find((player) => player.userId === id);
-  }
-  userJoin({ userId }) {
-    const player = this.getFreePlayerSlot();
-    player.set('ready', true);
-    player.set('userId', userId);
-    if (!this.getFreePlayerSlot()) this.updateStatus();
-    return player;
-  }
-  getFreePlayerSlot() {
-    return this.getPlayerList().find((player) => !player.ready);
-  }
-  getActivePlayer() {
-    return this.getPlayerList().find((player) => player.active);
-  }
-  changeActivePlayer({ player } = {}) {
-    const activePlayer = this.getActivePlayer();
-    if (activePlayer.eventData.extraTurn) {
-      activePlayer.delete('eventData', 'extraTurn');
-      if (activePlayer.eventData.skipTurn) {
-        // актуально только для событий в течение хода игрока, инициированных не им самим
-        activePlayer.delete('eventData', 'skipTurn');
-      } else {
-        this.log({
-          msg: `Игрок {{player}} получает дополнительный ход.`,
-          userId: activePlayer.userId,
-        });
-        return activePlayer;
-      }
-    }
+  // getPlayerList() {
+  //   const store = this.getStore();
+  //   return Object.keys(this.playerMap).map((_id) => store.player[_id]);
+  // }
+  // getPlayerByUserId(id) {
+  //   return this.getPlayerList().find((player) => player.userId === id);
+  // }
+  // userJoin({ userId }) {
+  //   const player = this.getFreePlayerSlot();
+  //   player.set('ready', true);
+  //   player.set('userId', userId);
+  //   if (!this.getFreePlayerSlot()) this.updateStatus();
+  //   return player;
+  // }
+  // getFreePlayerSlot() {
+  //   return this.getPlayerList().find((player) => !player.ready);
+  // }
+  // getActivePlayer() {
+  //   return this.getPlayerList().find((player) => player.active);
+  // }
+  // changeActivePlayer({ player } = {}) {
+  //   const activePlayer = this.getActivePlayer();
+  //   if (activePlayer.eventData.extraTurn) {
+  //     activePlayer.delete('eventData', 'extraTurn');
+  //     if (activePlayer.eventData.skipTurn) {
+  //       // актуально только для событий в течение хода игрока, инициированных не им самим
+  //       activePlayer.delete('eventData', 'skipTurn');
+  //     } else {
+  //       this.log({
+  //         msg: `Игрок {{player}} получает дополнительный ход.`,
+  //         userId: activePlayer.userId,
+  //       });
+  //       return activePlayer;
+  //     }
+  //   }
 
-    const playerList = this.getPlayerList();
-    let activePlayerIndex = playerList.findIndex((player) => player === activePlayer);
-    let newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
-    if (player) {
-      if (player.eventData.skipTurn) player.delete('eventData', 'skipTurn');
-      newActivePlayer = player;
-    } else {
-      if (this.isSinglePlayer()) {
-        newActivePlayer.delete('eventData', 'actionsDisabled');
-        if (newActivePlayer.eventData.skipTurn) {
-          this.log({
-            msg: `Игрок {{player}} пропускает ход.`,
-            userId: newActivePlayer.userId,
-          });
-          newActivePlayer.delete('eventData', 'skipTurn');
-          newActivePlayer.assign('eventData', { actionsDisabled: true });
-        }
-      } else {
-        while (newActivePlayer.eventData.skipTurn) {
-          this.log({
-            msg: `Игрок {{player}} пропускает ход.`,
-            userId: newActivePlayer.userId,
-          });
-          newActivePlayer.delete('eventData', 'skipTurn');
-          activePlayerIndex++;
-          newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
-        }
-      }
-    }
+  //   const playerList = this.getPlayerList();
+  //   let activePlayerIndex = playerList.findIndex((player) => player === activePlayer);
+  //   let newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
+  //   if (player) {
+  //     if (player.eventData.skipTurn) player.delete('eventData', 'skipTurn');
+  //     newActivePlayer = player;
+  //   } else {
+  //     if (this.isSinglePlayer()) {
+  //       newActivePlayer.delete('eventData', 'actionsDisabled');
+  //       if (newActivePlayer.eventData.skipTurn) {
+  //         this.log({
+  //           msg: `Игрок {{player}} пропускает ход.`,
+  //           userId: newActivePlayer.userId,
+  //         });
+  //         newActivePlayer.delete('eventData', 'skipTurn');
+  //         newActivePlayer.assign('eventData', { actionsDisabled: true });
+  //       }
+  //     } else {
+  //       while (newActivePlayer.eventData.skipTurn) {
+  //         this.log({
+  //           msg: `Игрок {{player}} пропускает ход.`,
+  //           userId: newActivePlayer.userId,
+  //         });
+  //         newActivePlayer.delete('eventData', 'skipTurn');
+  //         activePlayerIndex++;
+  //         newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
+  //       }
+  //     }
+  //   }
 
-    activePlayer.set('active', false);
-    newActivePlayer.set('active', true);
+  //   activePlayer.set('active', false);
+  //   newActivePlayer.set('active', true);
 
-    return newActivePlayer;
-  }
+  //   return newActivePlayer;
+  // }
   linkPlanes({ joinPort, targetPort, fake }) {
     const { targetLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
 
@@ -357,9 +350,9 @@
     }
     return availablePorts;
   }
-  isSinglePlayer() {
-    return this.settings.singlePlayer;
-  }
+  // isSinglePlayer() {
+  //   return this.settings.singlePlayer;
+  // }
 
   addBridge(data) {
     const store = this.getStore();

@@ -1,5 +1,5 @@
-(Base) =>
-  class extends Base {
+({
+  decorators: {
     addDeck(data, { deckClass = domain.game.Deck, deckListName = 'deckMap', deckItemClass = domain.game.Dice } = {}) {
       if (!data.settings) data.settings = {};
       if (!data.access) data.access = {};
@@ -18,10 +18,11 @@
       for (const item of data.itemList || []) deck.addItem(item);
 
       return deck;
-    }
+    },
     deleteDeck(deckToDelete) {
       deckToDelete.deleteFromParentsObjectStorage();
       const { parentDeckContainer } = deckToDelete.settings;
       this.delete(parentDeckContainer, deckToDelete._id);
-    }
-  };
+    },
+  },
+});

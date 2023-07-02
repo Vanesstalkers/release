@@ -8,7 +8,7 @@
           #client;
           constructor(data = {}) {
             const { col, id, client } = data;
-            super(data);
+            super(...arguments);
             this.#client = client;
             if (id) this.initChannel({ col, id });
           }
@@ -35,6 +35,11 @@
             const { actionName, actionData } = data;
             if (this[actionName]) this[actionName](actionData);
           }
+
+          /**
+           * Базовая функция класса для сохранения данных при получении обновлений
+           * @param {*} data
+           */
           processData(data) {
             throw new Error(`"processData" handler not created for channel (${this.#channelName})`);
           }
@@ -48,22 +53,27 @@
             this.#channel.subscribers.set(subscriberChannel, { accessConfig });
             this.broadcastData(this.dataState(), { customChannel: subscriberChannel });
           }
+          wrapPublishData(data) {
+            return { [this.col()]: { [this.id()]: data } };
+          }
           broadcastData(data, { customChannel } = {}) {
-            const wrapPublishData = (data) => ({ [this.col()]: { [this.id()]: data } });
-
             for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
               if (!customChannel || subscriberChannel === customChannel) {
                 let publishData;
                 const { rule = 'all', fields = [] } = accessConfig;
                 switch (rule) {
-                  case 'fields': // отправляем только выбранные поля
-                    publishData = wrapPublishData(
-                      Object.fromEntries(Object.entries(data).filter(([key, value]) => fields.includes(key)))
+                  case 'fields': // отправляем только выбранные поля (и вложенные в них объекты)
+                    publishData = this.wrapPublishData(
+                      Object.fromEntries(
+                        Object.entries(data).filter(([key, value]) =>
+                          fields.find((field) => key === field || key.indexOf(field + '.') === 0)
+                        )
+                      )
                     );
                     break;
                   case 'all': // отправляем все изменения по всем полям
                   default:
-                    publishData = wrapPublishData(data);
+                    publishData = this.wrapPublishData(data);
                 }
                 if (!Object.keys(publishData).length) continue;
                 lib.store.broadcaster.publishData(subscriberChannel, publishData);
@@ -80,7 +90,7 @@
 
     constructor(data = {}) {
       const { col, id } = data;
-      super(data);
+      super(...arguments);
       this.#col = col;
       if (id) this.initStore(id);
     }
@@ -95,6 +105,9 @@
     initStore(id) {
       this.#id = id.toString();
       lib.store(this.#col).set(this.#id, this);
+    }
+    storeId() {
+      return this.#col + '-' + this.#id;
     }
     async load({ fromData = null, fromDB = {} }, { initStoreDisabled = false } = {}) {
       if (fromData) {
@@ -147,10 +160,10 @@
     dataState() {
       return this.#dataState;
     }
-    set(key, value) {
-      const baseValue = {};
+    updateState(key, value) {
       // если обновляется объект, то ищем все старые вложенные ключи и обнуляем их
       if (typeof value === 'object') {
+        const baseValue = {};
         const findKey = `${key}.`;
         for (const key of Object.keys(this.dataState())) {
           if (key.indexOf(findKey) === 0) {
@@ -159,9 +172,11 @@
             else baseValue[updateKey] = null;
           }
         }
+        // тут происходит замена обнуленных вложенных ключей на новые значения
+        this[key] = { ...baseValue, ...value };
+      } else {
+        this[key] = value;
       }
-      // тут происходит замена обнуленных вложенных ключей на новые значения
-      this[key] = { ...baseValue, ...value };
     }
     fixState(changes) {
       if (changes) {

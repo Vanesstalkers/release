@@ -5,13 +5,16 @@
   },
 
   async saveSession(token, data, fields = {}) {
-    if (fields.online !== undefined) {
-      await db.redis.hset('online', token, fields.online ? 1 : 0);
-      delete fields.online;
-    }
-    const $set = { ...fields };
-    if (data) $set.data = data;
-    await db.mongo.findOneAndUpdate('session', { token }, { $set }, { returnDocument: 'after' });
+
+    // !!! надо прицепить к lib.user.session
+
+    // if (fields.online !== undefined) {
+    //   await db.redis.hset('online', token, fields.online ? 1 : 0);
+    //   delete fields.online;
+    // }
+    // const $set = { ...fields };
+    // if (data) $set.data = data;
+    // await db.mongo.findOneAndUpdate('session', { token }, { $set }, { returnDocument: 'after' });
   },
 
   async createSession(token, data, fields = {}) {

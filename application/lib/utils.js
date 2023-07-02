@@ -87,7 +87,8 @@
     return result;
   },
 
-  getDeep(source, splittedPath){
+  getDeep(source, path) {
+    const splittedPath = typeof path === 'string' ? path.split('.') : path;
     return splittedPath.reduce((result, part) => result?.[part] || null, source);
   },
   setDeep(obj, path, value) {

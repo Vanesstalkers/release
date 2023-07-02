@@ -7,7 +7,7 @@
       if (!game) throw new Error('Игра не найдена.');
       if (game.finished) throw new Error('Игра уже завершена.');
 
-      const repoUser = lib.repository.user[userId];
+      const repoUser = lib.store('user').get(userId);
       let { helper = null, helperLinks = {}, finishedTutorials = {} } = repoUser;
 
       const startTutorial = Object.keys(game.playerMap).length > 1 ? 'tutorialGameStart' : 'tutorialGameSingleStart';

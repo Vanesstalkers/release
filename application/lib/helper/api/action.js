@@ -27,7 +27,8 @@ async (context, { action, step, tutorial: tutorialName, usedLink }) => {
       const tutorial = lib.helper.getTutorial(currentTutorial.active);
       const nextStep = tutorial[step];
       if (nextStep) {
-        user.set('helper', nextStep);
+        user.updateState('helper', nextStep);
+        // user.helper = nextStep;
         user.currentTutorial = { ...currentTutorial, step };
       } else {
         user.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };

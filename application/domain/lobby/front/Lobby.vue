@@ -47,9 +47,9 @@
           </div>
         </div>
         <hr :style="{ margin: '10px 30px', borderColor: '#f4e205' }" />
-        <div v-for="game in gameList" :key="game._id">
+        <div v-for="game in lobbyGameList" :key="game._id">
           Раунд: ( {{ game.round }} ) Набрано игроков: ( {{ game.joinedPlayers }} )
-          <button class="lobby-btn" v-on:click="joinGame({ gameId: game._id })">Присоединиться к игре</button>
+          <button class="lobby-btn" v-on:click="joinGame({ gameId: game.id })">Присоединиться к игре</button>
         </div>
       </div>
     </div>
@@ -132,11 +132,11 @@
           }"
         >
           <label class="user-list-label" :style="{ width: '100%' }"
-            >Игроки онлайн ({{ userGuestsCount + userList.length }})</label
+            >Игроки онлайн ({{ lobbyUserGuestsCount + lobbyUserList.length }})</label
           >
           <div class="user-list">
-            <span v-if="userGuestsCount">Гость ({{ userGuestsCount }})</span>
-            <span v-for="user in userList" :key="user.id">
+            <span v-if="lobbyUserGuestsCount">Гость ({{ lobbyUserGuestsCount }})</span>
+            <span v-for="user in lobbyUserList" :key="user.id">
               {{ user.name }}
             </span>
           </div>
@@ -294,12 +294,15 @@ export default {
     userData() {
       return this.getStore(this.currentUser, 'user') || {};
     },
-    userList() {
-      return Object.entries(this.lobby?.users || {})
+    lobbyUserMap() {
+      return this.lobby?.users || {};
+    },
+    lobbyUserList() {
+      return Object.entries(this.lobbyUserMap)
         .filter(([id, user]) => user && user.name)
         .map(([id, user]) => Object.assign(user, { id }));
     },
-    userGuestsCount() {
+    lobbyUserGuestsCount() {
       return Object.values(this.lobby?.users || {}).filter((user) => user && !user.name).length;
     },
     lobby() {
@@ -314,6 +317,24 @@ export default {
     currentRanking() {
       return Object.values(this.rankings).find((r) => r.active)?.list || [];
     },
+
+    lobbyGameMap() {
+      return this.lobby?.games || {};
+    },
+    lobbyGameList() {
+      const list = Object.entries(this.lobbyGameMap)
+        // .filter(([id, user]) => user && user.name)
+        .map(([id, game]) => Object.assign(game, { id }));
+      return list.map((game) => {
+        if (game.playerMap) {
+          const playerEntries = Object.entries(game.playerMap);
+          game.joinedPlayers =
+            playerEntries.filter(([id, player]) => player.ready).length + ' из ' + playerEntries.length;
+        }
+        return game;
+      });
+    },
+
     gameList() {
       const list = Object.keys(this.lobby.gameMap || {}).map((id) => this.getStore(id, 'game')) || [];
       return list.map((game) => {
@@ -325,10 +346,17 @@ export default {
       });
     },
     getChat() {
-      const msgList = this.getStore('chat');
-      return Object.values(msgList)
-        .map((msg) => ({ ...msg, timeStr: new Date(msg.time).toLocaleString() }))
-        .reverse();
+      return (
+        Object.entries(this.lobby?.chat || {})
+          // .filter(([id, msg]) => msg && msg.text)
+          .map(([id, msg]) =>
+            Object.assign({}, msg, {
+              id,
+              timeStr: new Date(msg.time).toLocaleString(),
+            })
+          )
+          .reverse()
+      );
     },
     getTopPlayers() {
       return this.getStore('topPlayers');
@@ -343,24 +371,29 @@ export default {
       e.target.closest('.menu-item').classList.toggle('pinned');
     },
     async addGame(type) {
-      await api.lobby
-        .newGame({ type })
+      await api.action
+        .call({
+          path: 'domain.game.api.new',
+          args: [{ type }],
+        })
         .then(({ gameId }) => {
-          if (gameId) this.joinGame({ gameId });
+          // if (gameId) this.joinGame({ gameId });
         })
         .catch((err) => {
           prettyAlert(err.message);
         });
     },
     async joinGame({ gameId }) {
-      await api.lobby.joinGame({ gameId: gameId });
+      await api.action.call({
+        path: 'lib.game.api.join',
+        args: [{ gameId }],
+      });
     },
     showInfo(name) {
       api.action.call({
         path: 'lib.helper.api.action',
         args: [{ tutorial: 'lobby.tutorial.sales', step: name }],
       });
-      return;
     },
     showRules(name) {
       api.action.call({
@@ -377,8 +410,11 @@ export default {
     },
     sendChatMsg() {
       this.disableSendMsgBtn = 5;
-      api.lobby
-        .updateChat({ text: this.chatMsgText })
+      api.action
+        .call({
+          path: 'domain.lobby.api.updateChat',
+          args: [{ text: this.chatMsgText }],
+        })
         .then((data) => {
           this.chatMsgText = '';
           this.restoreMsgBtn();
@@ -386,6 +422,16 @@ export default {
         .catch((err) => {
           this.restoreMsgBtn();
         });
+
+      // api.lobby
+      //   .updateChat({ text: this.chatMsgText })
+      //   .then((data) => {
+      //     this.chatMsgText = '';
+      //     this.restoreMsgBtn();
+      //   })
+      //   .catch((err) => {
+      //     this.restoreMsgBtn();
+      //   });
     },
     restoreMsgBtn() {
       if (this.disableSendMsgBtn > 0) {

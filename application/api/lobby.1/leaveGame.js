@@ -3,10 +3,7 @@
   method: async () => {
     try {
       const gameId = context.gameId;
-      lib.repository
-        .getCollection('lobby')
-        .get('main')
-        .removeGame({ _id: gameId, canceledByUser: context.client.userId });
+      lib.store('lobby').get('main').removeGame({ _id: gameId, canceledByUser: context.client.userId });
 
       return 'ok';
     } catch (err) {

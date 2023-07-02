@@ -1,4 +1,4 @@
-(class LobbyUser extends lib.user.class {
+(class LobbyUser extends lib.user.class() {
   async joinLobby({ sessionId }) {
     const { gameId, playerId } = this;
 
@@ -10,7 +10,7 @@
 
     let { helper = null, helperLinks = {}, finishedTutorials = {} } = this;
     const lobbyStartTutorialName = 'lobby.tutorial.start';
-    if (!helper && !finishedTutorials[lobbyStartTutorialName]) {
+    if (!helper && !lib.utils.getDeep(finishedTutorials, lobbyStartTutorialName)) {
       const tutorial = lib.helper.getTutorial(lobbyStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
       // helperLinks = {

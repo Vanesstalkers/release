@@ -51,6 +51,11 @@
     this.getProtoParent().initChannel.call(this, data);
     this.subscribe(`user-${this.userId}`);
   }
+
+  /**
+   * Базовая функция класса для сохранения данных при получении обновлений
+   * @param {*} data
+   */
   processData(data) {
     try {
       this.client().emit('db/smartUpdated', data);
