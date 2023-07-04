@@ -33,7 +33,8 @@
     //     list: [],
     //   },
     // };
-    this.fixState();
+
+    // this.fixState();
     console.log(`Lobby "${this.storeId()}" loaded.`);
     return this;
   }
@@ -62,7 +63,7 @@
     Object.entries(data).forEach(([key, map]) => {
       switch (key) {
         case 'user':
-          assignIdMap(this.users, map);
+          this.set({ users: map });
           break;
         case 'game':
           assignIdMap(this.games, map);
@@ -73,39 +74,11 @@
       }
     });
 
-    await this.saveState();
+    await this.saveChanges();
   }
-  // getData() {
-  //   console.log('getData this.users=', this.users);
-  //   const gameMap = {},
-  //     userMap = {};
-  //   for (const [id, game] of this.games) gameMap[id] = this.getSingleGame(game);
-  //   // for (const id of this.users) userMap[id] = {}; /* this.getSingleUser(lib.repository.user[id]) */
-  //   return {
-  //     lobby: {
-  //       [this.id]: { userMap: this.getUsersMap(), gameMap: this.getGamesMap() },
-  //     },
-  //     game: gameMap,
-  //     user: this.users,
-  //     chat: this.getChatMap(),
-  //     ranking: this.rankings,
-  //   };
-  // }
-  // getChatMap() {
-  //   return Object.fromEntries(this.chat.slice(-10).map((msg) => [`${msg.time}-${msg._id}`, msg]));
-  // }
   getGamesMap() {
     return Object.fromEntries(Object.entries(Object.fromEntries(this.games)).map(([id]) => [id, {}]));
   }
-  // getSingleGame(game) {
-  //   return { _id: game._id, round: game.round, status: game.status, playerList: game.playerList };
-  // }
-  // getUsersMap() {
-  //   return Object.fromEntries([...this.users].map((id) => [id, {}]));
-  // }
-  // getSingleUser(user) {
-  //   return { _id: user._id, name: user.name, login: user.login };
-  // }
 
   async updateChat({ text, user }) {
     const time = Date.now();
@@ -113,27 +86,30 @@
     const { _id } = await db.mongo.insertOne('chat', insertData);
     insertData._id = _id;
     this.chat[_id] = insertData;
-    await this.saveState();
+    await this.saveChanges();
   }
   async joinLobby({ sessionId, userId, name }) {
     if (!this.users[userId]) {
-      this.users[userId] = { name, sessions: [] };
+      this.set({ users: { [userId]: { sessions: [] } } });
       this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name'] });
     }
-    this.users[userId].sessions.push(sessionId);
-    await this.saveState();
+    this.set({ users: { [userId]: { sessions: [...this.users[userId].sessions, sessionId] } } });
+    await this.saveChanges();
   }
   async leaveLobby({ sessionId, userId }) {
-    this.users[userId].sessions = this.users[userId].sessions.filter((id) => id !== sessionId);
-    if (this.users[userId].sessions.length === 0) this.users[userId] = null;
-    await this.saveState();
+    this.set({ users: { [userId]: { sessions: this.users[userId].sessions.filter((id) => id !== sessionId) } } });
+    if (this.users[userId].sessions.length === 0) {
+      this.set({ users: { [userId]: null } });
+      this.unsubscribe(`user-${userId}`);
+    }
+    await this.saveChanges();
   }
   async addGame(gameData) {
     const gameId = gameData.id;
     // this.games[gameId] = gameData;
     this.games[gameId] = {};
     this.subscribe(`game-${gameId}`, { rule: 'fields', fields: ['round', 'status', 'playerMap'] });
-    await this.saveState();
+    await this.saveChanges();
   }
   async removeGame({ _id, canceledByUser }) {
     const gameId = _id.toString();

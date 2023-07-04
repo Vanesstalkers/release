@@ -392,13 +392,13 @@ export default {
     showInfo(name) {
       api.action.call({
         path: 'lib.helper.api.action',
-        args: [{ tutorial: 'lobby.tutorial.sales', step: name }],
+        args: [{ tutorial: 'lobby-tutorial-sales', step: name }],
       });
     },
     showRules(name) {
       api.action.call({
         path: 'lib.helper.api.action',
-        args: [{ tutorial: 'lobby.tutorial.gameRules', step: name }],
+        args: [{ tutorial: 'lobby-tutorial-gameRules', step: name }],
       });
       return;
     },

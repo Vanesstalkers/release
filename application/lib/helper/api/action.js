@@ -1,6 +1,6 @@
 async (context, { action, step, tutorial: tutorialName, usedLink }) => {
   const user = lib.store('user').get(context.userId);
-  let { currentTutorial, helperLinks = {}, finishedTutorials = {} } = user;
+  let { currentTutorial } = user;
   if (!currentTutorial) currentTutorial = {};
 
   if (tutorialName) {
@@ -12,34 +12,35 @@ async (context, { action, step, tutorial: tutorialName, usedLink }) => {
       ? Object.entries(tutorial).find(([key]) => key === step)[1]
       : Object.values(tutorial).find(({ initialStep }) => initialStep);
     if (!helper) throw new Error('Tutorial initial step not found');
-    user.currentTutorial = { active: tutorialName };
 
-    user.helper = helper;
-    if (usedLink) {
-      user.helperLinks = { ...helperLinks, [usedLink]: { ...helperLinks[usedLink], used: true } };
-    }
+    user.set({ currentTutorial: { active: tutorialName } });
+    user.set({ helper });
+    if (usedLink) user.set({ helperLinks: { [usedLink]: { used: true } } });
   } else if (currentTutorial.active) {
     if (action === 'exit') {
-      user.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
-      user.helper = null;
-      user.currentTutorial = null;
+      user.set({
+        finishedTutorials: { [currentTutorial.active]: true },
+        helper: null,
+        currentTutorial: null,
+      });
     } else {
       const tutorial = lib.helper.getTutorial(currentTutorial.active);
       const nextStep = tutorial[step];
       if (nextStep) {
-        user.updateState('helper', nextStep);
-        // user.helper = nextStep;
-        user.currentTutorial = { ...currentTutorial, step };
+        user.set({ helper: nextStep }, { reset: ['helper'] }); // reset обязателен, так как набор ключей в каждом helper-step может быть разный
+        user.set({ currentTutorial: { step } });
       } else {
-        user.finishedTutorials = { ...finishedTutorials, [currentTutorial.active]: true };
-        user.helper = null;
-        user.currentTutorial = null;
+        user.set({
+          finishedTutorials: { [currentTutorial.active]: true },
+          helper: null,
+          currentTutorial: null,
+        });
       }
     }
   } else {
-    user.helper = null;
+    user.set({ helper: null });
   }
 
-  await user.saveState();
+  await user.saveChanges();
   return { status: 'ok' };
 };

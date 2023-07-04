@@ -31,7 +31,7 @@
           </li>
         </ul>
         <ul v-if="menu.showTutorials && !inGame" class="tutorials">
-          <li v-on:click.stop="action({ tutorial: 'lobby.tutorial.start' })">Стартовое приветствие</li>
+          <li v-on:click.stop="action({ tutorial: 'lobby-tutorial-start' })">Стартовое приветствие</li>
         </ul>
 
         <div v-if="menu.buttons" :class="['controls', menu.bigControls ? 'big' : '']">

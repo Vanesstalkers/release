@@ -1,8 +1,8 @@
 async (context, { name }) => {
   const user = lib.store('user').get(context.userId);
 
-  user.name = name;
+  user.set({ name });
 
-  await user.saveState();
+  await user.saveChanges();
   return { status: 'ok' };
 };

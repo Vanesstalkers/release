@@ -56,6 +56,7 @@
         userId: session.userId,
       }); // данные попадут в context (в следующих вызовах)
       context.client.events.close.push(() => {
+        session.unsubscribe(`user-${session.userId}`);
         console.log(`session disconnected (token=${session.token}`);
       });
 

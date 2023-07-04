@@ -15,46 +15,46 @@ export default new Vuex.Store({
     selectedCard: null,
   },
   getters: {
-    isMobile: state => state.isMobile,
-    guiScale: state => state.guiScale,
-    isLandscape: state => state.isLandscape,
-    isPortrait: state => !state.isLandscape,
-    currentUser: state => state.currentUser,
-    sessionPlayerId: state => state.sessionPlayerId,
-    sessionPlayerIsActive: state =>
+    isMobile: (state) => state.isMobile,
+    guiScale: (state) => state.guiScale,
+    isLandscape: (state) => state.isLandscape,
+    isPortrait: (state) => !state.isLandscape,
+    currentUser: (state) => state.currentUser,
+    sessionPlayerId: (state) => state.sessionPlayerId,
+    sessionPlayerIsActive: (state) =>
       state.sessionPlayerId ===
       Object.keys((state.store.game?.[state.gameId] || {}).playerMap || {}).find(
-        id => state.store.player?.[id]?.active,
+        (id) => state.store.player?.[id]?.active
       ),
-    currentRound: state => (state.store.game?.[state.gameId] || {}).round,
-    actionsDisabled: state => state.store.player?.[state.sessionPlayerId]?.eventData?.actionsDisabled,
-    pickedDiceId: state => state.pickedDiceId,
-    selectedDiceSideId: state => state.selectedDiceSideId,
-    availablePorts: state => state.availablePorts,
-    helperLinksBounds: state => state.helperLinksBounds,
-    shownCard: state => state.shownCard,
-    selectedCard: state => state.selectedCard,
+    currentRound: (state) => (state.store.game?.[state.gameId] || {}).round,
+    actionsDisabled: (state) => state.store.player?.[state.sessionPlayerId]?.eventData?.actionsDisabled,
+    pickedDiceId: (state) => state.pickedDiceId,
+    selectedDiceSideId: (state) => state.selectedDiceSideId,
+    availablePorts: (state) => state.availablePorts,
+    helperLinksBounds: (state) => state.helperLinksBounds,
+    shownCard: (state) => state.shownCard,
+    selectedCard: (state) => state.selectedCard,
 
-    getSimple: state => (id, col) => {
+    getSimple: (state) => (id, col) => {
       return (col ? state[col]?.[id] : state[id]) || {};
     },
-    getStore: state => (id, col) => {
+    getStore: (state) => (id, col) => {
       return (col ? state.store[col]?.[id] : state.store[id]) || {};
     },
-    getClone: state => (id, col) => {
+    getClone: (state) => (id, col) => {
       return JSON.parse(JSON.stringify((col ? state[col]?.[id] : state[id]) || {}));
     },
-    getState: state => {
+    getState: (state) => {
       return state;
     },
-    gamePlaneCustomStyleData: state => state.gamePlaneCustomStyleData || {},
+    gamePlaneCustomStyleData: (state) => state.gamePlaneCustomStyleData || {},
     getHelperLinks: (state, getters) => {
       const links = getters.getStore(getters.currentUser, 'user').helperLinks || {};
       const currentGame = localStorage.getItem('currentGame');
       return Object.fromEntries(
         Object.entries(links).filter(
-          ([code, link]) => link.used !== true && link.type === (currentGame ? 'game' : 'lobby'),
-        ),
+          ([code, link]) => link.used !== true && link.type === (currentGame ? 'game' : 'lobby')
+        )
       );
     },
   },
@@ -65,8 +65,8 @@ export default new Vuex.Store({
     setSelectedDiceSideId: (state, value) => {
       state.selectedDiceSideId = value;
     },
-    hideZonesAvailability: state => {
-      Object.keys(state.store.zone).forEach(id => {
+    hideZonesAvailability: (state) => {
+      Object.keys(state.store.zone).forEach((id) => {
         if (state.store.zone[id].available) state.store.zone[id].available = false;
       });
     },
@@ -80,7 +80,7 @@ export default new Vuex.Store({
       state.selectedCard = value;
     },
 
-    clearData: state => {
+    clearData: (state) => {
       Vue.set(state, 'forms', {});
       Vue.set(state, 'session', {});
       Vue.set(state, 'game', {});
@@ -94,7 +94,7 @@ export default new Vuex.Store({
     setData: (state, value) => {
       Object.entries(value).forEach(([key, val]) => {
         if (!state[key]) Vue.set(state, key, {});
-        Object.keys(val).forEach(id => {
+        Object.keys(val).forEach((id) => {
           Vue.set(state[key], id, val[id]);
         });
       });
@@ -102,7 +102,7 @@ export default new Vuex.Store({
     setDeep: (state, value) => {
       Object.entries(value).forEach(([key, val]) => {
         if (!state[key]) Vue.set(state, key, {});
-        Object.keys(val).forEach(id => {
+        Object.keys(val).forEach((id) => {
           Object.entries(val[id]).forEach(([k, v]) => {
             const props = k.split('.');
             if (!state[key][id]) Vue.set(state[key], id, {});
@@ -120,8 +120,9 @@ export default new Vuex.Store({
       const store = state.store;
       Object.entries(value).forEach(([key, val]) => {
         if (!store[key]) store[key] = {};
-        Object.keys(val).forEach(id => {
-          Object.entries(val[id]).forEach(([k, v]) => {
+        Object.keys(val).forEach((id) => {
+          const flattenObj = flatten(val[id]);
+          Object.entries(flattenObj).forEach(([k, v]) => {
             const props = k.split('.');
             if (!store[key][id]) store[key][id] = {};
             let itemPart = store[key][id];
@@ -134,6 +135,19 @@ export default new Vuex.Store({
         });
       });
       Vue.set(state, 'store', { ...store });
+
+      function isPlainObj(value) {
+        return value?.constructor?.prototype?.hasOwnProperty('isPrototypeOf');
+      }
+      function flatten(obj, keys = []) {
+        const acc = {};
+        return Object.keys(obj).reduce((acc, key) => {
+          return Object.assign(
+            acc,
+            isPlainObj(obj[key]) ? flatten(obj[key], keys.concat(key)) : { [keys.concat(key).join('.')]: obj[key] }
+          );
+        }, acc);
+      }
     },
   },
   actions: {
@@ -141,15 +155,12 @@ export default new Vuex.Store({
       commit('setSimple', options);
     },
     async setData({ state, commit, dispatch }, options = {}) {
-      // console.log('setData', options);
       commit('setData', options);
     },
     async setDeep({ state, commit, dispatch }, options = {}) {
-      // console.log('setDeep', options);
       commit('setDeep', options);
     },
     async setStore({ state, commit, dispatch }, options = {}) {
-      // console.log('setStore', options);
       commit('setStore', options);
     },
   },

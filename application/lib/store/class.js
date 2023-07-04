@@ -22,6 +22,9 @@
 
             // !!! тут нужно восстановить информацию о себе у старых подписчиков
           }
+          removeChannel() {
+            // !!! надо настроить удаление канала
+          }
           client() {
             return this.#client;
           }
@@ -49,9 +52,17 @@
               accessConfig,
             });
           }
+          unsubscribe(channelName) {
+            lib.store.broadcaster.publishAction(channelName, 'deleteSubscriber', {
+              subscriber: this.#channelName,
+            });
+          }
           addSubscriber({ subscriber: subscriberChannel, accessConfig = {} }) {
             this.#channel.subscribers.set(subscriberChannel, { accessConfig });
-            this.broadcastData(this.dataState(), { customChannel: subscriberChannel });
+            this.broadcastData(this, { customChannel: subscriberChannel });
+          }
+          deleteSubscriber({ subscriber: subscriberChannel }) {
+            this.#channel.subscribers.delete(subscriberChannel);
           }
           wrapPublishData(data) {
             return { [this.col()]: { [this.id()]: data } };
@@ -85,14 +96,20 @@
   return class extends protoClass {
     #id;
     #col;
-    #dataState = {};
-    #lockedStateJSON = null;
+    #changes = {};
+    #disableChanges = false;
 
     constructor(data = {}) {
       const { col, id } = data;
       super(...arguments);
       this.#col = col;
       if (id) this.initStore(id);
+    }
+    id() {
+      return this.#id;
+    }
+    col() {
+      return this.#col;
     }
     getProtoParent() {
       let parent = this;
@@ -129,7 +146,7 @@
         }
       }
       if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
-      this.fixState();
+      // this.fixState();
       return this;
     }
     async create(initialData = {}) {
@@ -144,103 +161,65 @@
           if (!this.channel()) this.initChannel();
         }
         if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
-        this.fixState();
+        // this.fixState();
         return this;
       } catch (err) {
         throw err;
       }
     }
 
-    id() {
-      return this.#id;
+    set(val, config) {
+      if (!this.#disableChanges)
+        lib.utils.mergeDeep({ masterObj: this, target: this.#changes, source: lib.utils.structuredClone(val), config });
+      lib.utils.mergeDeep({ masterObj: this, target: this, source: val, config });
     }
-    col() {
-      return this.#col;
+    markNew(obj) {
+      // !!! сомнительная реализация, т.к. эти данные повторно сохранятся в БД
+      if (this.#disableChanges) return;
+      const col = obj.col;
+      const _id = obj._id;
+      if (!this.#changes[col]) this.#changes[col] = {};
+      this.#changes[col][_id] = obj;
     }
-    dataState() {
-      return this.#dataState;
-    }
-    updateState(key, value) {
-      // если обновляется объект, то ищем все старые вложенные ключи и обнуляем их
-      if (typeof value === 'object') {
-        const baseValue = {};
-        const findKey = `${key}.`;
-        for (const key of Object.keys(this.dataState())) {
-          if (key.indexOf(findKey) === 0) {
-            const updateKey = key.replace(findKey, '');
-            if (updateKey.includes('.')) delete baseValue[updateKey];
-            else baseValue[updateKey] = null;
-          }
-        }
-        // тут происходит замена обнуленных вложенных ключей на новые значения
-        this[key] = { ...baseValue, ...value };
-      } else {
-        this[key] = value;
-      }
-    }
-    fixState(changes) {
-      if (changes) {
-        for (const [key, value] of Object.entries(changes)) {
-          if (value === null) {
-            const findKey = `${key}.`;
-            for (const key of Object.keys(this.#dataState)) {
-              if (key.indexOf(findKey) === 0) delete this.#dataState[key];
-            }
-            delete this.#dataState[key];
-          } else this.#dataState[key] = value;
-        }
-      } else this.#dataState = lib.utils.flatten(this);
-    }
-
-    lockState() {
-      this.#lockedStateJSON = JSON.stringify(this);
-    }
-    unlockState() {
-      for (const key of Object.keys(this)) delete this[key];
-      for (const [key, value] of Object.entries(JSON.parse(this.#lockedStateJSON))) this[key] = value;
-    }
-
     getChanges() {
-      const currentState = lib.utils.flatten(this);
-      const changes = {};
-      const restoredKeys = [];
-      for (const [key, value] of Object.entries(currentState)) {
-        if (
-          value !== this.#dataState[key] &&
-          ((!Array.isArray(value) && value?.toString() !== this.#dataState[key]?.toString()) || // проверка для объектов '{}'
-            (Array.isArray(value) && JSON.stringify(value) !== JSON.stringify(this.#dataState[key]))) // проверять массивы можно только тут, иначе они передаются по ссылке и значение в #dataState всегда совпадает currentState
-        ) {
-          changes[key] = value;
-          if (this.#dataState[key] === null) restoredKeys.push(key);
-        } else {
-          if (restoredKeys.length && restoredKeys.find((rkey) => key.indexOf(`${rkey}.`) === 0)) {
-            changes[key] = this.#dataState[key];
-          }
-        }
-      }
-      return changes;
+      return this.#changes;
     }
+    enableChanges() {
+      this.#disableChanges = false;
+    }
+    disableChanges() {
+      this.#disableChanges = true;
+    }
+    clearChanges() {
+      this.#changes = {};
+    }
+    async saveChanges() {
+      // !!! тут возникает гонка (смотри публикации на клиенте при открытии лобби после перезагрузки браузера)
 
-    async saveState() {
       const changes = this.getChanges();
       if (!Object.keys(changes).length) return;
+      // let _id = this.#id.length === 24 ? this.#id : '64a2d4a89ba5a1a9fccdbef6';
+      // if (_id.length === 24) {
       if (this.#id.length === 24) {
         const $update = { $set: {}, $unset: {} };
-        const changeKeys = Object.keys(changes);
+        const flattenChanges = lib.utils.flatten(changes);
+        const changeKeys = Object.keys(flattenChanges);
         changeKeys.forEach((key, idx) => {
           // защита от ошибки MongoServerError: Updating the path 'XXX.YYY' would create a conflict at 'XXX'
           if (changeKeys[idx + 1]?.indexOf(`${key}.`) !== 0) {
-            if (changes[key] === null) $update.$unset[key] = '';
-            else $update.$set[key] = changes[key];
+            if (flattenChanges[key] === null) $update.$unset[key] = '';
+            else $update.$set[key] = flattenChanges[key];
           }
         });
         if (Object.keys($update.$set).length === 0) delete $update.$set;
         if (Object.keys($update.$unset).length === 0) delete $update.$unset;
         await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, $update);
+        // console.log('db.mongo.updateOne=', { col: this.#col, _id, $update });
+        // await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(_id) }, $update);
       }
       if (typeof this.broadcastData === 'function') this.broadcastData(changes);
 
-      this.fixState(changes);
+      this.clearChanges();
     }
   };
 };

@@ -96,6 +96,35 @@
     obj[head] = rest.length ? lib.utils.setDeep(obj[head], rest.join('.'), value) : value;
     return obj;
   },
+  mergeDeep({ target, source, masterObj, config = {}, keyPath = [] }) {
+    const { reset = [] } = config;
+    // обнуляем ключи в заданных объектах (для передачи обновлений клиенту и БД)
+    if (reset.includes(keyPath.join('.'))) {
+      for (const key of Object.keys(masterObj)) target[key] = null;
+    }
+
+    for (const key of Object.keys(source)) {
+      if (!masterObj[key]) target[key] = source[key];
+      else if (typeof masterObj[key] !== typeof source[key] || masterObj[key] === null || source[key] === null)
+        target[key] = source[key];
+      else if (Array.isArray(masterObj[key])) {
+        // массивы обновляются только целиком (проблемы с реализацией удаления)
+        target[key] = source[key];
+      } else if (typeof masterObj[key] === 'object') {
+        if (!target[key]) target[key] = {};
+        lib.utils.mergeDeep({
+          target: target[key],
+          source: source[key],
+          masterObj: masterObj[key],
+          config,
+          keyPath: [...keyPath, key],
+        });
+      } else if (masterObj[key] !== source[key]) target[key] = source[key];
+      else {
+        // тут значения, которые не изменились
+      }
+    }
+  },
 
   isObjectID(value) {
     return value && typeof value === 'object' && value._bsontype === 'ObjectID';
@@ -106,6 +135,7 @@
 
   flatten(obj, keys = []) {
     const acc = {};
+    // ??? проверить, нужен ли baseKey 
     const baseKey = Object.values(keys).join('.');
     if (baseKey) acc[baseKey] = {};
     return Object.keys(obj).reduce((acc, key) => {
@@ -239,6 +269,7 @@
   },
 
   structuredClone(data) {
+    // !!! заменить на натив в node17
     return JSON.parse(JSON.stringify(data));
   },
 });

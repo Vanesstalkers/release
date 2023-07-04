@@ -9,17 +9,17 @@
     });
 
     let { helper = null, helperLinks = {}, finishedTutorials = {} } = this;
-    const lobbyStartTutorialName = 'lobby.tutorial.start';
-    if (!helper && !lib.utils.getDeep(finishedTutorials, lobbyStartTutorialName)) {
+    const lobbyStartTutorialName = 'lobby-tutorial-start';
+    if (!helper && !finishedTutorials[lobbyStartTutorialName]) {
       const tutorial = lib.helper.getTutorial(lobbyStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
       // helperLinks = {
       //   'menu-top': { selector: '.menu-item.top', tutorial: lobbyStartTutorialName, type: 'lobby' },
-      //   'menu-chat': { selector: '.menu-item.chat', tutorial: 'lobby.tutorial.menu', type: 'lobby' },
+      //   'menu-chat': { selector: '.menu-item.chat', tutorial: 'lobby-tutorial-menu', type: 'lobby' },
       // };
-      this.currentTutorial = { active: lobbyStartTutorialName };
-      this.helper = helper;
-      this.helperLinks = helperLinks;
+      this.set({ currentTutorial: { active: lobbyStartTutorialName } });
+      this.set({ helper });
+      this.set({ helperLinks });
     }
 
     if (gameId) {
@@ -54,7 +54,7 @@
       }
     }
 
-    await this.saveState();
+    await this.saveChanges();
   }
   leaveLobby({ sessionId }) {
     lib.store.broadcaster.publishAction(`lobby-main`, 'leaveLobby', { sessionId, userId: this.id() });
