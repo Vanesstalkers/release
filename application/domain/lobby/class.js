@@ -72,7 +72,7 @@
     this.set({ chat: { [_id]: insertData } });
     await this.saveChanges();
   }
-  async joinLobby({ sessionId, userId, name }) {
+  async userEnter({ sessionId, userId, name }) {
     if (!this.users[userId]) {
       this.set({ users: { [userId]: { sessions: [] } } });
       this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name'] });
@@ -80,7 +80,7 @@
     this.set({ users: { [userId]: { sessions: [...this.users[userId].sessions, sessionId] } } });
     await this.saveChanges();
   }
-  async leaveLobby({ sessionId, userId }) {
+  async userLeave({ sessionId, userId }) {
     this.set({ users: { [userId]: { sessions: this.users[userId].sessions.filter((id) => id !== sessionId) } } });
     if (this.users[userId].sessions.length === 0) {
       this.set({ users: { [userId]: null } });

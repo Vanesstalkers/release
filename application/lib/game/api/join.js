@@ -1,9 +1,6 @@
 async (context, { gameId }) => {
-  const { sessionId, userId } = context;
-  const session = lib.store('session').get(sessionId);
-  session.subscribe(`game-${gameId}`);
-  lib.store.broadcaster.publishAction(`game-${gameId}`, 'userJoin', { userId });
-//   session.gameId = gameId;
-//   await session.saveState();
+  const { userId, gameId: currentGameId } = context;
+  if (currentGameId) throw new Error('Уже подключен к другой игре');
+  lib.store.broadcaster.publishAction(`game-${gameId}`, 'playerJoin', { userId });
   return { status: 'ok' };
 };

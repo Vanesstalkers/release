@@ -10,6 +10,28 @@
       super(storeData, gameObjectData);
     }
 
+    prepareFakeData({ data, userId }) {
+      const result = {};
+      const player = this.getPlayerByUserId(userId);
+
+      for (const [col, ids] of Object.entries(data)) {
+        result[col] = {};
+        for (const [id, changes] of Object.entries(ids)) {
+          if (col === 'game' || col === 'player' || changes.fake) {
+            result[col][id] = changes;
+          } else {
+            const obj = this.getObjectById(id);
+            // объект может быть удален (!!! костыль)
+            if (obj && typeof obj.prepareFakeData === 'function') {
+              const { visibleId, preparedData } = obj.prepareFakeData({ data: changes, player });
+              result[col][visibleId] = preparedData;
+            } else result[col][id] = changes;
+          }
+        }
+      }
+      return result;
+    }
+
     async create({ type } = {}) {
       const gameJSON = domain.game.exampleJSON[type];
       if (!gameJSON) throw new Error(`Not found initial game data (type='${type}').`);
@@ -63,16 +85,15 @@
     getPlayerByUserId(id) {
       return this.getPlayerList().find((player) => player.userId === id);
     }
-    async userJoin({ userId }) {
-      this.log({ msg: `Игрок {{player}} присоединился к игре.`, userId });
-
+    async playerJoin({ userId }) {
       const player = this.getFreePlayerSlot();
-      player.set('ready', true);
-      player.set('userId', userId);
-      // if (!this.getFreePlayerSlot()) this.updateStatus();
+      if (!player) throw new Error('Свободных мест не осталось');
 
-      // context.gameId = gameId.toString();
-      // context.playerId = playerId.toString();
+      this.log({ msg: `Игрок {{player}} присоединился к игре.`, userId });
+      lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', { gameId: this.id(), playerId: player.id() });
+
+      player.set({ ready: true, userId });
+      if (!this.getFreePlayerSlot()) this.updateStatus();
 
       // await game.broadcastData();
 

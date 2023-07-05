@@ -1,8 +1,8 @@
 (class LobbyUser extends lib.user.class() {
-  async joinLobby({ sessionId }) {
+  async enterLobby({ sessionId }) {
     const { gameId, playerId } = this;
 
-    lib.store.broadcaster.publishAction(`lobby-main`, 'joinLobby', {
+    lib.store.broadcaster.publishAction(`lobby-main`, 'userEnter', {
       sessionId,
       userId: this.id(),
       name: this.name,
@@ -57,6 +57,6 @@
     await this.saveChanges();
   }
   leaveLobby({ sessionId }) {
-    lib.store.broadcaster.publishAction(`lobby-main`, 'leaveLobby', { sessionId, userId: this.id() });
+    lib.store.broadcaster.publishAction(`lobby-main`, 'userLeave', { sessionId, userId: this.id() });
   }
 });
