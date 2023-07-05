@@ -327,9 +327,8 @@ export default {
         .map(([id, game]) => Object.assign(game, { id }));
       return list.map((game) => {
         if (game.playerMap) {
-          const playerEntries = Object.entries(game.playerMap);
-          game.joinedPlayers =
-            playerEntries.filter(([id, player]) => player.ready).length + ' из ' + playerEntries.length;
+          const players = Object.keys(game.playerMap).map((id) => game.store?.player[id] || {});
+          game.joinedPlayers = players.filter((player) => player.ready).length + ' из ' + players.length;
         }
         return game;
       });

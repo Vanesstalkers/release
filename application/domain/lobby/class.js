@@ -44,21 +44,6 @@
    * @param {*} data
    */
   async processData(data) {
-    function assignIdMap(target, sourceMap) {
-      Object.keys(sourceMap).forEach((id) => {
-        Object.entries(sourceMap[id]).forEach(([k, v]) => {
-          const props = k.split('.');
-          if (!target[id]) target[id] = {};
-          let itemPart = target[id];
-          for (let i = 0; i < props.length - 1; i++) {
-            if (!itemPart[props[i]]) itemPart[props[i]] = {};
-            itemPart = itemPart[props[i]];
-          }
-          itemPart[props[props.length - 1]] = v;
-        });
-      });
-    }
-
     const store = this.store;
     Object.entries(data).forEach(([key, map]) => {
       switch (key) {
@@ -66,14 +51,13 @@
           this.set({ users: map });
           break;
         case 'game':
-          assignIdMap(this.games, map);
+          this.set({ games: map });
           break;
         default:
-          if (!store[key]) store[key] = {};
-          assignIdMap(store[key], map);
+          if (!store[key]) this.set({ store: { [key]: {} } });
+          this.set({ store: { [key]: map } });
       }
     });
-
     await this.saveChanges();
   }
   getGamesMap() {
@@ -85,7 +69,7 @@
     const insertData = { text, user, time, parent: this.storeId() };
     const { _id } = await db.mongo.insertOne('chat', insertData);
     insertData._id = _id;
-    this.chat[_id] = insertData;
+    this.set({ chat: { [_id]: insertData } });
     await this.saveChanges();
   }
   async joinLobby({ sessionId, userId, name }) {
@@ -106,9 +90,7 @@
   }
   async addGame(gameData) {
     const gameId = gameData.id;
-    // this.games[gameId] = gameData;
-    this.games[gameId] = {};
-    this.subscribe(`game-${gameId}`, { rule: 'fields', fields: ['round', 'status', 'playerMap'] });
+    this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
   }
   async removeGame({ _id, canceledByUser }) {

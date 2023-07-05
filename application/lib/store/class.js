@@ -71,23 +71,43 @@
             for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
               if (!customChannel || subscriberChannel === customChannel) {
                 let publishData;
-                const { rule = 'all', fields = [] } = accessConfig;
+                const { rule = 'all', fields = [], pathRoot, path } = accessConfig;
                 switch (rule) {
-                  case 'fields': // отправляем только выбранные поля (и вложенные в них объекты)
-                    publishData = this.wrapPublishData(
-                      Object.fromEntries(
-                        Object.entries(data).filter(([key, value]) =>
-                          fields.find((field) => key === field || key.indexOf(field + '.') === 0)
-                        )
+                  /**
+                   * фильтруем данные через кастомный обработчик
+                   */
+                  case 'custom':
+                    if (!pathRoot || !path)
+                      throw new Error(
+                        `Custom rule handler path or pathRoot (subscriberChannel="${subscriberChannel}") not found`
+                      );
+                    const splittedPath = path.split('.');
+                    const method = lib.utils.getDeep(pathRoot === 'domain' ? domain : lib, splittedPath);
+                    if (typeof method !== 'function')
+                      throw new Error(
+                        `Custom rule handler (subscriberChannel="${subscriberChannel}", path="${path}") not found`
+                      );
+                    publishData = method(data);
+                    break;
+                  /**
+                   * отправляем только выбранные поля (и вложенные в них объекты)
+                   */
+                  case 'fields':
+                    publishData = Object.fromEntries(
+                      Object.entries(data).filter(([key, value]) =>
+                        fields.find((field) => key === field || key.indexOf(field + '.') === 0)
                       )
                     );
                     break;
-                  case 'all': // отправляем все изменения по всем полям
+                  /**
+                   * отправляем все изменения по всем полям
+                   */
+                  case 'all':
                   default:
-                    publishData = this.wrapPublishData(data);
+                    publishData = data;
                 }
                 if (!Object.keys(publishData).length) continue;
-                lib.store.broadcaster.publishData(subscriberChannel, publishData);
+                lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
               }
             }
           }
