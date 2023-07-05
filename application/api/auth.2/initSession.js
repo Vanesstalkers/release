@@ -48,6 +48,12 @@
         }
       }
 
+      context.client.events.close.push(() => {
+        session.unsubscribe(`user-${session.userId}`);
+        session.user().unlinkSession(session);
+        console.log(`session disconnected (token=${session.token}`);
+      });
+
       const sessionData = {};
       sessionData.sessionId = session.id();
       sessionData.userId = session.userId;
@@ -55,10 +61,6 @@
         sessionId: session.id(),
         userId: session.userId,
       }); // данные попадут в context (в следующих вызовах)
-      context.client.events.close.push(() => {
-        session.unsubscribe(`user-${session.userId}`);
-        console.log(`session disconnected (token=${session.token}`);
-      });
 
       return { token: session.token, userId: session.userId };
     } catch (err) {
