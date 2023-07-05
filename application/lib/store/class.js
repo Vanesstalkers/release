@@ -111,6 +111,9 @@
     col() {
       return this.#col;
     }
+    /**
+     * При вызове любыми наследниками всегда возвращает protoClass
+     */
     getProtoParent() {
       let parent = this;
       while (protoClass.prototype.isPrototypeOf(Object.getPrototypeOf(parent))) {
@@ -146,7 +149,6 @@
         }
       }
       if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
-      // this.fixState();
       return this;
     }
     async create(initialData = {}) {
@@ -161,7 +163,6 @@
           if (!this.channel()) this.initChannel();
         }
         if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
-        // this.fixState();
         return this;
       } catch (err) {
         throw err;

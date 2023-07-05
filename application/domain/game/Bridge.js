@@ -1,4 +1,4 @@
-(class Bridge extends domain.game['!GameObject'] {
+(class Bridge extends lib.game.gameObject {
   zoneMap = {};
   width = 0;
   height = 0;

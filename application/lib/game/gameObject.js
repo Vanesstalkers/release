@@ -34,24 +34,21 @@
       this.code = this.getCodeTemplate(this.constructor.name + '[' + (data._code || '') + ']');
     }
   }
+  id() {
+    return this._id;
+  }
   updateFakeId() {
     this.fakeId = (Date.now() + Math.random()).toString();
   }
-  set(key, value) {
+  set(val, config) {
+    // !!! убрать после рефакторинга всех domain.game['!GameObject']
+    if (config) throw new Error('!config');
     if (!this._col) {
       throw new Error(`${key}=${value} not saved to changes ('_col' is no defined)`);
     } else {
-      this.#game.change({ _col: this._col, _id: this._id, key, value });
+      this.#game.set({ store: { [this._col]: { [this._id]: val } } }, config);
     }
-    this[key] = value;
-  }
-  assign(objKey, value) {
-    this.set(objKey, { ...(this[objKey] || {}), ...value });
-  }
-  delete(objKey, key) {
-    // !!! переделать на удаление через null
-    delete this[objKey][key];
-    this.set(objKey, { ...this[objKey] });
+    lib.utils.mergeDeep({ masterObj: this, target: this, source: val, config });
   }
   default_customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, data._code);
@@ -138,13 +135,6 @@
   matches({ className } = {}) {
     if (className && this.constructor.name === className) return true;
     return false;
-  }
-  getAllLinks() {
-    return {
-      parent: this.getParent(),
-      parentList: this.getParentList(),
-      objects: this.getObjects(),
-    };
   }
   getGame() {
     return this.#game;

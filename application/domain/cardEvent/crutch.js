@@ -18,7 +18,7 @@
       if (!skipFakeValueSet) {
         if (!target) return;
         const realValue = target.eventData.fakeValue?.realValue ?? target.value;
-        target.assign('eventData', { fakeValue: { realValue } });
+        target.set({ eventData: { fakeValue: { realValue } } });
         target.set('value', fakeValue);
       }
 

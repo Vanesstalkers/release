@@ -1,7 +1,7 @@
 ({
   init: function ({ game, player }) {
     if (game.isSinglePlayer()) {
-      player.assign('eventData', { skipTurn: true });
+      player.set({ eventData: { skipTurn: true } });
       return { removeHandlers: true };
     } else {
       game.set('activeEvent', { sourceId: this._id });
@@ -17,7 +17,7 @@
         userId: targetPlayer.userId,
       });
 
-      targetPlayer.assign('eventData', { skipTurn: true });
+      targetPlayer.set({ eventData: { skipTurn: true } });
       game.set('activeEvent', null);
       for (const player of game.getObjects({ className: 'Player' })) {
         player.set('activeEvent', null);

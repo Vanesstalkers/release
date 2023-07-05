@@ -28,7 +28,7 @@
           dice.set('activeEvent', null);
         }
 
-        game.assign('activeEvent', { targetDiceId: target._id });
+        game.set({ activeEvent: { targetDiceId: target._id } });
         for (const player of game.getObjects({ className: 'Player' })) {
           if (player === activePlayer) continue;
           player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
@@ -66,7 +66,7 @@
       const player = game.getActivePlayer();
       if (!game.activeEvent?.targetDiceId) {
         const targetDice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
-        if (targetDice) game.assign('activeEvent', { targetDiceId: targetDice._id });
+        if (targetDice) game.set({ activeEvent: { targetDiceId: targetDice._id } });
         const deck = player.getObjectByCode('Deck[domino]');
         for (const dice of deck.getObjects({ className: 'Dice' })) {
           dice.set('activeEvent', null);

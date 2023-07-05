@@ -1,4 +1,4 @@
-(class Dice extends domain.game['!GameObject'] {
+(class Dice extends lib.game.gameObject {
   constructor(data, { parent }) {
     super(data, { col: 'dice', parent });
 

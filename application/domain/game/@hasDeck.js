@@ -7,7 +7,7 @@
 
       const deck = new deckClass(data, { parent: this });
       this.getGame().markNew(deck);
-      this.assign(deckListName, { [deck._id]: {} });
+      this.set({ [deckListName]: { [deck._id]: {} } });
       deck.setItemClass(deckItemClass);
 
       if (data.itemMap) {

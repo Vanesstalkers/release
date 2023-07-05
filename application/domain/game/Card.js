@@ -1,4 +1,4 @@
-(class Card extends domain.game['!GameObject'] {
+(class Card extends lib.game.gameObject {
   #events;
 
   constructor(data, { parent }) {

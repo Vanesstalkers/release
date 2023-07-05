@@ -1,4 +1,4 @@
-(class ZoneSide extends domain.game['!GameObject'] {
+(class ZoneSide extends lib.game.gameObject {
   constructor(data, { parent }) {
     super(data, { col: 'zoneside', parent });
 
@@ -8,7 +8,7 @@
   }
 
   addLink(link) {
-    this.assign('links', { [link._id]: link.code });
+    this.set({ links: { [link._id]: link.code } });
   }
   updateExpectedValues() {
     const expectedValues = {};

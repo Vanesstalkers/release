@@ -1,4 +1,4 @@
-(class Zone extends domain.game['!GameObject'] {
+(class Zone extends lib.game.gameObject {
   itemMap = {};
 
   constructor(data, { parent }) {
@@ -51,7 +51,7 @@
     const available = this.checkIsAvailable(item);
     if (available) {
       if (available === 'rotate') item.set('sideList', [...item.sideList.reverse()]);
-      this.assign('itemMap', { [item._id]: {} });
+      this.set({ itemMap: { [item._id]: {} } });
       this.updateValues();
     }
 

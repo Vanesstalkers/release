@@ -26,7 +26,7 @@
     throw new Error('Добавлять новые костяшки можно только взамен временно удаленных.');
 
   if (replacedDice && zone !== replacedDice.getParent()) {
-    replacedDice.assign('relatedPlacement', { [dice._id]: dice });
+    replacedDice.set({ relatedPlacement: { [dice._id]: dice } });
   }
   dice.moveToTarget(zone);
   dice.set('placedAtRound', game.round);

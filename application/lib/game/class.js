@@ -83,7 +83,7 @@
       // //   JSON.stringify({ eventName: 'updateGame', eventData: { _id: game._id, playerList: game.getPlayerList() } })
       // // );
 
-      await this.saveState();
+      await this.saveChanges();
     }
     getFreePlayerSlot() {
       return this.getPlayerList().find((player) => !player.ready);
@@ -122,7 +122,7 @@
               userId: newActivePlayer.userId,
             });
             newActivePlayer.delete('eventData', 'skipTurn');
-            newActivePlayer.assign('eventData', { actionsDisabled: true });
+            newActivePlayer.set({ eventData: { actionsDisabled: true } });
           }
         } else {
           while (newActivePlayer.eventData.skipTurn) {

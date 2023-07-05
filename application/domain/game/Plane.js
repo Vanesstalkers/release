@@ -1,4 +1,4 @@
-(class Plane extends domain.game['!GameObject'] {
+(class Plane extends lib.game.gameObject {
   zoneMap = {};
   portMap = {};
   width = 500;
@@ -26,7 +26,7 @@
     for (const item of data.zoneList || []) {
       const zone = new domain.game.Zone(item, { parent: this });
       this.getGame().markNew(zone);
-      this.assign('zoneMap', { [zone._id]: {} });
+      this.set({ zoneMap: { [zone._id]: {} } });
     }
     if (data.zoneLinks) {
       for (const [zoneCode, sideList] of Object.entries(data.zoneLinks)) {
@@ -71,7 +71,7 @@
   addPort(data) {
     const port = new domain.game.Port(data, { parent: this });
     this.getGame().markNew(port);
-    this.assign('portMap', { [port._id]: {} });
+    this.set({ portMap: { [port._id]: {} } });
   }
   getZone() {
     return Object.keys(this.zoneMap)

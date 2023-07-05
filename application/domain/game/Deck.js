@@ -1,4 +1,4 @@
-(class Deck extends domain.game['!GameObject'] {
+(class Deck extends lib.game.gameObject {
   itemMap = {};
   #itemClass;
 
@@ -75,7 +75,7 @@
       if (!item.fakeId) item.updateFakeId();
     }
     this.getGame().markNew(item);
-    this.assign('itemMap', { [item._id]: {} });
+    this.set({ itemMap: { [item._id]: {} } });
     return true;
   }
   removeItem(itemToRemove, { deleteFromStorage = false } = {}) {

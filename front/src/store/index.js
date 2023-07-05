@@ -141,7 +141,12 @@ export default new Vuex.Store({
       }
       function flatten(obj, keys = []) {
         const acc = {};
-        return Object.keys(obj).reduce((acc, key) => {
+        const objKeys = Object.keys(obj);
+
+        // для пустых объектов нужно добавлять baseKey, а для всех остальных нельзя, потому что теряются вложенные атрибуты (объект перетирается)
+        const baseKey = Object.values(keys).join('.');
+        if (objKeys.length === 0 && baseKey) acc[baseKey] = {};
+        return objKeys.reduce((acc, key) => {
           return Object.assign(
             acc,
             isPlainObj(obj[key]) ? flatten(obj[key], keys.concat(key)) : { [keys.concat(key).join('.')]: obj[key] }

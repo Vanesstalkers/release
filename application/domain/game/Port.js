@@ -1,4 +1,4 @@
-(class Port extends domain.game['!GameObject'] {
+(class Port extends lib.game.gameObject {
   static DIRECTIONS = {
     top: {
       oppositeDirection: 'bottom',
