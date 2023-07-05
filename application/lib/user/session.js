@@ -1,17 +1,28 @@
 (class Session extends lib.store.class(class {}, { broadcastEnabled: true }) {
+  #user;
   constructor({ id, client } = {}) {
     super({ col: 'session', id, client });
   }
+  user(user) {
+    if (user !== undefined) return (this.#user = user);
+    return this.#user;
+  }
+
   async create({ userId, userLogin, token, windowTabId }) {
     if (!userId) throw new Error('Ошибка создания сессии (empty userId).');
+
+    const user = lib.store('user').get(userId);
+    user.linkSession(this);
+
     return await this.getProtoParent().create.call(this, { token, windowTabId, userId, userLogin });
   }
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);
 
+    let user;
     const userOnline = await db.redis.hget('users', this.userLogin, { json: true });
     if (!userOnline) {
-      await new lib.user.mainClass().load({ fromDB: { id: this.userId } }).catch((err) => {
+      user = await new lib.user.mainClass().load({ fromDB: { id: this.userId } }).catch((err) => {
         if (err === 'not_found') throw new Error('Session user not found');
         else throw err;
       });
@@ -21,7 +32,10 @@
       if (userOnline.workerId !== application.worker.id) {
         return { reconnect: { workerId: userOnline.workerId, port: userOnline.port } };
       }
+      user = lib.store('user').get(userOnline.id);
     }
+
+    user.linkSession(this);
 
     return this;
   }
@@ -51,7 +65,6 @@
     this.getProtoParent().initChannel.call(this, data);
     this.subscribe(`user-${this.userId}`);
   }
-
   /**
    * Базовая функция класса для сохранения данных при получении обновлений
    * @param {*} data

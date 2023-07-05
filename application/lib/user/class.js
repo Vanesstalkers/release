@@ -1,5 +1,6 @@
 () =>
   class User extends lib.store.class(class {}, { broadcastEnabled: true }) {
+    #sessions = new Map();
     constructor({ id } = {}) {
       super({ col: 'user', id });
     }
@@ -39,5 +40,17 @@
         },
         { json: true }
       );
+    }
+
+    linkSession(session) {
+      this.#sessions.set(session.id(), session);
+      session.user(this);
+    }
+    unlinkSession(session) {
+      this.#sessions.delete(session.id());
+      session.user(null);
+    }
+    sessions() {
+      return this.#sessions.values();
     }
   };
