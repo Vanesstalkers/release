@@ -50,7 +50,7 @@
 
     const available = this.checkIsAvailable(item);
     if (available) {
-      if (available === 'rotate') item.set('sideList', [...item.sideList.reverse()]);
+      if (available === 'rotate') item.set({ sideList: [...item.sideList.reverse()] });
       this.set({ itemMap: { [item._id]: {} } });
       this.updateValues();
     }
@@ -62,9 +62,9 @@
     this.sideList.forEach((side, sideIndex) => {
       if (item) {
         const itemSide = item.sideList[sideIndex];
-        side.set('value', itemSide.value);
+        side.set({ value: itemSide.value });
       } else {
-        side.set('value', undefined);
+        side.set({ value: undefined });
       }
       for (const linkCode of Object.values(side.links)) {
         this.getGame().getObjectByCode(linkCode).updateExpectedValues();
@@ -82,7 +82,7 @@
     return zones;
   }
   removeItem(itemToRemove) {
-    this.delete('itemMap', itemToRemove._id);
+    this.set({ itemMap: this.itemMap.filter((id) => id !== itemToRemove._id) });
     this.updateValues();
   }
   getDeletedItem() {
@@ -143,7 +143,7 @@
     const parent = this.getParent();
     if (parent.release) return false;
     if (parent.getObjects({ className: 'Zone' }).find((zone) => !zone.getNotDeletedItem())) return false;
-    parent.set('release', true);
+    parent.set({ release: true });
     return true;
   }
 });

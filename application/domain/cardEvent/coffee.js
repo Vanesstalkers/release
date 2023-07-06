@@ -1,5 +1,5 @@
 ({
   init: function ({ game, player }) {
-    player.set('eventData', { extraTurn: true });
+    player.set({ eventData: { extraTurn: true } });
   },
 });

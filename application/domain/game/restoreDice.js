@@ -11,7 +11,7 @@
     }
   }
 
-  dice.set('deleted', null);
+  dice.set({ deleted: null });
   zone.updateValues();
 
   const deletedDices = game.getDeletedDices();
@@ -21,7 +21,7 @@
     if (notReplacedDeletedDices.length === 0) {
       const deck = game.getObjectByCode('Deck[domino]');
       for (const dice of deletedDices) {
-        dice.set('deleted', null);
+        dice.set({ deleted: null });
         dice.moveToTarget(deck); // возвращаем удаленные dice в deck
       }
     }

@@ -4,9 +4,9 @@
       player.set({ eventData: { skipTurn: true } });
       return { removeHandlers: true };
     } else {
-      game.set('activeEvent', { sourceId: this._id });
+      game.set({ activeEvent: { sourceId: this._id } });
       for (const player of game.getObjects({ className: 'Player' })) {
-        player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
+        player.set({ activeEvent: { choiceEnabled: true, sourceId: this._id } });
       }
     }
   },
@@ -18,9 +18,9 @@
       });
 
       targetPlayer.set({ eventData: { skipTurn: true } });
-      game.set('activeEvent', null);
+      game.set({ activeEvent: null });
       for (const player of game.getObjects({ className: 'Player' })) {
-        player.set('activeEvent', null);
+        player.set({ activeEvent: null });
       }
       return { timerOverdueOff: true };
     },

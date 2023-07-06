@@ -3,7 +3,7 @@
   const joinPlane = joinPort.getParent();
   const targetPort = game.getObjectById(targetPortId);
 
-  game.set('availablePorts', []);
+  game.set({ availablePorts: [] });
 
   game.disableChanges();
   const targetPortIsAvailable =

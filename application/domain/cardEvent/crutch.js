@@ -5,12 +5,12 @@
       if (deck.type !== 'domino') continue;
       for (const dice of deck.getObjects({ className: 'Dice' })) {
         for (const dside of dice.getObjects({ className: 'DiceSide' })) {
-          dside.set('activeEvent', { sourceId: this._id });
+          dside.set({ activeEvent: { sourceId: this._id } });
           diceFound = true;
         }
       }
     }
-    if (diceFound) game.set('activeEvent', { sourceId: this._id });
+    if (diceFound) game.set({ activeEvent: { sourceId: this._id } });
   },
   handlers: {
     eventTrigger: function ({ game, player, target, fakeValue = 0, skipFakeValueSet }) {
@@ -18,19 +18,18 @@
       if (!skipFakeValueSet) {
         if (!target) return;
         const realValue = target.eventData.fakeValue?.realValue ?? target.value;
-        target.set({ eventData: { fakeValue: { realValue } } });
-        target.set('value', fakeValue);
+        target.set({ eventData: { fakeValue: { realValue } }, value: fakeValue });
       }
 
       for (const deck of player.getObjects({ className: 'Deck' })) {
         if (deck.type !== 'domino') continue;
         for (const dice of deck.getObjects({ className: 'Dice' })) {
           for (const dside of dice.getObjects({ className: 'DiceSide' })) {
-            dside.set('activeEvent', null);
+            dside.set({ activeEvent: null });
           }
         }
       }
-      game.set('activeEvent', null);
+      game.set({ activeEvent: null });
 
       return { timerOverdueOff: true };
     },
@@ -38,8 +37,10 @@
       const restoredDices = {};
       for (const dside of game.getObjects({ className: 'DiceSide' })) {
         if (dside.eventData.fakeValue) {
-          dside.set('value', dside.eventData.fakeValue.realValue);
-          dside.delete('eventData', 'fakeValue');
+          dside.set({
+            value: dside.eventData.fakeValue.realValue,
+            eventData: { fakeValue: null },
+          });
           const zoneParent = dside.findParent({ className: 'Zone' });
           if (zoneParent) {
             zoneParent.updateValues();

@@ -46,7 +46,7 @@
         const directions = {};
         for (const direct of directKeys) directions[direct] = false;
         directions[newDirect] = true;
-        this.set('direct', directions);
+        this.set({ direct: directions });
 
         return true;
       } else {
@@ -61,7 +61,7 @@
       }
       const newDirectionIndex = (usedDirectionIndex + 1) % directKeys.length;
       directions[directKeys[newDirectionIndex]] = true;
-      this.set('direct', directions);
+      this.set({ direct: directions });
 
       return directKeys[newDirectionIndex];
     }

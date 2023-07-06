@@ -8,7 +8,7 @@
     },
     removePlane(plane) {
       // !!! проверить, что не нужно удалять детей (zone и port)
-      this.delete('planeMap', plane._id);
+      this.set({ planeMap: this.planeMap.filter((id) => id !== plane._id) });
       plane.deleteFromParentsObjectStorage();
     },
   },

@@ -83,7 +83,7 @@
       }
     }
 
-    dice.set('deleted', null);
+    dice.set({ deleted: null });
     zone.updateValues();
     for (const side of zone.sideList) {
       for (const linkCode of Object.values(side.links)) {
@@ -94,7 +94,7 @@
         const checkIsAvailable = !linkedDice || linkedZone.checkIsAvailable(linkedDice, { skipPlacedItem: true });
         if (checkIsAvailable === 'rotate') {
           // linkedDice был повернут после удаления dice
-          linkedDice.set('sideList', [...linkedDice.sideList.reverse()]);
+          linkedDice.set({ sideList: [...linkedDice.sideList.reverse()] });
           linkedZone.updateValues();
         }
       }
@@ -120,12 +120,12 @@
       });
     }
   }
-  prevPlayer.delete('eventData', 'disablePlayerHandLimit');
+  prevPlayer.set({ eventData: { disablePlayerHandLimit: null } });
 
   gameDominoDeck.moveRandomItems({ count: 1, target: playerHand });
 
   for (const card of cardDeckActive.getObjects({ className: 'Card' })) {
-    if (!card.isPlayOneTime()) card.set('played', null);
+    if (!card.isPlayOneTime()) card.set({ played: null });
     card.moveToTarget(cardDeckDrop);
   }
 
@@ -141,7 +141,7 @@
 
   // игра могла закончиться по результатам добавления новых plane на игровое поле
   if (game.status !== 'finished') {
-    game.set('round', newRoundNumber);
+    game.set({ round: newRoundNumber });
     lib.store('lobby').get('main').updateGame({ _id: game._id, round: game.round });
     lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
     for (const logEvent of newRoundLogEvents) game.log(logEvent);

@@ -38,7 +38,7 @@
     return { visibleId, preparedData };
   }
 
-  getTitle(){
+  getTitle() {
     return this.sideList.map((side) => side.value).join('-');
   }
   moveToTarget(target) {
@@ -47,12 +47,12 @@
     const moveResult = target.addItem(this);
 
     if (moveResult) {
-      this.set('visible', null);
+      this.set({ visible: null });
       this.updateParent(target);
     } else {
       currentParent.addItem(this);
     }
-    if(currentParent.matches({ className: 'Zone'})) currentParent.updateValues();
+    if (currentParent.matches({ className: 'Zone' })) currentParent.updateValues();
 
     return moveResult;
   }

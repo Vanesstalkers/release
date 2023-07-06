@@ -3,17 +3,17 @@
     let diceFound = false;
     for (const plane of game.getObjects({ className: 'Plane' })) {
       for (const dice of plane.getObjects({ className: 'Dice' })) {
-        dice.set('activeEvent', { sourceId: this._id });
+        dice.set({ activeEvent: { sourceId: this._id } });
         diceFound = true;
       }
     }
     for (const bridge of game.getObjects({ className: 'Bridge' })) {
       for (const dice of bridge.getObjects({ className: 'Dice' })) {
-        dice.set('activeEvent', { sourceId: this._id });
+        dice.set({ activeEvent: { sourceId: this._id } });
         diceFound = true;
       }
     }
-    if (diceFound) game.set('activeEvent', { sourceId: this._id });
+    if (diceFound) game.set({ activeEvent: { sourceId: this._id } });
     else return { removeHandlers: true };
   },
   handlers: {
@@ -21,22 +21,23 @@
       if (!dice) return { timerOverdueOff: true };
 
       const parent = dice.findParent({ className: 'Zone' }).getParent(); // тут моет быть Bridge
-      parent.set('release', null);
+      parent.set({ release: null });
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
       dice.moveToTarget(playerHand);
-      dice.set('visible', true);
-      dice.set('locked', true);
-
-      dice.set('activeEvent', null);
-      game.set('activeEvent', null);
+      dice.set({
+        visible: true,
+        locked: true,
+        activeEvent: null,
+      });
+      game.set({ activeEvent: null });
       for (const plane of game.getObjects({ className: 'Plane' })) {
         for (const dice of plane.getObjects({ className: 'Dice' })) {
-          dice.set('activeEvent', null);
+          dice.set({ activeEvent: null });
         }
       }
       for (const bridge of game.getObjects({ className: 'Bridge' })) {
         for (const dice of bridge.getObjects({ className: 'Dice' })) {
-          dice.set('activeEvent', null);
+          dice.set({ activeEvent: null });
         }
       }
 
@@ -49,7 +50,7 @@
     },
     endRound: function ({ game }) {
       for (const dice of game.getObjects({ className: 'Dice' })) {
-        if (dice.locked) dice.set('locked', null);
+        if (dice.locked) dice.set({ locked: null });
       }
     },
     timerOverdue: function ({ game }) {

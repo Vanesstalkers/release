@@ -15,11 +15,11 @@
     });
     const plane = deck.getObjectByCode(`Plane[${code}]`);
     domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
-    if (game.availablePorts.length) game.set('activeEvent', { sourceId: this._id });
+    if (game.availablePorts.length) game.set({ activeEvent: { sourceId: this._id } });
   },
   handlers: {
     addPlane: function ({ game, player }) {
-      game.set('activeEvent', null);
+      game.set({ activeEvent: null });
       return { timerOverdueOff: true };
     },
     timerOverdue: function ({ game }) {

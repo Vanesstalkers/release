@@ -1,9 +1,9 @@
 ({
   init: function ({ game }) {
-    game.set('activeEvent', { sourceId: this._id });
+    game.set({ activeEvent: { sourceId: this._id } });
     for (const plane of game.getObjects({ className: 'Plane', directParent: game })) {
       if (plane.isCardPlane()) continue;
-      plane.set('activeEvent', { sourceId: this._id });
+      plane.set({ activeEvent: { sourceId: this._id } });
     }
   },
   handlers: {
@@ -14,11 +14,11 @@
       for (const dice of target.getObjects({ className: 'Dice' })) {
         dice.moveToTarget(deck);
       }
-      target.set('release', null);
+      target.set({ release: null });
 
-      game.set('activeEvent', null);
+      game.set({ activeEvent: null });
       for (const plane of game.getObjects({ className: 'Plane', directParent: game })) {
-        plane.set('activeEvent', null);
+        plane.set({ activeEvent: null });
       }
       return { timerOverdueOff: true };
     },

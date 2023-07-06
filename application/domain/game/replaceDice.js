@@ -29,7 +29,7 @@
     replacedDice.set({ relatedPlacement: { [dice._id]: dice } });
   }
   dice.moveToTarget(zone);
-  dice.set('placedAtRound', game.round);
+  dice.set({ placedAtRound: game.round });
   game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
   if (zone.checkForRelease()) {
     const playerCardDeck = player.getObjectByCode('Deck[card]');
@@ -57,7 +57,7 @@
   if (notReplacedDeletedDices.length === 0) {
     const deck = game.getObjectByCode('Deck[domino]');
     deletedDices.forEach((dice) => {
-      dice.set('deleted', null);
+      dice.set({ deleted: null });
       dice.moveToTarget(deck); // возвращаем удаленные dice в deck
     });
   }

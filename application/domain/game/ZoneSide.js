@@ -16,6 +16,6 @@
       const link = this.getGame().getObjectByCode(linkCode);
       if (link.value !== undefined) expectedValues[link.value] = true;
     }
-    this.set('expectedValues', expectedValues);
+    this.set({ expectedValues });
   }
 });

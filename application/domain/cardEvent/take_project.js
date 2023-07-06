@@ -11,12 +11,12 @@
         if (player === activePlayer) continue;
         const deck = player.getObjectByCode('Deck[domino]');
         for (const dice of deck.getObjects({ className: 'Dice' })) {
-          dice.set('activeEvent', { sourceId: this._id });
+          dice.set({ activeEvent: { sourceId: this._id } });
           diceFound = true;
         }
-        player.set('activeEvent', { showDecks: true, sourceId: this._id });
+        player.set({ activeEvent: { showDecks: true, sourceId: this._id } });
       }
-      if (diceFound) game.set('activeEvent', { sourceId: this._id });
+      if (diceFound) game.set({ activeEvent: { sourceId: this._id } });
     }
   },
   handlers: {
@@ -33,15 +33,15 @@
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
       dice.moveToTarget(playerHand);
 
-      dice.set('activeEvent', null);
-      game.set('activeEvent', null);
+      dice.set({ activeEvent: null });
+      game.set({ activeEvent: null });
       for (const player of game.getObjects({ className: 'Player' })) {
         if (player === activePlayer) continue;
         const deck = player.getObjectByCode('Deck[domino]');
         for (const dice of deck.getObjects({ className: 'Dice' })) {
-          dice.set('activeEvent', null);
+          dice.set({ activeEvent: null });
         }
-        player.set('activeEvent', null);
+        player.set({ activeEvent: null });
       }
 
       game.log({

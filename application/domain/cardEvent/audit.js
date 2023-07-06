@@ -1,8 +1,8 @@
 ({
   init: function ({ game }) {
-    game.set('activeEvent', { sourceId: this._id });
+    game.set({ activeEvent: { sourceId: this._id } });
     for (const player of game.getObjects({ className: 'Player' })) {
-      player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
+      player.set({ activeEvent: { choiceEnabled: true, sourceId: this._id } });
     }
   },
   handlers: {
@@ -14,14 +14,14 @@
 
       const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
       for (const dice of targetPlayerHand.getObjects({ className: 'Dice' })) {
-        dice.set('visible', true);
+        dice.set({ visible: true });
         game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
       }
-      targetPlayerHand.set('itemMap', targetPlayerHand.itemMap); // инициирует рассылку изменений с пересчетом видимости
+      targetPlayerHand.set({ itemMap: targetPlayerHand.itemMap }); // инициирует рассылку изменений с пересчетом видимости
 
-      game.set('activeEvent', null);
+      game.set({ activeEvent: null });
       for (const player of game.getObjects({ className: 'Player' })) {
-        player.set('activeEvent', null);
+        player.set({ activeEvent: null });
       }
 
       return { timerOverdueOff: true };

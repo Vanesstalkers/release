@@ -2,14 +2,18 @@
   const DIRECTIONS = joinPort.constructor.DIRECTIONS;
 
   const joinPlane = joinPort.getParent();
-  joinPlane.set('rotation', getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }));
+  joinPlane.set({
+    rotation: getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }),
+  });
 
   const targetLinkPoint = getLinkPointCoordinates(targetPort);
   const joinLinkPoint = getLinkPointCoordinates(joinPort);
 
   // сдвигаем plane на значение разницы позиций между потенциальными точками стыковки
-  joinPlane.set('top', joinPlane.top + targetLinkPoint.top - joinLinkPoint.top);
-  joinPlane.set('left', joinPlane.left + targetLinkPoint.left - joinLinkPoint.left);
+  joinPlane.set({
+    top: joinPlane.top + targetLinkPoint.top - joinLinkPoint.top,
+    left: joinPlane.left + targetLinkPoint.left - joinLinkPoint.left,
+  });
 
   function getPlaneRotationByLinkedPortDirections({ joinPort, targetPort }) {
     let targetDirectWithRotate = targetPort.getDirect();

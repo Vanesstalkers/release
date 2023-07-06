@@ -1,5 +1,5 @@
 ({
   init: function ({ game, player }) {
-    player.set('eventData', { disablePlayerHandLimit: true });
+    player.set({ eventData: { disablePlayerHandLimit: true } });
   },
 });

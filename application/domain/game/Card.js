@@ -44,7 +44,7 @@
         for (const handler of config.handlers) game.deleteEventHandler({ handler, source: this });
       }
     }
-    this.set('played', Date.now());
+    this.set({ played: Date.now() });
   }
   callHandler({ handler, data = {} }) {
     if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');

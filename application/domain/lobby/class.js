@@ -100,7 +100,7 @@
 
     const game = lib.repository.getCollection('game').get(gameId);
     lib.timers.timerDelete(game);
-    game.set('status', 'finished');
+    game.set({ status: 'finished' });
     await game.broadcastData();
 
     const afterGameHelpers = {};

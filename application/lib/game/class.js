@@ -115,10 +115,10 @@
     changeActivePlayer({ player } = {}) {
       const activePlayer = this.getActivePlayer();
       if (activePlayer.eventData.extraTurn) {
-        activePlayer.delete('eventData', 'extraTurn');
+        activePlayer.set({ eventData: { extraTurn: null } });
         if (activePlayer.eventData.skipTurn) {
           // актуально только для событий в течение хода игрока, инициированных не им самим
-          activePlayer.delete('eventData', 'skipTurn');
+          activePlayer.set({ eventData: { skipTurn: null } });
         } else {
           this.log({
             msg: `Игрок {{player}} получает дополнительный ход.`,
@@ -132,18 +132,23 @@
       let activePlayerIndex = playerList.findIndex((player) => player === activePlayer);
       let newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
       if (player) {
-        if (player.eventData.skipTurn) player.delete('eventData', 'skipTurn');
+        this.set({ itemMap: this.itemMap.filter((id) => id !== itemToRemove._id) });
+        if (player.eventData.skipTurn) player.set({ eventData: { skipTurn: null } });
         newActivePlayer = player;
       } else {
         if (this.isSinglePlayer()) {
-          newActivePlayer.delete('eventData', 'actionsDisabled');
+          newActivePlayer.set({ eventData: { actionsDisabled: null } });
           if (newActivePlayer.eventData.skipTurn) {
             this.log({
               msg: `Игрок {{player}} пропускает ход.`,
               userId: newActivePlayer.userId,
             });
-            newActivePlayer.delete('eventData', 'skipTurn');
-            newActivePlayer.set({ eventData: { actionsDisabled: true } });
+            newActivePlayer.set({
+              eventData: {
+                skipTurn: null,
+                actionsDisabled: true,
+              },
+            });
           }
         } else {
           while (newActivePlayer.eventData.skipTurn) {
@@ -151,15 +156,15 @@
               msg: `Игрок {{player}} пропускает ход.`,
               userId: newActivePlayer.userId,
             });
-            newActivePlayer.delete('eventData', 'skipTurn');
+            newActivePlayer.set({ eventData: { skipTurn: null } });
             activePlayerIndex++;
             newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
           }
         }
       }
 
-      activePlayer.set('active', false);
-      newActivePlayer.set('active', true);
+      activePlayer.set({ active: false });
+      newActivePlayer.set({ active: true });
 
       return newActivePlayer;
     }

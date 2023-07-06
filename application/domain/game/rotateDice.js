@@ -4,7 +4,7 @@
   const checkItemCanBeRotated = zone.checkItemCanBeRotated();
 
   if (checkItemCanBeRotated) {
-    dice.set('sideList', [...dice.sideList.reverse()]);
+    dice.set({ sideList: [...dice.sideList.reverse()] });
     zone.updateValues();
   }
 

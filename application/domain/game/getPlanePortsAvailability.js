@@ -18,7 +18,7 @@
   // переделать на callEventHandlers({ handler: 'addPlane'})
   // if (Object.keys(game.planeMap).length === 0) game.addPlane(joinPlane); // начало игры с planesAtStart=0
 
-  game.set('availablePorts', availablePorts);
+  game.set({ availablePorts });
   if (availablePorts.length === 0) {
     const planeParent = joinPlane.getParent();
     if (game.status === 'prepareStart') {

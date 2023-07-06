@@ -134,8 +134,8 @@
     };
 
     const bridgeCode = this.addBridge(bridgeData);
-    joinPort.set('linkedBridge', bridgeCode);
-    targetPort.set('linkedBridge', bridgeCode);
+    joinPort.set({ linkedBridge: bridgeCode });
+    targetPort.set({ linkedBridge: bridgeCode });
   }
   checkPlaneCollysion(checkPlane) {
     const planePosition = checkPlane.getPosition();
@@ -276,7 +276,7 @@
       targetPort.updateDirect(targetPortDirect);
       this.linkPlanes({ joinPort, targetPort });
 
-      this.set('availablePorts', []);
+      this.set({ availablePorts: [] });
 
       let availableZoneCount = 0;
       for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
@@ -352,7 +352,7 @@
               targetPort.updateDirect(targetPortDirect);
               this.linkPlanes({ joinPort, targetPort });
 
-              this.set('availablePorts', []);
+              this.set({ availablePorts: [] });
             }
           }
         }
@@ -366,7 +366,7 @@
           }
         }
 
-        this.set('status', 'prepareStart');
+        this.set({ status: 'prepareStart' });
         if (planesPlacedByPlayerCount > 0) {
           this.addEventHandler({ handler: 'addPlane', source: this });
           lib.timers.timerRestart(this);
@@ -384,7 +384,7 @@
           // deckCard.moveRandomItems({ count: 3, target: playerHandCard });
         }
 
-        this.set('status', 'inProcess');
+        this.set({ status: 'inProcess' });
         domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
@@ -395,7 +395,7 @@
     lib.store('lobby').get('main').updateGame({ _id: this._id, status: this.status });
   }
   setWinner({ player }) {
-    this.set('winUserId', player.userId);
+    this.set({ winUserId: player.userId });
     // const playerList = this.getObjects({ className: 'Player' });
     // for (const player of playerList) {
 
@@ -427,11 +427,11 @@
   onTimerRestart({ timerId, data: { time = this.settings.timer, extraTime = 0 } = {} }) {
     const player = this.getActivePlayer();
     if (extraTime) {
-      player.set('timerEndTime', player.timerEndTime + extraTime * 1000);
+      player.set({ timerEndTime: player.timerEndTime + extraTime * 1000 });
     } else {
-      player.set('timerEndTime', Date.now() + time * 1000);
+      player.set({ timerEndTime: Date.now() + time * 1000 });
     }
-    player.set('timerUpdateTime', Date.now());
+    player.set({ timerUpdateTime: Date.now() });
   }
   onTimerTick({ timerId, data: { time = null } = {} }) {
     const player = this.getActivePlayer();
@@ -452,8 +452,10 @@
   }
   onTimerDelete({ timerId }) {
     const player = this.getActivePlayer();
-    player.set('timerEndTime', null);
-    player.set('timerUpdateTime', Date.now());
+    player.set({
+      timerEndTime: null,
+      timerUpdateTime: Date.now(),
+    });
   }
 
   secureBroadcast(data, broadcastClients) {

@@ -3,21 +3,21 @@
     let diceFound = false;
     const deck = player.getObjectByCode('Deck[domino]');
     for (const dice of deck.getObjects({ className: 'Dice' })) {
-      dice.set('activeEvent', { sourceId: this._id });
+      dice.set({ activeEvent: { sourceId: this._id } });
       diceFound = true;
     }
-    if (diceFound) game.set('activeEvent', { sourceId: this._id });
+    if (diceFound) game.set({ activeEvent: { sourceId: this._id } });
   },
   handlers: {
     eventTrigger: function ({ game, player: activePlayer, target }) {
       if (!target) return;
 
       function complete({ game, dice }) {
-        game.set('activeEvent', null);
-        dice.set('activeEvent', null);
+        game.set({ activeEvent: null });
+        dice.set({ activeEvent: null });
         for (const player of game.getObjects({ className: 'Player' })) {
           if (player === activePlayer) continue;
-          player.set('activeEvent', null);
+          player.set({ activeEvent: null });
         }
         return { timerOverdueOff: true };
       }
@@ -25,13 +25,13 @@
       if (!game.activeEvent.targetDiceId) {
         const deck = activePlayer.getObjectByCode('Deck[domino]');
         for (const dice of deck.getObjects({ className: 'Dice' })) {
-          dice.set('activeEvent', null);
+          dice.set({ activeEvent: null });
         }
 
         game.set({ activeEvent: { targetDiceId: target._id } });
         for (const player of game.getObjects({ className: 'Player' })) {
           if (player === activePlayer) continue;
-          player.set('activeEvent', { choiceEnabled: true, sourceId: this._id });
+          player.set({ activeEvent: { choiceEnabled: true, sourceId: this._id } });
         }
 
         if (game.isSinglePlayer()) {
@@ -69,7 +69,7 @@
         if (targetDice) game.set({ activeEvent: { targetDiceId: targetDice._id } });
         const deck = player.getObjectByCode('Deck[domino]');
         for (const dice of deck.getObjects({ className: 'Dice' })) {
-          dice.set('activeEvent', null);
+          dice.set({ activeEvent: null });
         }
       }
       if (game.activeEvent?.targetDiceId) {
