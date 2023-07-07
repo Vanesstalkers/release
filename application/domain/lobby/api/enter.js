@@ -8,6 +8,7 @@ async (context) => {
   session.subscribe(`lobby-main`);
   context.client.events.close.push(() => {
     user.leaveLobby({ sessionId });
+    session.unsubscribe(`lobby-main`);
   });
 
   return { status: 'ok' };

@@ -1,8 +1,13 @@
 <template>
-  <div id="lobby" :class="[isMobile ? 'mobile-view' : '', isLandscape ? 'landscape-view' : 'portrait-view']">
+  <div
+    id="lobby"
+    :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
+  >
     <helper />
 
-    <div :class="['menu-item', 'info', !isMobile ? 'preview' : '']">
+    <!-- <div :style="{ zIndex: 100, position: 'absolute', background: 'red' }">{{ $root.state }}</div> -->
+
+    <div :class="['menu-item', 'info', !state.isMobile ? 'preview' : '']">
       <label v-on:click="pinMenuItem">
         УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
@@ -234,7 +239,6 @@
         ЗАЛ СЛАВЫ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
       <div :style="{ display: 'flex' }">
-        <!-- {{ getTopPlayers }} -->
         <div :style="{ width: '200px' }">
           {{ rankingsList }}
         </div>
@@ -261,7 +265,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
@@ -285,14 +288,14 @@ export default {
   },
   watch: {},
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      isMobile: 'isMobile',
-      isLandscape: 'isLandscape',
-      currentUser: 'currentUser',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     userData() {
-      return this.getStore(this.currentUser, 'user') || {};
+      return this.store.user?.[this.state.currentUser] || {};
     },
     lobbyUserMap() {
       return this.lobby?.users || {};
@@ -306,10 +309,10 @@ export default {
       return Object.values(this.lobby?.users || {}).filter((user) => user && !user.name).length;
     },
     lobby() {
-      return this.getStore('main', 'lobby') || {};
+      return this.store.lobby?.main || {};
     },
     rankings() {
-      return this.getStore('ranking') || {};
+      return this.lobby.rankings || {};
     },
     rankingsList() {
       return Object.values(this.rankings).map((r) => ({ title: r.title, active: r.active }));
@@ -333,17 +336,6 @@ export default {
         return game;
       });
     },
-
-    gameList() {
-      const list = Object.keys(this.lobby.gameMap || {}).map((id) => this.getStore(id, 'game')) || [];
-      return list.map((game) => {
-        if (game.playerList) {
-          game.joinedPlayers =
-            game.playerList.filter((player) => player.ready).length + ' из ' + game.playerList.length;
-        }
-        return game;
-      });
-    },
     getChat() {
       return (
         Object.entries(this.lobby?.chat || {})
@@ -357,13 +349,10 @@ export default {
           .reverse()
       );
     },
-    getTopPlayers() {
-      return this.getStore('topPlayers');
-    },
   },
   methods: {
     show(mask) {
-      if (mask === '' && this.isMobile) return;
+      if (mask === '' && this.state.isMobile) return;
       this.bg.showMask = mask;
     },
     pinMenuItem(e) {

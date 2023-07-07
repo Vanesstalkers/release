@@ -388,11 +388,11 @@
         domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
-        lib.store('lobby').get('main').removeGame({ _id: this._id });
+        lib.store('lobby').get('main').removeGame({ _id: this.id() });
         return; // обновлять игру не нужно, так как она удалена
     }
 
-    lib.store('lobby').get('main').updateGame({ _id: this._id, status: this.status });
+    lib.store('lobby').get('main').updateGame({ _id: this.id(), status: this.status });
   }
   setWinner({ player }) {
     this.set({ winUserId: player.userId });
@@ -443,7 +443,7 @@
         api.game.action({
           name: 'endRound',
           data: { timerOverdue: true },
-          customContext: { gameId: this._id, playerId: player._id },
+          customContext: { gameId: this.id(), playerId: player._id },
         });
       } else {
         lib.timers.timerDelete(this);
@@ -462,6 +462,40 @@
     for (const client of broadcastClients) {
       const broadcastData = this.prepareFakeData({ userId: client.userId, data });
       client.emit('db/smartUpdated', broadcastData);
+    }
+  }
+
+  broadcastData(data, { customChannel } = {}) {
+    for (const [subscriberChannel, { accessConfig = {} } = {}] of this.channel().subscribers.entries()) {
+      if (!customChannel || subscriberChannel === customChannel) {
+        let publishData;
+        const { rule = 'all', fields = [], pathRoot, path } = accessConfig;
+        switch (rule) {
+          /**
+           * отправляем только выбранные поля (и вложенные в них объекты)
+           */
+          case 'fields':
+            publishData = this.wrapPublishData(
+              Object.fromEntries(
+                Object.entries(data).filter(([key, value]) =>
+                  fields.find((field) => key === field || key.indexOf(field + '.') === 0)
+                )
+              )
+            );
+            break;
+          /**
+           * отправляем данные в формате хранилища на клиенте
+           */
+          case 'vue-store':
+            publishData = { ...this.wrapPublishData({ ...data, store: undefined }), ...data.store };
+            break;
+          case 'all':
+          default:
+            publishData = this.wrapPublishData(data);
+        }
+        if (!Object.keys(publishData).length) continue;
+        lib.store.broadcaster.publishData(subscriberChannel, publishData);
+      }
     }
   }
 });

@@ -132,7 +132,6 @@
       let activePlayerIndex = playerList.findIndex((player) => player === activePlayer);
       let newActivePlayer = playerList[(activePlayerIndex + 1) % playerList.length];
       if (player) {
-        this.set({ itemMap: this.itemMap.filter((id) => id !== itemToRemove._id) });
         if (player.eventData.skipTurn) player.set({ eventData: { skipTurn: null } });
         newActivePlayer = player;
       } else {

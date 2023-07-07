@@ -20,7 +20,10 @@ export default {
     offset: Object,
     wrapperStyle: Object,
     wrapperClass: Array,
-    contentClass: Array,
+    contentClass: {
+      type: Array,
+      default: () => [],
+    },
   },
   computed: {
     ...mapGetters({

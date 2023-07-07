@@ -28,9 +28,13 @@ const init = async () => {
     return next();
   });
 
+  const state = {
+    store: {},
+  };
   window.app = new Vue({
     router,
     store,
+    data: { state },
     render: function (h) {
       return h(App);
     },
@@ -49,7 +53,8 @@ const init = async () => {
     store.dispatch('setData', data);
   });
   api.db.on('smartUpdated', (data) => {
-    store.dispatch('setStore', data);
+    mergeDeep({ target: state.store, source: data });
+    state.lastUpdate = Date.now();
   });
 
   api.session.on('joinGame', (data) => {
@@ -76,9 +81,7 @@ const init = async () => {
 
   if (!sessionToken) throw new Error('Ошибка инициализации сессии');
   if (token !== sessionToken) localStorage.setItem('metarhia.session.token', sessionToken);
-  if (userId) {
-    store.dispatch('setSimple', { currentUser: userId });
-  }
+  if (userId) state.currentUser = userId;
 
   window.app.$mount('#app');
 
@@ -95,11 +98,9 @@ const init = async () => {
   const checkDevice = () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    store.dispatch('setSimple', {
-      isMobile: isMobile() ? true : false,
-      isLandscape: height < width,
-      guiScale: width < 1000 ? 1 : width < 1500 ? 2 : width < 2000 ? 3 : width < 3000 ? 4 : 5,
-    });
+    state.isMobile = isMobile() ? true : false;
+    state.isLandscape = height < width;
+    state.guiScale = width < 1000 ? 1 : width < 1500 ? 2 : width < 2000 ? 3 : width < 3000 ? 4 : 5;
   };
 
   // window.addEventListener('orientationchange', async () => {

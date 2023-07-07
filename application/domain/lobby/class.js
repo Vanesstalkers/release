@@ -60,9 +60,6 @@
     });
     await this.saveChanges();
   }
-  getGamesMap() {
-    return Object.fromEntries(Object.entries(Object.fromEntries(this.games)).map(([id]) => [id, {}]));
-  }
 
   async updateChat({ text, user }) {
     const time = Date.now();
@@ -95,32 +92,33 @@
   }
   async removeGame({ _id, canceledByUser }) {
     const gameId = _id.toString();
-    this.games.delete(gameId);
-    this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
+    // this.games.delete(gameId);
+    this.set({ games: { [gameId]: null } });
+    // this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
 
-    const game = lib.repository.getCollection('game').get(gameId);
-    lib.timers.timerDelete(game);
-    game.set({ status: 'finished' });
-    await game.broadcastData();
+    // const game = lib.repository.getCollection('game').get(gameId);
+    // lib.timers.timerDelete(game);
+    // game.set({ status: 'finished' });
+    // await game.broadcastData();
 
-    const afterGameHelpers = {};
-    const playerList = game.getObjects({ className: 'Player' });
-    for (const player of playerList) {
-      const { userId } = player;
-      const repoUser = lib.store('user').get(userId);
-      const type = canceledByUser
-        ? userId === canceledByUser
-          ? 'lose'
-          : 'cancel'
-        : userId === game.winUserId
-        ? 'win'
-        : 'lose';
-      const helper = domain.game['tutorialGameEnd'][type];
-      afterGameHelpers[userId] = { user: { [userId]: { helper } } };
-      repoUser.currentTutorial = { active: 'tutorialGameEnd' };
-      repoUser.helper = helper;
-    }
-    this.broadcast(null, afterGameHelpers);
+    // const afterGameHelpers = {};
+    // const playerList = game.getObjects({ className: 'Player' });
+    // for (const player of playerList) {
+    //   const { userId } = player;
+    //   const repoUser = lib.store('user').get(userId);
+    //   const type = canceledByUser
+    //     ? userId === canceledByUser
+    //       ? 'lose'
+    //       : 'cancel'
+    //     : userId === game.winUserId
+    //     ? 'win'
+    //     : 'lose';
+    //   const helper = domain.game['tutorialGameEnd'][type];
+    //   afterGameHelpers[userId] = { user: { [userId]: { helper } } };
+    //   repoUser.currentTutorial = { active: 'tutorialGameEnd' };
+    //   repoUser.helper = helper;
+    // }
+    // this.broadcast(null, afterGameHelpers);
   }
   updateGame({ _id, ...data }) {
     // const gameId = _id.toString();

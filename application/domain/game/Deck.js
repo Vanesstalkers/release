@@ -79,7 +79,7 @@
     return true;
   }
   removeItem(itemToRemove, { deleteFromStorage = false } = {}) {
-    this.set({ itemMap: this.itemMap.filter((id) => id !== itemToRemove._id) });
+    this.set({ itemMap: { ...this.itemMap, [itemToRemove._id]: null } });
     if (deleteFromStorage) this.deleteFromObjectStorage(itemToRemove);
   }
   moveAllItems({ target }) {
