@@ -8,7 +8,7 @@
   >
     <div class="card-info-btn" v-on:click.stop="showInfo(card.name)" />
     <div
-      v-if="canPlay && sessionPlayerIsActive && !actionsDisabled && !card.played"
+      v-if="canPlay && $root.sessionPlayerIsActive && !$root.actionsDisabled && !card.played"
       v-on:click.stop="playCard"
       class="play-btn"
     >
@@ -18,8 +18,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
-
 export default {
   props: {
     cardId: String,
@@ -31,14 +29,15 @@ export default {
     return {};
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      actionsDisabled: 'actionsDisabled',
-      sessionPlayerIsActive: 'sessionPlayerIsActive',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     card() {
       if (this.cardData) return this.cardData;
-      const card = this.getStore(this.cardId, 'card');
+      const card = this.store.card?.[this.cardId];
       return card._id ? card : { _id: this.cardId };
     },
     customStyle() {
@@ -49,15 +48,15 @@ export default {
   methods: {
     async playCard() {
       if (this.card.played) return;
-      await api.game.action({ name: 'playCard', data: { cardId: this.cardId } }).catch(err => {
+      await api.game.action({ name: 'playCard', data: { cardId: this.cardId } }).catch((err) => {
         prettyAlert(err.message);
       });
     },
     toggleSelect() {
-      this.$store.commit('setSelectedCard', this.isSelected ? null : this.cardId);
+      this.$root.state.selectedCard = this.isSelected ? null : this.cardId;
     },
     showInfo(name) {
-      this.$store.commit('setShownCard', name);
+      this.$root.state.shownCard = name;
     },
   },
   mounted() {},

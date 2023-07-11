@@ -5,7 +5,7 @@
       const { userId } = context.client;
       const game = lib.repository.getCollection('game').get(gameId);
 
-      game.log({ msg: `Игрок {{player}} присоединился к игре.`, userId });
+      game.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 
       const { _id: playerId } = game.playerJoin({ userId });
       context.gameId = gameId.toString();
@@ -14,7 +14,7 @@
       await game.broadcastData();
 
       context.client.emit('session/joinGame', { gameId, playerId });
-      lib.store('lobby').get('main').updateGame({ _id: game._id, playerList: game.getPlayerList() });
+      lib.store('lobby').get('main').updateGame({ _id: game.id(), playerList: game.getPlayerList() });
       // lib.broadcaster.pubClient.publish(
       //   `lobby-main`,
       //   JSON.stringify({ eventName: 'updateGame', eventData: { _id: game._id, playerList: game.getPlayerList() } })

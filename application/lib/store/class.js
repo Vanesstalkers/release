@@ -191,8 +191,18 @@
 
     set(val, config) {
       if (!this.#disableChanges)
-        lib.utils.mergeDeep({ masterObj: this, target: this.#changes, source: lib.utils.structuredClone(val), config });
-      lib.utils.mergeDeep({ masterObj: this, target: this, source: val, config });
+        lib.utils.mergeDeep({
+          masterObj: this,
+          target: this.#changes,
+          source: lib.utils.structuredClone(val),
+          config, // все получатели #changes должны знать об удаленных ключах, поэтому ключи с null-значением сохраняем (по дефолту deleteNull = false)
+        });
+      lib.utils.mergeDeep({
+        masterObj: this,
+        target: this,
+        source: val,
+        config: { deleteNull: true, ...config }, // удаляем ключи с null-значением
+      });
     }
     markNew(obj) {
       // !!! сомнительная реализация, т.к. эти данные повторно сохранятся в БД

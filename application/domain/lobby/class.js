@@ -44,8 +44,7 @@
    * @param {*} data
    */
   async processData(data) {
-    const store = this.store;
-    Object.entries(data).forEach(([key, map]) => {
+    for (const [key, map] of Object.entries(data)) {
       switch (key) {
         case 'user':
           this.set({ users: map });
@@ -54,10 +53,9 @@
           this.set({ games: map });
           break;
         default:
-          if (!store[key]) this.set({ store: { [key]: {} } });
-          this.set({ store: { [key]: map } });
+          throw new Error(`Unexpected  (key=${key}`);
       }
-    });
+    }
     await this.saveChanges();
   }
 

@@ -59,7 +59,9 @@
       );
     }
 
-    log(data) {
+    logs(data) {
+      if (!data) return this.#logs;
+
       if (typeof data === 'string') data = { msg: data };
       if (!data.time) data.time = Date.now();
 
@@ -89,7 +91,7 @@
       const player = this.getFreePlayerSlot();
       if (!player) throw new Error('Свободных мест не осталось');
 
-      this.log({ msg: `Игрок {{player}} присоединился к игре.`, userId });
+      this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
       lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', { gameId: this.id(), playerId: player.id() });
 
       player.set({ ready: true, userId });
@@ -120,7 +122,7 @@
           // актуально только для событий в течение хода игрока, инициированных не им самим
           activePlayer.set({ eventData: { skipTurn: null } });
         } else {
-          this.log({
+          this.logs({
             msg: `Игрок {{player}} получает дополнительный ход.`,
             userId: activePlayer.userId,
           });
@@ -138,7 +140,7 @@
         if (this.isSinglePlayer()) {
           newActivePlayer.set({ eventData: { actionsDisabled: null } });
           if (newActivePlayer.eventData.skipTurn) {
-            this.log({
+            this.logs({
               msg: `Игрок {{player}} пропускает ход.`,
               userId: newActivePlayer.userId,
             });
@@ -151,7 +153,7 @@
           }
         } else {
           while (newActivePlayer.eventData.skipTurn) {
-            this.log({
+            this.logs({
               msg: `Игрок {{player}} пропускает ход.`,
               userId: newActivePlayer.userId,
             });

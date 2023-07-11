@@ -10,19 +10,20 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
-
 export default {
   props: {
     portId: String,
     linkLines: Object,
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     port() {
-      return this.getStore(this.portId, 'port');
+      return this.store.port?.[this.portId];
     },
   },
   methods: {},

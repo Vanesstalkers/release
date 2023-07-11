@@ -1,14 +1,12 @@
 <template>
   <div class="gui-wrapper" :class="wrapperClass" :style="wrapperCustomStyle">
-    <div :class="['gui-resizeable', `scale-${guiScale}`, ...contentClass]" :style="contentCustomStyle">
+    <div :class="['gui-resizeable', `scale-${state.guiScale}`, ...contentClass]" :style="contentCustomStyle">
       <slot></slot>
     </div>
   </div>
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
-
 export default {
   name: 'gui-wrapper',
   props: {
@@ -26,9 +24,9 @@ export default {
     },
   },
   computed: {
-    ...mapGetters({
-      guiScale: 'guiScale',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
     wrapperCustomStyle() {
       const style = {};
       if (this.pos.includes('top')) style.top = '0px';

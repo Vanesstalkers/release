@@ -11,13 +11,13 @@
       v-on:click.stop="showTutorial(link)"
     />
 
-    <div v-if="!menu" :class="['helper-guru', 'helper-avatar', `scale-${guiScale}`]" v-on:click.stop="initMenu">
+    <div v-if="!menu" :class="['helper-guru', 'helper-avatar', `scale-${state.guiScale}`]" v-on:click.stop="initMenu">
       <div v-if="alert" class="alert" v-on:click.stop="">
         {{ alert }}
         <div class="close" v-on:click.stop="alert = null" />
       </div>
     </div>
-    <div v-if="menu" :class="['helper-menu', `scale-${guiScale}`]">
+    <div v-if="menu" :class="['helper-menu', `scale-${state.guiScale}`]">
       <div class="helper-avatar" />
       <div class="content">
         <div class="text">
@@ -52,7 +52,7 @@
         </div>
       </div>
     </div>
-    <div :class="['helper-dialog', `scale-${guiScale}`, ...dialogClass]" :style="dialogStyle">
+    <div :class="['helper-dialog', `scale-${state.guiScale}`, ...dialogClass]" :style="dialogStyle">
       <div class="helper-avatar" />
       <div :class="['content', helperData.img && helperData.text ? 'nowrap' : '']">
         <div v-if="helperData.img" class="img">
@@ -74,8 +74,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
-
 export default {
   name: 'helper',
   components: {},
@@ -91,25 +89,16 @@ export default {
     },
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      currentUser: 'currentUser',
-      guiScale: 'guiScale',
-      getHelperLinks: 'getHelperLinks',
-      helperLinksBounds: 'helperLinksBounds',
-    }),
-    helperData() {
-      return this.getStore(this.currentUser, 'user').helper || {};
+    state() {
+      return this.$root.state || {};
     },
-    helperLinks() {
-      return Object.entries(this.getHelperLinks)
-        .map(([code, link]) => ({
-          code,
-          pos: {},
-          ...link,
-          clientRect: this.helperLinksBounds[code],
-        }))
-        .filter(({ clientRect }) => clientRect);
+    store() {
+      return this.state.store || {};
+    },
+    helperData() {
+      const data = this.store.user?.[this.state.currentUser]?.helper || {};
+      console.log('helperData=', data);
+      return data;
     },
     helperClass() {
       return Object.entries(this.helperClassMap)

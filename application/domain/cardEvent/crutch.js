@@ -51,7 +51,7 @@
         }
       }
       for (const dice of Object.values(restoredDices)) {
-        game.log(`Костяшка "${dice.getTitle()}" восстановила свои значения, измененные событием "Костыль".`);
+        game.logs(`Костяшка "${dice.getTitle()}" восстановила свои значения, измененные событием "Костыль".`);
       }
     },
     timerOverdue: function ({ game }) {

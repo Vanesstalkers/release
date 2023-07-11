@@ -7,7 +7,7 @@
   },
   handlers: {
     eventTrigger: function ({ game, target: targetPlayer }) {
-      game.log({
+      game.logs({
         msg: `Игрок {{player}} стал целью события "${this.title}".`,
         userId: targetPlayer.userId,
       });

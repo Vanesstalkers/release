@@ -10,7 +10,7 @@
     ]"
     :style="customStyle"
   >
-    <div v-if="showControls && iam && sessionPlayerIsActive" v-on:click="endRound" class="end-round-btn">
+    <div v-if="showControls && iam && $root.sessionPlayerIsActive" v-on:click="endRound" class="end-round-btn">
       Закончить раунд
     </div>
     <div v-if="player.active && player.timerEndTime" class="end-round-timer">{{ this.localTimer }}</div>
@@ -24,8 +24,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
-
 export default {
   props: {
     playerId: String,
@@ -40,12 +38,14 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      sessionPlayerIsActive: 'sessionPlayerIsActive',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     player() {
-      const player = this.getStore(this.playerId, 'player') || {};
+      const player = this.store.player?.[this.playerId] || {};
       // через watch не осилил (проблема при создании игры - "Vue cannot detect property addition or deletion")
       if (player.timerEndTime && this.localTimerUpdateTime !== player.timerUpdateTime) {
         clearTimeout(this.localTimerId);
@@ -67,14 +67,14 @@ export default {
       return style;
     },
     choiceEnabled() {
-      return this.sessionPlayerIsActive && this.player.activeEvent?.choiceEnabled;
+      return this.$root.sessionPlayerIsActive && this.player.activeEvent?.choiceEnabled;
     },
     dominoDeckCount() {
       return (
         Object.keys(
           Object.keys(this.player.deckMap || {})
-            .map(id => this.getStore(id, 'deck'))
-            .filter(deck => deck.type === 'domino' && !deck.subtype)[0]?.itemMap || {},
+            .map((id) => this.store.deck?.[id] || {})
+            .filter((deck) => deck.type === 'domino' && !deck.subtype)[0]?.itemMap || {}
         ).length || 0
       );
     },
@@ -82,17 +82,17 @@ export default {
       return (
         Object.keys(
           Object.keys(this.player.deckMap || {})
-            .map(id => this.getStore(id, 'deck'))
-            .filter(deck => deck.type === 'card' && !deck.subtype)[0]?.itemMap || {},
+            .map((id) => this.store.deck?.[id] || {})
+            .filter((deck) => deck.type === 'card' && !deck.subtype)[0]?.itemMap || {}
         ).length || 0
       );
     },
   },
   methods: {
     async endRound() {
-      this.$store.commit('hideZonesAvailability');
-      this.$store.commit('setPickedDiceId', null);
-      await api.game.action({ name: 'endRound' }).catch(err => {
+      this.$root.hideZonesAvailability();
+      this.$root.state.pickedDiceId = '';
+      await api.game.action({ name: 'endRound' }).catch((err) => {
         prettyAlert(err.message);
       });
     },

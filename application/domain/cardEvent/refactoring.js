@@ -41,7 +41,7 @@
         }
       }
 
-      game.log({
+      game.logs({
         msg: `Игрок {{player}} забрал со стола костяшку "${dice.getTitle()}".`,
         userId: activePlayer.userId,
       });

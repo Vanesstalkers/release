@@ -7,10 +7,10 @@ async (context, { gameId }) => {
 
   context.gameId = gameId;
   context.playerId = user.playerId;
-  session.subscribe(`game-${gameId}`, { rule: 'vue-store' });
+  session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
   context.client.events.close.push(() => {
     session.unsubscribe(`game-${gameId}`);
   });
 
-  return { status: 'ok' };
+  return { status: 'ok', playerId: user.playerId };
 };

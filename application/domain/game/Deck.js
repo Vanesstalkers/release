@@ -19,7 +19,7 @@
         if (key === 'itemMap' && !this.access[player?._id]) {
           const ids = {};
           for (const [idx, [id, val]] of Object.entries(value).entries()) {
-            const item = this.getObjectById(id);
+            const item = this.game().getObjectById(id); // item мог быть перемещен
             ids[item.fakeId] = val;
           }
           result.itemMap = ids;
@@ -74,7 +74,7 @@
       item = new itemClass(item, { parent: this });
       if (!item.fakeId) item.updateFakeId();
     }
-    this.getGame().markNew(item);
+    this.game().markNew(item);
     this.set({ itemMap: { [item._id]: {} } });
     return true;
   }

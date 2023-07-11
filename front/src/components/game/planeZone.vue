@@ -22,7 +22,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import planeZoneSides from './planeZoneSides.vue';
 import dice from './dice.vue';
 
@@ -36,27 +35,29 @@ export default {
     linkLines: Object,
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      pickedDiceId: 'pickedDiceId',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     zone() {
-      return this.getStore(this.zoneId, 'zone');
+      return this.store.zone?.[this.zoneId] || {};
     },
   },
   methods: {
     async putDice() {
-      if (this.pickedDiceId) {
+      if (this.state.pickedDiceId) {
         await api.game
-          .action({ name: 'replaceDice', data: { diceId: this.pickedDiceId, zoneId: this.zoneId } })
-          .then(res => {
+          .action({ name: 'replaceDice', data: { diceId: this.state.pickedDiceId, zoneId: this.zoneId } })
+          .then((res) => {
             if (!res.gameFinished) {
               // иначе может отработать уже после выхода в лобби, где нет игрового store
-              this.$store.commit('setPickedDiceId', null);
-              this.$store.commit('hideZonesAvailability');
+              this.$root.state.pickedDiceId = '';
+              this.$root.hideZonesAvailability();
             }
           })
-          .catch(err => {
+          .catch((err) => {
             prettyAlert(err.message);
           });
       }

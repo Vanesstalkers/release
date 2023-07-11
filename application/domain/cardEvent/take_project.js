@@ -44,7 +44,7 @@
         player.set({ activeEvent: null });
       }
 
-      game.log({
+      game.logs({
         msg: `Игрок {{player}} стал целью события "${this.title}".`,
         userId: targetPlayer.userId,
       });

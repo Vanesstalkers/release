@@ -49,7 +49,7 @@
       return { status: 'ok', gameFinished: true };
     }
 
-    game.log(`Игрок {{player}} инициировал РЕЛИЗ, за что получает дополнительную карту события в руку.`);
+    game.logs(`Игрок {{player}} инициировал РЕЛИЗ, за что получает дополнительную карту события в руку.`);
   }
 
   const notReplacedDeletedDices = deletedDices.filter((dice) => !dice.getParent().getNotDeletedItem());

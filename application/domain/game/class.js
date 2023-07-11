@@ -9,13 +9,13 @@
       ...domain.game['@hasPlane'].decorators,
     });
 
-    this.setGame(this);
+    this.game(this);
     delete this.code; // мешается в ZoneSide.links + в принципе не нужен
   }
 
   fromJSON(data, { newGame } = {}) {
     if (data.store) this.store = data.store;
-    this.logs = data.logs || {};
+    this.logs(data.logs);
     this.addTime = data.addTime;
     this.settings = data.settings;
     this.status = data.status || 'waitForPlayers';
@@ -201,7 +201,7 @@
             const [linkZoneCode, linkSideCode] = link.split('.');
             const zone = bridge.getObjectByCode(zoneCode);
             const side = zone.getObjectByCode(sideCode);
-            const linkZone = bridge.getGame().getObjectByCode(linkZoneCode);
+            const linkZone = bridge.game().getObjectByCode(linkZoneCode);
             const linkSide = linkZone.getObjectByCode(linkSideCode);
             side.addLink(linkSide);
             linkSide.addLink(side);
@@ -305,7 +305,7 @@
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     this.set({
       eventHandlers: {
-        [handler]: this.eventHandlers[handler].concat(source._id.toString()),
+        [handler]: this.eventHandlers[handler].concat(source.id()),
       },
     });
   }
@@ -361,6 +361,7 @@
         for (let i = 0; i < planesPlacedByPlayerCount; i++) {
           const hand = playerList[i % playerList.length].getObjectByCode('Deck[plane]');
           for (let j = 0; j < 2; j++) {
+            // !!! может добавиться меньше 2 plane 
             const plane = gamePlaneDeck.getRandomItem();
             plane.moveToTarget(hand);
           }
@@ -466,11 +467,28 @@
   }
 
   broadcastData(data, { customChannel } = {}) {
-    for (const [subscriberChannel, { accessConfig = {} } = {}] of this.channel().subscribers.entries()) {
+    const subscribers = this.channel().subscribers.entries();
+    for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers) {
       if (!customChannel || subscriberChannel === customChannel) {
         let publishData;
-        const { rule = 'all', fields = [], pathRoot, path } = accessConfig;
+        const { rule = 'all', fields = [], pathRoot, path, userId } = accessConfig;
         switch (rule) {
+          /**
+           * фильтруем данные через кастомный обработчик
+           */
+          case 'custom':
+            if (!pathRoot || !path)
+              throw new Error(
+                `Custom rule handler path or pathRoot (subscriberChannel="${subscriberChannel}") not found`
+              );
+            const splittedPath = path.split('.');
+            const method = lib.utils.getDeep(pathRoot === 'domain' ? domain : lib, splittedPath);
+            if (typeof method !== 'function')
+              throw new Error(
+                `Custom rule handler (subscriberChannel="${subscriberChannel}", path="${path}") not found`
+              );
+            publishData = this.wrapPublishData(method(data));
+            break;
           /**
            * отправляем только выбранные поля (и вложенные в них объекты)
            */
@@ -487,7 +505,11 @@
            * отправляем данные в формате хранилища на клиенте
            */
           case 'vue-store':
-            publishData = { ...this.wrapPublishData({ ...data, store: undefined }), ...data.store };
+            publishData = {
+              ...this.wrapPublishData({ ...data, store: undefined }),
+              ...(userId ? this.prepareFakeData({ userId, data: data.store }) : data.store),
+              logs: this.logs(),
+            };
             break;
           case 'all':
           default:

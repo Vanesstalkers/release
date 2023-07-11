@@ -8,7 +8,7 @@
     this.placedAtRound = data.placedAtRound;
 
     if (data.sideList) {
-      const store = this.getGame().getStore();
+      const store = this.game().getStore();
       this.sideList = [
         new domain.game.DiceSide(store.diceside[data.sideList[0]._id], { parent: this }),
         new domain.game.DiceSide(store.diceside[data.sideList[1]._id], { parent: this }),

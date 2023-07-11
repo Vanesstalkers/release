@@ -53,7 +53,7 @@
         const dice = game.getObjectById(game.activeEvent.targetDiceId);
         const targetDeck = target.getObjectByCode('Deck[domino]');
         if (target.matches({ className: 'Player' })) {
-          game.log({
+          game.logs({
             msg: `Игрок {{player}} стал целью события "${this.title}".`,
             userId: target.userId,
           });

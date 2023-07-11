@@ -97,30 +97,41 @@
     return obj;
   },
   mergeDeep({ target, source, masterObj, config = {}, keyPath = [] }) {
-    const { reset = [] } = config;
+    const { reset = [], deleteNull = false } = config;
     // обнуляем ключи в заданных объектах (для передачи обновлений клиенту и БД)
     if (reset.includes(keyPath.join('.'))) {
       for (const key of Object.keys(masterObj)) target[key] = null;
     }
 
     for (const key of Object.keys(source)) {
-      if (!masterObj[key]) target[key] = source[key];
-      else if (typeof masterObj[key] !== typeof source[key] || masterObj[key] === null || source[key] === null)
-        target[key] = source[key];
-      else if (Array.isArray(masterObj[key])) {
+      if (!masterObj[key]) {
+        if (!(deleteNull && source[key] === null)) target[key] = source[key];
+      } else if (typeof masterObj[key] !== typeof source[key] || masterObj[key] === null || source[key] === null) {
+        if (deleteNull && source[key] === null) delete target[key];
+        else target[key] = source[key];
+      } else if (Array.isArray(masterObj[key])) {
         // массивы обновляются только целиком (проблемы с реализацией удаления)
-        target[key] = source[key];
+        if (deleteNull && source[key] === null) delete target[key];
+        else target[key] = source[key];
       } else if (typeof masterObj[key] === 'object') {
-        if (!target[key]) target[key] = {};
-        lib.utils.mergeDeep({
-          target: target[key],
-          source: source[key],
-          masterObj: masterObj[key],
-          config,
-          keyPath: [...keyPath, key],
-        });
-      } else if (masterObj[key] !== source[key]) target[key] = source[key];
-      else {
+        if (deleteNull && source[key] === null) delete target[key];
+        else {
+          if (source[key] === null) target[key] = null;
+          else {
+            if (!target[key]) target[key] = {};
+            lib.utils.mergeDeep({
+              target: target[key],
+              source: source[key],
+              masterObj: masterObj[key],
+              config,
+              keyPath: [...keyPath, key],
+            });
+          }
+        }
+      } else if (masterObj[key] !== source[key]) {
+        if (deleteNull && source[key] === null) delete target[key];
+        else target[key] = source[key];
+      } else {
         // тут значения, которые не изменились
       }
     }

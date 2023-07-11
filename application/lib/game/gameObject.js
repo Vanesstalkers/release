@@ -17,8 +17,8 @@
     this.setParent(parent);
     this.addToParentsObjectStorage();
     if (parent) {
-      const game = parent.getGame();
-      this.setGame(game);
+      const game = parent.game();
+      this.game(game);
       if (!game.store[this._col]) game.store[this._col] = {};
       game.store[this._col][this._id] = this;
     }
@@ -62,7 +62,7 @@
     }
   }
   addToObjectStorage(obj) {
-    this.#_objects[obj._id] = obj;
+    this.#_objects[obj.id()] = obj;
   }
   deleteFromParentsObjectStorage() {
     let parent = this.getParent();
@@ -72,11 +72,11 @@
     } while ((parent = parent.getParent()));
   }
   deleteFromObjectStorage(obj) {
-    if (this.#_objects[obj._id]) delete this.#_objects[obj._id];
+    if (this.#_objects[obj.id()]) delete this.#_objects[obj.id()];
   }
   getObjectById(_id) {
     // _id всегда уникален
-    return this.#_objects[_id] || (_id === this.#game._id.toString() ? this.#game : null);
+    return this.#_objects[_id] || (_id === this.#game.id() ? this.#game : null);
   }
   getObjectByCode(code) {
     // внутри одного родителя code может быть не уникален
@@ -136,14 +136,12 @@
     if (className && this.constructor.name === className) return true;
     return false;
   }
-  getGame() {
-    return this.#game;
-  }
-  setGame(game) {
+  game(game) {
+    if(!game) return this.#game;
     this.#game = game;
   }
   getStore() {
-    return this.getGame().store;
+    return this.game().store;
   }
   getFlattenStore() {
     return Object.values(this.getStore()).reduce((obj, item) => ({ ...obj, ...item }), {});

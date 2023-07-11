@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
-import store from './store';
+// import store from './store';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -12,14 +12,14 @@ import { Metacom } from '../lib/metacom.js';
 library.add(fas, far, fab);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 Vue.config.productionTip = false;
-window.vuex = store;
+// window.vuex = store;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
 
   router.beforeEach((to, from, next) => {
     const currentGame = localStorage.getItem('currentGame');
-    store.commit('setSimple', { store: {} });
+    console.log('currentGame=', currentGame);
     if (to.name === 'Game') {
       if (!currentGame) return next({ name: 'Lobby' });
     } else {
@@ -29,12 +29,54 @@ const init = async () => {
   });
 
   const state = {
-    store: {},
+    currentUser: '',
+    gameId: '',
+    sessionPlayerId: '',
+    isMobile: false,
+    isLandscape: true,
+    isPortrait: false,
+    guiScale: 1,
+    pickedDiceId: '',
+    selectedDiceSideId: '',
+    shownCard: '',
+    selectedCard: '',
+    store: {
+      // без этого не работают глобальные computed и methods
+      game: {},
+      player: {},
+      zone: {},
+    },
   };
+  window.state = state;
   window.app = new Vue({
     router,
-    store,
+    // store,
     data: { state },
+    computed: {
+      sessionPlayerIsActive: () => {
+        console.log(
+          'sessionPlayerIsActive: () => {',
+          Object.keys((state.store.game?.[state.gameId] || {}).playerMap || {}).map(
+            (id) => state.store.player?.[id].userId
+          )
+        );
+        return (
+          state.sessionPlayerId ===
+          Object.keys((state.store.game?.[state.gameId] || {}).playerMap || {}).find(
+            (id) => state.store.player?.[id]?.active
+          )
+        );
+      },
+      currentRound: () => state.store.game?.[state.gameId]?.round,
+      actionsDisabled: () => state.store.player?.[state.sessionPlayerId]?.eventData?.actionsDisabled,
+    },
+    methods: {
+      hideZonesAvailability: () => {
+        for (const id of Object.keys(state.store.zone)) {
+          if (state.store.zone[id].available) state.store.zone[id].available = false;
+        }
+      },
+    },
     render: function (h) {
       return h(App);
     },
@@ -49,17 +91,12 @@ const init = async () => {
 
   await metacom.load('auth', 'lobby', 'game', 'helper', 'db', 'session', 'user', 'action');
 
-  api.db.on('updated', (data) => {
-    store.dispatch('setData', data);
-  });
   api.db.on('smartUpdated', (data) => {
     mergeDeep({ target: state.store, source: data });
-    state.lastUpdate = Date.now();
   });
 
   api.session.on('joinGame', (data) => {
     localStorage.setItem('currentGame', data.gameId);
-    store.dispatch('setSimple', { sessionPlayerId: data.playerId });
     router.push({ path: `/game/${data.gameId}` });
   });
   api.session.on('leaveGame', () => {
@@ -67,7 +104,6 @@ const init = async () => {
     router.push({ path: `/` });
   });
 
-  localStorage.removeItem('currentGame');
   const token = localStorage.getItem('metarhia.session.token');
   const session = await api.auth.initSession({ token, windowTabId: window.name, demo: true });
 
@@ -133,14 +169,14 @@ const init = async () => {
       }
     }
 
-    store.dispatch('setSimple', {
-      helperLinksBounds: Object.fromEntries(
-        Object.entries(store.getters.getHelperLinks).map(([code, link]) => [
-          code,
-          window.app.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
-        ])
-      ),
-    });
+    // store.dispatch('setSimple', {
+    //   helperLinksBounds: Object.fromEntries(
+    //     Object.entries(store.getters.getHelperLinks).map(([code, link]) => [
+    //       code,
+    //       window.app.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
+    //     ])
+    //   ),
+    // });
   }).observe(document.querySelector('body'), {
     attributes: true,
     // attributeFilter: [/* 'markup-code',  */ 'markup-onload'],
@@ -151,3 +187,29 @@ const init = async () => {
 };
 
 init();
+
+function mergeDeep({ target, source }) {
+  for (const key of Object.keys(source)) {
+    if (!target[key]) {
+      if (source[key] !== null) Vue.set(target, key, source[key]);
+    } else if (typeof target[key] !== typeof source[key] || target[key] === null || source[key] === null) {
+      if (source[key] === null) Vue.delete(target, key);
+      else Vue.set(target, key, source[key]);
+    } else if (Array.isArray(target[key])) {
+      // массивы обновляются только целиком (проблемы с реализацией удаления)
+      if (source[key] === null) Vue.delete(target, key);
+      else Vue.set(target, key, source[key]);
+    } else if (typeof target[key] === 'object') {
+      if (source[key] === null) Vue.delete(target, key);
+      else {
+        if (!target[key]) Vue.set(target, key, {});
+        mergeDeep({ target: target[key], source: source[key] });
+      }
+    } else if (target[key] !== source[key]) {
+      if (source[key] === null) Vue.delete(target, key);
+      else Vue.set(target, key, source[key]);
+    } else {
+      // тут значения, которые не изменились
+    }
+  }
+}

@@ -36,7 +36,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import planeZone from './planeZone.vue';
 import planePort from './planePort.vue';
 
@@ -55,12 +54,14 @@ export default {
     gamePlaneScale: Number,
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      sessionPlayerIsActive: 'sessionPlayerIsActive',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     plane() {
-      return this.getStore(this.planeId, 'plane');
+      return this.store.plane?.[this.planeId] || {};
     },
     customStyle() {
       const style = { ...this.plane, ...(this.inHand ? this.inHandStyle : {}) } || {};
@@ -85,14 +86,14 @@ export default {
       return Object.keys(this.plane.portMap || {});
     },
     activeEvent() {
-      return this.sessionPlayerIsActive && this.plane.activeEvent;
+      return this.$root.sessionPlayerIsActive && this.plane.activeEvent;
     },
   },
   methods: {
     async selectPlane(event) {
       const $plane = event.target.closest('.plane');
       if ($plane.closest('.player.iam')) {
-        this.$store.commit('setAvailablePorts', []);
+        // this.$store.commit('setAvailablePorts', []);
         await api.game.action({ name: 'getPlanePortsAvailability', data: { joinPlaneId: this.planeId } }).catch(err => {
           prettyAlert(err.message);
         });

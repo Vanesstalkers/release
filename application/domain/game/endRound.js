@@ -11,7 +11,7 @@
   }
 
   if (game.status !== 'inProcess') {
-    console.log('game', { status: game.status, id: game._id });
+    console.log('game', { status: game.status, id: game.id() });
     throw new Error('Действие запрещено.');
   }
 
@@ -21,12 +21,12 @@
 
   if (game.round > 0) {
     if (timerOverdue) {
-      game.log({
+      game.logs({
         msg: `Игрок {{player}} не успел завершить все действия за отведенное время, и раунд №${game.round} завершился автоматически.`,
         userId: prevPlayer.userId,
       });
     } else {
-      game.log({
+      game.logs({
         msg: `Игрок {{player}} закончил раунд №${game.round}.`,
         userId: prevPlayer.userId,
       });
@@ -38,7 +38,7 @@
 
     if (game.activeEvent) {
       const source = game.getObjectById(game.activeEvent.sourceId);
-      game.log(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
+      game.logs(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
     }
     game.callEventHandlers({ handler: 'timerOverdue' });
   }
@@ -101,7 +101,7 @@
     }
   }
   if (deletedDices.length) {
-    game.log({
+    game.logs({
       msg:
         `Найдены удаленные, но не замененные костяшки. Вся группа удаленных костяшек была восстановлена на свои места.` +
         (restoreAlreadyPlacedDice
@@ -114,7 +114,7 @@
   if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
     if (!prevPlayer.eventData.disablePlayerHandLimit) {
       prevPlayerHand.moveAllItems({ target: gameDominoDeck });
-      game.log({
+      game.logs({
         msg: `У игрока {{player}} превышено максимальное количество костяшек в руке на конец хода. Все его костяшки сброшены в колоду.`,
         userId: prevPlayer.userId,
       });
@@ -142,9 +142,9 @@
   // игра могла закончиться по результатам добавления новых plane на игровое поле
   if (game.status !== 'finished') {
     game.set({ round: newRoundNumber });
-    lib.store('lobby').get('main').updateGame({ _id: game._id, round: game.round });
+    lib.store('lobby').get('main').updateGame({ _id: game.id(), round: game.round });
     lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
-    for (const logEvent of newRoundLogEvents) game.log(logEvent);
+    for (const logEvent of newRoundLogEvents) game.logs(logEvent);
   }
 
   return { status: 'ok' };

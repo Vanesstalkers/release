@@ -13,7 +13,7 @@
   updateExpectedValues() {
     const expectedValues = {};
     for (const linkCode of Object.values(this.links)) {
-      const link = this.getGame().getObjectByCode(linkCode);
+      const link = this.game().getObjectByCode(linkCode);
       if (link.value !== undefined) expectedValues[link.value] = true;
     }
     this.set({ expectedValues });

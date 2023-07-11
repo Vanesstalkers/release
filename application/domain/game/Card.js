@@ -34,7 +34,7 @@
     }
   }
   play() {
-    const game = this.getGame();
+    const game = this.game();
     const player = game.getActivePlayer();
     const config = this.getSelfConfig();
     for (const handler of config.handlers) game.addEventHandler({ handler, source: this });
@@ -48,7 +48,7 @@
   }
   callHandler({ handler, data = {} }) {
     if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');
-    const game = this.getGame();
+    const game = this.game();
     const player = game.getActivePlayer();
     if (data.targetId) data.target = game.getObjectById(data.targetId);
     return this.#events.handlers[handler].call(this, { game, player, ...data });

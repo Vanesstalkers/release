@@ -1,19 +1,19 @@
 <template>
   <div
-    v-if="game._id"
+    v-if="game.addTime"
     id="game"
-    :class="[isMobile ? 'mobile-view' : '', isLandscape ? 'landscape-view' : 'portrait-view']"
+    :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
     @wheel.prevent="zoomGamePlane"
   >
     <tutorial :inGame="true" />
 
     <GUIWrapper
       :pos="['top', 'left']"
-      :offset="{ left: isMobile ? 60 : [60, 80, 110, 130, 160, 190][guiScale] }"
+      :offset="{ left: state.isMobile ? 60 : [60, 80, 110, 130, 160, 190][state.guiScale] }"
       :contentClass="['gui-small']"
       :wrapperStyle="{ zIndex: 1 }"
     >
-      <div style="display: flex;">
+      <div style="display: flex">
         <div class="chat gui-btn" />
         <div class="log gui-btn" v-on:click="showLog = !showLog" />
         <div class="move gui-btn" v-on:click="showControls = !showControls" />
@@ -46,17 +46,16 @@
       </div>
     </div>
 
-    <div v-if="shownCard" class="shown-card">
+    <div v-if="state.shownCard" class="shown-card">
       <div class="close" v-on:click.stop="closeCardInfo" />
-      <div class="img" :style="{ backgroundImage: `url(/img/cards/release/${shownCard}.jpg)` }" />
+      <div class="img" :style="{ backgroundImage: `url(/img/cards/release/${state.shownCard}.jpg)` }" />
     </div>
-
     <div
       id="gamePlane"
       :style="{ ...gamePlaneCustomStyleData, opacity: 1, transformOrigin: 'left top', ...gamePlaneControlStyle }"
     >
-      <plane v-for="id in Object.keys(this.game.planeMap)" :key="id" :planeId="id" :gamePlaneScale="gamePlaneScale" />
-      <bridge v-for="id in Object.keys(this.game.bridgeMap)" :key="id" :bridgeId="id" />
+      <plane v-for="id in Object.keys(game.planeMap)" :key="id" :planeId="id" :gamePlaneScale="gamePlaneScale" />
+      <bridge v-for="id in Object.keys(game.bridgeMap)" :key="id" :bridgeId="id" />
 
       <div
         v-for="position in possibleAddPlanePositions"
@@ -94,15 +93,15 @@
 
     <GUIWrapper :pos="['bottom', 'right']" :wrapperClass="['session-player']">
       <player
-        :playerId="sessionPlayerId"
-        :customClass="[`scale-${guiScale}`]"
+        :playerId="state.sessionPlayerId"
+        :customClass="[`scale-${state.guiScale}`]"
         :iam="true"
         :showControls="showPlayerControls"
       />
     </GUIWrapper>
     <GUIWrapper
-      :pos="isMobile && isPortrait ? ['bottom', 'right'] : ['bottom', 'left']"
-      :offset="isMobile && isPortrait ? { bottom: 10 + 10 + 180 * 0.6 } : {}"
+      :pos="state.isMobile && state.isPortrait ? ['bottom', 'right'] : ['bottom', 'left']"
+      :offset="state.isMobile && state.isPortrait ? { bottom: 10 + 10 + 180 * 0.6 } : {}"
       :wrapperClass="['players']"
       :contentClass="['gui-small']"
     >
@@ -118,7 +117,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import {} from '../components/game/utils';
 
 import GUIWrapper from '../components/gui-wrapper.vue';
@@ -139,6 +137,7 @@ export default {
   },
   data() {
     return {
+      gamePlaneCustomStyleData: {},
       gamePlaneScale: 1,
       gamePlaneScaleMin: 0.3,
       gamePlaneScaleMax: 1,
@@ -169,18 +168,12 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      guiScale: 'guiScale',
-      isMobile: 'isMobile',
-      isLandscape: 'isLandscape',
-      isPortrait: 'isPortrait',
-      sessionPlayerId: 'sessionPlayerId',
-      sessionPlayerIsActive: 'sessionPlayerIsActive',
-      gamePlaneCustomStyleData: 'gamePlaneCustomStyleData',
-      availablePorts: 'availablePorts',
-      shownCard: 'shownCard',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     gamePlaneControlStyle() {
       const transform = [];
       transform.push('translate(' + this.gamePlaneTranslateX + 'px, ' + this.gamePlaneTranslateY + 'px)');
@@ -188,11 +181,10 @@ export default {
       return { transform: transform.join(' '), scale: this.gamePlaneScale };
     },
     game() {
-      return this.getStore(this.gameId, 'game');
+      return this.store.game?.[this.gameId] || {};
     },
     logs() {
-      const data = this.getStore('logs');
-      return data;
+      return this.store.logs || {};
     },
     statusLabel() {
       switch (this.game.status) {
@@ -211,24 +203,21 @@ export default {
     },
     playerIds() {
       const ids = Object.keys(this.game.playerMap || {}).sort((id1, id2) => (id1 > id2 ? 1 : -1));
-      const curPlayerIdx = ids.indexOf(this.sessionPlayerId);
-      return ids.slice(curPlayerIdx + 1).concat(ids.slice(0, curPlayerIdx));
-    },
-    sessionPlayer() {
-      return this.getStore(this.playerId, 'player');
+      const curPlayerIdx = ids.indexOf(this.state.sessionPlayerId);
+      const result = ids.slice(curPlayerIdx + 1).concat(ids.slice(0, curPlayerIdx));
+      return result;
     },
     helper() {
-      return this.getStore(this.sessionPlayerId, 'player')?.helper || {};
+      return this.store.player?.[this.state.sessionPlayerId]?.helper;
     },
     deckList() {
-      const list = Object.keys(this.game.deckMap).map(id => this.getStore(id, 'deck')) || [];
-      return list;
+      return Object.keys(this.game.deckMap).map((id) => this.store.deck?.[id]) || [];
     },
     activeCards() {
-      return this.deckList.find(deck => deck.subtype === 'active') || {};
+      return this.deckList.find((deck) => deck.subtype === 'active') || {};
     },
     possibleAddPlanePositions() {
-      if (!this.sessionPlayerIsActive) return [];
+      if (!this.$root.sessionPlayerIsActive) return [];
       return (this.game.availablePorts || []).map(
         ({ joinPortId, joinPortDirect, targetPortId, targetPortDirect, position }) => {
           return {
@@ -243,51 +232,51 @@ export default {
               height: position.bottom - position.top + 'px',
             },
           };
-        },
+        }
       );
     },
   },
   watch: {
-    'game.round': function() {
-      this.$store.commit('setSelectedDiceSideId', null);
-      this.$store.commit('setAvailablePorts', []);
+    'game.round': function () {
+      this.$root.state.selectedDiceSideId = '';
+      // this.$store.commit('setAvailablePorts', []);
     },
-    helper: function(val, oldVal) {
+    helper: function (val, oldVal) {
       if (val.selector) {
         document.getElementById('app').setAttribute('tutorial-active', true);
         document.querySelector(val.selector).classList.add('tutorial-active');
       }
     },
-    'game.status': function(val) {
+    'game.status': function (val) {
       if (val === 'finished') {
         localStorage.setItem('currentGame', '');
         this.$router.push({ path: `/` });
       }
     },
-    isLandscape: function() {
+    'state.isLandscape': function () {
       this.updatePlaneScale();
     },
-    'game.availablePorts': function(newValue, oldValue) {
+    'game.availablePorts': function (newValue, oldValue) {
       if (newValue?.length > 0 || oldValue?.length > 0) this.updatePlaneScale();
     },
   },
   methods: {
     sortActiveCards(arr) {
       return arr
-        .map(id => this.getStore(id, 'card'))
+        .map((id) => this.store.card?.[id] || {})
         .sort((a, b) => (a.played > b.played ? 1 : -1)) // сортируем по времени сыгрывания
         .sort((a, b) => (a.played ? 0 : 1)) // переносим не сыгранные в конец
-        .map(card => card._id);
+        .map((card) => card._id);
     },
     async takeDice() {
       // return;
-      await api.game.action({ name: 'takeDice', data: { count: 3 } }).catch(err => {
+      await api.game.action({ name: 'takeDice', data: { count: 3 } }).catch((err) => {
         prettyAlert(err.message);
       });
     },
     async takeCard() {
       // return;
-      await api.game.action({ name: 'takeCard', data: { count: 5 } }).catch(err => {
+      await api.game.action({ name: 'takeCard', data: { count: 5 } }).catch((err) => {
         prettyAlert(err.message);
       });
     },
@@ -303,10 +292,10 @@ export default {
             targetPortDirect: event.target.attributes.targetPortDirect.value,
           },
         })
-        .catch(err => {
+        .catch((err) => {
           prettyAlert(err.message);
         });
-      this.$store.commit('setAvailablePorts', []);
+      // this.$store.commit('setAvailablePorts', []);
     },
     updatePlaneScale() {
       if (this.$el instanceof HTMLElement) {
@@ -338,7 +327,7 @@ export default {
             if (gamePlane instanceof HTMLElement) {
               const gamePlaneRect = gamePlane.getBoundingClientRect();
 
-              gamePlane.querySelectorAll('.plane, .fake-plane').forEach(plane => {
+              gamePlane.querySelectorAll('.plane, .fake-plane').forEach((plane) => {
                 const rect = plane.getBoundingClientRect();
                 const offsetTop = rect.top - gamePlaneRect.top;
                 const offsetLeft = rect.left - gamePlaneRect.left;
@@ -353,13 +342,12 @@ export default {
               });
 
               const planePadding = 300;
-              const gamePlaneCustomStyleData = {
+              this.gamePlaneCustomStyleData = {
                 height: planePadding + (p.b - p.t) / this.gamePlaneScale + 'px',
                 width: planePadding + (p.r - p.l) / this.gamePlaneScale + 'px',
                 top: 'calc(50% - ' + ((p.b - p.t) / 2 + p.ot * 1) + 'px)',
-                left: `calc(${this.isMobile ? '65%' : '50%'} - ${(p.r - p.l) / 2 + p.ol * 1}px)`,
+                left: `calc(${this.state.isMobile ? '65%' : '50%'} - ${(p.r - p.l) / 2 + p.ol * 1}px)`,
               };
-              this.$store.dispatch('setSimple', { gamePlaneCustomStyleData });
 
               restoreGamePlaneSettings();
             }
@@ -374,33 +362,35 @@ export default {
       if (this.gamePlaneScale > this.gamePlaneScaleMax) this.gamePlaneScale = this.gamePlaneScaleMax;
     },
     closeCardInfo() {
-      this.$store.commit('setShownCard', null);
+      this.$root.state.shownCard = '';
     },
   },
-  async created() {
-    // console.log('async created() {');
-    this.$store.commit('setSimple', { gameId: this.gameId });
-    // this.$store.commit('setSimple', { store: {} });
-  },
-  mounted() {
-    api.game
-      .enter({ gameId: this.gameId })
-      .then(data => {
-        console.log('api.game.enter', data);
+  async created() {},
+  async mounted() {
+    // без этого не смогу записать gameId и playerId в context сессии
+    await api.action
+      .call({
+        path: 'lib.game.api.enter',
+        args: [{ gameId: this.gameId }],
       })
-      .catch(err => {
-        console.log({ err });
+      .then((data) => {
+        console.log('api.game.enter', data);
+        this.$root.state.gameId = this.gameId;
+        this.$root.state.sessionPlayerId = data.playerId;
+      })
+      .catch((err) => {
+        prettyAlert(err.message);
         localStorage.setItem('currentGame', '');
         this.$router.push({ path: `/` });
       });
 
-    document.addEventListener('contextmenu', function(event) {
+    document.addEventListener('contextmenu', function (event) {
       event.preventDefault();
     });
 
     const self = this;
     const config = this.gamePlaneConfig;
-    document.body.addEventListener('mousedown', function(event) {
+    document.body.addEventListener('mousedown', function (event) {
       if (event.target.classList.contains('scroll-off') || event.target.classList.contains('gui')) return;
       if (event.button === 2) {
         config.initialRotateAngle = event.clientX;
@@ -411,7 +401,7 @@ export default {
         config.isDragging = true;
       }
     });
-    document.body.addEventListener('mouseup', function(event) {
+    document.body.addEventListener('mouseup', function (event) {
       if (event.button === 2) {
         config.rotationLast = config.rotation;
         config.isRotating = false;
@@ -419,7 +409,7 @@ export default {
         config.isDragging = false;
       }
     });
-    document.body.addEventListener('mousemove', function(event) {
+    document.body.addEventListener('mousemove', function (event) {
       if (config.isRotating) {
         config.rotation = config.rotationLast + (event.clientX - config.initialRotateAngle) / 2;
         self.gamePlaneRotation = config.rotation;
@@ -436,7 +426,7 @@ export default {
       }
     });
 
-    document.body.addEventListener('touchstart', function(event) {
+    document.body.addEventListener('touchstart', function (event) {
       if (event.target.closest('.helper-dialog')) return;
       const touches = event.touches;
       if (touches.length === 2) {
@@ -453,7 +443,7 @@ export default {
         config.isTouchMoved = false;
       }
     });
-    document.body.addEventListener('touchmove', function(event) {
+    document.body.addEventListener('touchmove', function (event) {
       if (event.target.closest('.helper-dialog')) return;
       const touches = event.touches;
       if (touches.length === 2) {
@@ -482,7 +472,7 @@ export default {
         }
       }
     });
-    document.body.addEventListener('touchend', function(event) {
+    document.body.addEventListener('touchend', function (event) {
       if (!config.isTouchMoved) {
         // handle tap event on the movable element
         // event.preventDefault();
@@ -695,10 +685,10 @@ export default {
   display: block;
 }
 .plane.card-event.card-event-req_legal {
-  ---background-image: "url(/img/cards/release/req_legal.jpg)";
+  ---background-image: 'url(/img/cards/release/req_legal.jpg)';
 }
 .plane.card-event.card-event-req_tax {
-  ---background-image: "url(/img/cards/release/req_tax.jpg)";
+  ---background-image: 'url(/img/cards/release/req_tax.jpg)';
 }
 .fake-plane {
   position: absolute;

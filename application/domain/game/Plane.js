@@ -25,7 +25,7 @@
     }
     for (const item of data.zoneList || []) {
       const zone = new domain.game.Zone(item, { parent: this });
-      this.getGame().markNew(zone);
+      this.game().markNew(zone);
       this.set({ zoneMap: { [zone._id]: {} } });
     }
     if (data.zoneLinks) {
@@ -70,7 +70,7 @@
 
   addPort(data) {
     const port = new domain.game.Port(data, { parent: this });
-    this.getGame().markNew(port);
+    this.game().markNew(port);
     this.set({ portMap: { [port._id]: {} } });
   }
   getZone() {

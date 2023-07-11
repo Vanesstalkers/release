@@ -7,7 +7,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import planeZone from './planeZone.vue';
 
 export default {
@@ -22,11 +21,14 @@ export default {
     return { customClass: {} };
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     bridge() {
-      return this.getStore(this.bridgeId, 'bridge');
+      return this.store.bridge?.[this.bridgeId] || {};
     },
     customStyle() {
       const style = { ...this.bridge } || {};

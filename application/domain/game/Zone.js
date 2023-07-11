@@ -9,13 +9,13 @@
     this.vertical = data.vertical;
 
     if (data.sideList) {
-      const store = this.getGame().getStore();
+      const store = this.game().getStore();
       this.sideList = [
         new domain.game.ZoneSide(store.zoneside[data.sideList[0]._id], { parent: this }),
         new domain.game.ZoneSide(store.zoneside[data.sideList[1]._id], { parent: this }),
       ];
     } else {
-      const game = this.getGame();
+      const game = this.game();
       this.sideList = [
         new domain.game.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
         new domain.game.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
@@ -67,12 +67,12 @@
         side.set({ value: undefined });
       }
       for (const linkCode of Object.values(side.links)) {
-        this.getGame().getObjectByCode(linkCode).updateExpectedValues();
+        this.game().getObjectByCode(linkCode).updateExpectedValues();
       }
     });
   }
   getNearZones() {
-    const game = this.getGame();
+    const game = this.game();
     const zones = [];
     for (const side of this.sideList) {
       for (const linkCode of Object.values(side.links)) {

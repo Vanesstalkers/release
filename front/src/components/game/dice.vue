@@ -9,7 +9,7 @@
       activeEvent ? 'active-event' : '',
       hide ? 'hide' : '',
     ]"
-    v-on:click="e => (activeEvent ? chooseDice() : pickDice())"
+    v-on:click="(e) => (activeEvent ? chooseDice() : pickDice())"
   >
     <div v-if="!locked" class="controls">
       <div :class="['scroll-off', 'control rotate', dice.deleted ? 'hidden' : '']" v-on:click.stop="rotateDice">
@@ -40,16 +40,15 @@
         :key="side._id"
         :value="side.value"
         :class="['el', side.activeEvent ? 'active-event' : '', side.eventData.fakeValue ? 'fake-value' : '']"
-        v-on:click="e => (side.activeEvent ? (e.stopPropagation(), openDiceSideValueSelect(side._id)) : null)"
+        v-on:click="(e) => (side.activeEvent ? (e.stopPropagation(), openDiceSideValueSelect(side._id)) : null)"
       >
-        <dice-side-value-select v-if="selectedDiceSideId === side._id" v-on:select="pickActiveEventDiceSide" />
+        <dice-side-value-select v-if="state.selectedDiceSideId === side._id" v-on:select="pickActiveEventDiceSide" />
       </div>
     </template>
   </div>
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import diceSideValueSelect from './diceSideValueSelect.vue';
 
 export default {
@@ -62,35 +61,34 @@ export default {
     iam: Boolean,
   },
   computed: {
-    ...mapGetters({
-      getStore: 'getStore',
-      currentRound: 'currentRound',
-      sessionPlayerIsActive: 'sessionPlayerIsActive',
-      actionsDisabled: 'actionsDisabled',
-      selectedDiceSideId: 'selectedDiceSideId',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     dice() {
-      const dice = this.getStore(this.diceId, 'dice');
+      const dice = this.store.dice?.[this.diceId];
       return dice._id ? dice : { _id: this.diceId };
     },
     sideList() {
       const sideList = this.dice.sideList || [{}, {}];
       return sideList.map(({ _id }) => {
-        const side = this.getStore(_id, 'diceside');
+        const side = this.store.diceside?.[_id];
         return side._id ? side : { eventData: {} };
       });
     },
     locked() {
-      return this.dice.locked || this.actionsDisabled;
+      return this.dice.locked || this.$root.actionsDisabled;
     },
     activeEvent() {
-      return this.sessionPlayerIsActive && this.dice.activeEvent;
+      return this.$root.sessionPlayerIsActive && this.dice.activeEvent;
     },
     hide() {
       return this.inHand && !this.iam && !this.dice.visible;
     },
     replaceAllowed() {
-      return this.dice.placedAtRound !== this.currentRound;
+      return this.dice.placedAtRound !== this.$root.currentRound;
     },
   },
   methods: {
@@ -100,42 +98,42 @@ export default {
           name: 'eventTrigger',
           data: { eventData: { targetId: this.diceId, targetPlayerId: this.$parent.playerId } },
         })
-        .catch(err => {
+        .catch((err) => {
           prettyAlert(err.message);
         });
     },
     openDiceSideValueSelect(targetId) {
-      this.$store.commit('setSelectedDiceSideId', targetId);
+      this.$root.state.selectedDiceSideId = targetId;
     },
     async pickActiveEventDiceSide(fakeValue) {
       await api.game
-        .action({ name: 'eventTrigger', data: { eventData: { targetId: this.selectedDiceSideId, fakeValue } } })
-        .catch(err => {
+        .action({ name: 'eventTrigger', data: { eventData: { targetId: this.state.selectedDiceSideId, fakeValue } } })
+        .catch((err) => {
           prettyAlert(err.message);
         });
-      this.$store.commit('setSelectedDiceSideId', null);
+      this.$root.state.selectedDiceSideId = '';
     },
     async pickDice() {
       if (!this.iam) return;
       if (this.locked) return;
-      this.$store.commit('setPickedDiceId', this.diceId);
-      this.$store.commit('hideZonesAvailability');
-      await api.game.action({ name: 'getZonesAvailability', data: { diceId: this.diceId } }).catch(err => {
+      this.$root.state.pickedDiceId = this.diceId;
+      this.$root.hideZonesAvailability()
+      await api.game.action({ name: 'getZonesAvailability', data: { diceId: this.diceId } }).catch((err) => {
         prettyAlert(err.message);
       });
     },
     async rotateDice() {
-      await api.game.action({ name: 'rotateDice', data: { diceId: this.diceId } }).catch(err => {
+      await api.game.action({ name: 'rotateDice', data: { diceId: this.diceId } }).catch((err) => {
         prettyAlert(err.message);
       });
     },
     async deleteDice() {
-      await api.game.action({ name: 'deleteDice', data: { diceId: this.diceId } }).catch(err => {
+      await api.game.action({ name: 'deleteDice', data: { diceId: this.diceId } }).catch((err) => {
         prettyAlert(err.message);
       });
     },
     async restoreDice() {
-      await api.game.action({ name: 'restoreDice', data: { diceId: this.diceId } }).catch(err => {
+      await api.game.action({ name: 'restoreDice', data: { diceId: this.diceId } }).catch((err) => {
         prettyAlert(err.message);
       });
     },

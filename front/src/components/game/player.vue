@@ -12,10 +12,10 @@
             :style="{ width: '0px', height: '150px', position: 'relative' }"
           >
             <div
-              v-if="!isPortrait || iam"
+              v-if="!state.isPortrait || iam"
               class="hand-dices"
               :style="
-                iam || (isMobile && isPortrait)
+                iam || (state.isMobile && state.isPortrait)
                   ? {
                       position: 'absolute',
                       right: '0px',
@@ -47,7 +47,7 @@
               :key="id"
               :cardId="id"
               :canPlay="iam"
-              :isSelected="id === selectedCard"
+              :isSelected="id === state.selectedCard"
             />
           </div>
         </div>
@@ -60,7 +60,6 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions, mapMutations } from 'vuex';
 import plane from './plane.vue';
 import dice from './dice.vue';
 import card from './card.vue';
@@ -83,28 +82,25 @@ export default {
     return {};
   },
   computed: {
-    ...mapGetters({
-      isMobile: 'isMobile',
-      isLandscape: 'isLandscape',
-      isPortrait: 'isPortrait',
-      getStore: 'getStore',
-      sessionPlayerId: 'sessionPlayerId',
-      sessionPlayerIsActive: 'sessionPlayerIsActive',
-      selectedCard: 'selectedCard',
-    }),
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
     player() {
-      return this.getStore(this.playerId, 'player');
+      return this.store.player?.[this.playerId];
     },
     dominoDecks() {
-      return (
-        this.deckIds
-          .map(id => this.getStore(id, 'deck'))
-          .filter(deck => deck.type === 'domino')
-          .sort(({ subtype }) => (subtype ? -1 : 1)) || []
+      return this.deckIds.map(
+        (id) =>
+          this.store.deck?.[id] ||
+          {}.filter((deck) => deck.type === 'domino').sort(({ subtype }) => (subtype ? -1 : 1)) ||
+          []
       );
     },
     cardDecks() {
-      return this.deckIds.map(id => this.getStore(id, 'deck')).filter(deck => deck.type === 'card') || [];
+      return this.deckIds.map((id) => this.store.deck?.[id]).filter((deck) => deck.type === 'card') || [];
     },
     deckIds() {
       return Object.keys(this.player.deckMap || {});
@@ -113,20 +109,20 @@ export default {
       return this.iam
         ? null
         : {
-            domino: Object.keys(this.dominoDecks.find(deck => !deck.subtype)?.itemMap || {}).length || 0,
-            card: Object.keys(this.cardDecks.find(deck => !deck.subtype)?.itemMap || {}).length || 0,
+            domino: Object.keys(this.dominoDecks.find((deck) => !deck.subtype)?.itemMap || {}).length || 0,
+            card: Object.keys(this.cardDecks.find((deck) => !deck.subtype)?.itemMap || {}).length || 0,
           };
     },
     planeInHandIds() {
       return Object.keys(
-        this.deckIds.map(id => this.getStore(id, 'deck')).find(deck => deck.type === 'plane')?.itemMap || {},
+        this.deckIds.map((id) => this.store.deck?.[id]).find((deck) => deck.type === 'plane')?.itemMap || {}
       );
     },
     hasPlaneInHand() {
       return this.planeInHandIds.length > 0;
     },
     showDecks() {
-      return this.sessionPlayerIsActive && this.player.activeEvent?.showDecks;
+      return this.$root.sessionPlayerIsActive && this.player.activeEvent?.showDecks;
     },
   },
   methods: {},

@@ -6,7 +6,7 @@
       data.settings.parentDeckContainer = deckListName;
 
       const deck = new deckClass(data, { parent: this });
-      this.getGame().markNew(deck);
+      this.game().markNew(deck);
       this.set({ [deckListName]: { [deck._id]: {} } });
       deck.setItemClass(deckItemClass);
 
