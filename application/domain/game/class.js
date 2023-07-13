@@ -5,8 +5,8 @@
   constructor(data = {}) {
     super();
     Object.assign(this, {
-      ...domain.game['@hasDeck'].decorators,
-      ...domain.game['@hasPlane'].decorators,
+      ...domain.game['@hasDeck'].decorate(),
+      ...domain.game['@hasPlane'].decorate(),
     });
 
     this.game(this);
@@ -20,7 +20,7 @@
     this.settings = data.settings;
     this.status = data.status || 'waitForPlayers';
     this.round = data.round || 0;
-    this.activeEvent = data.activeEvent; // в конструктор Game передается только _id
+    if (data.activeEvent) this.activeEvent = data.activeEvent;
     this.eventHandlers = data.eventHandlers || {
       endRound: [],
       timerOverdue: [],
@@ -360,8 +360,7 @@
         const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
         for (let i = 0; i < planesPlacedByPlayerCount; i++) {
           const hand = playerList[i % playerList.length].getObjectByCode('Deck[plane]');
-          for (let j = 0; j < 2; j++) {
-            // !!! может добавиться меньше 2 plane 
+          for (let j = 0; j < this.settings.planesToChoosee; j++) {
             const plane = gamePlaneDeck.getRandomItem();
             plane.moveToTarget(hand);
           }
@@ -393,7 +392,7 @@
         return; // обновлять игру не нужно, так как она удалена
     }
 
-    lib.store('lobby').get('main').updateGame({ _id: this.id(), status: this.status });
+    // lib.store('lobby').get('main').updateGame({ _id: this.id(), status: this.status });
   }
   setWinner({ player }) {
     this.set({ winUserId: player.userId });
@@ -505,9 +504,12 @@
            * отправляем данные в формате хранилища на клиенте
            */
           case 'vue-store':
-            publishData = {
+            const store = {
               ...this.wrapPublishData({ ...data, store: undefined }),
-              ...(userId ? this.prepareFakeData({ userId, data: data.store }) : data.store),
+              ...data.store,
+            };
+            publishData = {
+              ...(userId ? this.prepareFakeData({ userId, data: store }) : store),
               logs: this.logs(),
             };
             break;

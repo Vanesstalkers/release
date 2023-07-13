@@ -2,8 +2,8 @@
   constructor(data, { parent }) {
     super(data, { col: 'player', parent });
     Object.assign(this, {
-      ...domain.game['@hasDeck'].decorators,
-      ...domain.game['@hasPlane'].decorators,
+      ...domain.game['@hasDeck'].decorate(),
+      ...domain.game['@hasPlane'].decorate(),
     });
 
     this.userId = data.userId;

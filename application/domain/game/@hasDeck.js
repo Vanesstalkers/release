@@ -1,5 +1,5 @@
 ({
-  decorators: {
+  decorate: () => ({
     addDeck(data, { deckClass = domain.game.Deck, deckListName = 'deckMap', deckItemClass = domain.game.Dice } = {}) {
       if (!data.settings) data.settings = {};
       if (!data.access) data.access = {};
@@ -26,5 +26,5 @@
         [parentDeckContainer]: this[parentDeckContainer].filter((id) => id !== deckToDelete._id),
       });
     },
-  },
+  }),
 });

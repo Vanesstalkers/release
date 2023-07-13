@@ -68,7 +68,8 @@
             return { [this.col()]: { [this.id()]: data } };
           }
           broadcastData(data, { customChannel } = {}) {
-            for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
+            const subscribers = this.#channel.subscribers;
+            for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers.entries()) {
               if (!customChannel || subscriberChannel === customChannel) {
                 let publishData;
                 const { rule = 'all', fields = [], pathRoot, path } = accessConfig;
@@ -108,6 +109,13 @@
                 }
                 if (!Object.keys(publishData).length) continue;
                 lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
+              }
+            }
+          }
+          broadcastAction(name, data, { customChannel } = {}) {
+            for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
+              if (!customChannel || subscriberChannel === customChannel) {
+                lib.store.broadcaster.publishAction(subscriberChannel, name, data);
               }
             }
           }
@@ -189,14 +197,16 @@
       }
     }
 
-    set(val, config) {
-      if (!this.#disableChanges)
-        lib.utils.mergeDeep({
-          masterObj: this,
-          target: this.#changes,
-          source: lib.utils.structuredClone(val),
-          config, // все получатели #changes должны знать об удаленных ключах, поэтому ключи с null-значением сохраняем (по дефолту deleteNull = false)
-        });
+    setChanges(val, config = {}) {
+      lib.utils.mergeDeep({
+        masterObj: this,
+        target: this.#changes,
+        source: lib.utils.structuredClone(val),
+        config, // все получатели #changes должны знать об удаленных ключах, поэтому ключи с null-значением сохраняем (по дефолту deleteNull = false)
+      });
+    }
+    set(val, config = {}) {
+      if (!this.#disableChanges) this.setChanges(val, config);
       lib.utils.mergeDeep({
         masterObj: this,
         target: this,

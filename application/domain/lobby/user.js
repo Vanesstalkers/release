@@ -1,7 +1,5 @@
 (class LobbyUser extends lib.user.class() {
   async enterLobby({ sessionId }) {
-    const { gameId, playerId } = this;
-
     lib.store.broadcaster.publishAction(`lobby-main`, 'userEnter', {
       sessionId,
       userId: this.id(),
@@ -57,7 +55,10 @@
     await this.saveChanges();
   }
   leaveLobby({ sessionId }) {
-    lib.store.broadcaster.publishAction(`lobby-main`, 'userLeave', { sessionId, userId: this.id() });
+    const session = lib.store('session').get(sessionId);
+    const lobbyName = `lobby-main`;
+    delete session.connectedToLobby[lobbyName];
+    lib.store.broadcaster.publishAction(lobbyName, 'userLeave', { sessionId, userId: this.id() });
   }
 
   async joinGame({ gameId, playerId }) {
@@ -132,5 +133,17 @@
     // context.client.emit('db/smartUpdated', data);
 
     // lib.broadcaster.subscribe({ room: `game-${gameId}`, client: context.client });
+  }
+  async leaveGame() {
+    const { gameId } = this;
+    this.set({ gameId: null, playerId: null });
+    await this.saveChanges();
+
+    for (const session of this.sessions()) {
+      session.unsubscribe(`game-${gameId}`);
+      session.gameId = null;
+      session.playerId = null;
+      session.send('session/leaveGame', {});
+    }
   }
 });

@@ -142,7 +142,7 @@
   // игра могла закончиться по результатам добавления новых plane на игровое поле
   if (game.status !== 'finished') {
     game.set({ round: newRoundNumber });
-    lib.store('lobby').get('main').updateGame({ _id: game.id(), round: game.round });
+    // lib.store('lobby').get('main').updateGame({ _id: game.id(), round: game.round });
     lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
     for (const logEvent of newRoundLogEvents) game.logs(logEvent);
   }

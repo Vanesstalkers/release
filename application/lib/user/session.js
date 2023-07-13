@@ -12,9 +12,10 @@
     if (!userId) throw new Error('Ошибка создания сессии (empty userId).');
 
     const user = lib.store('user').get(userId);
+    await this.getProtoParent().create.call(this, { token, windowTabId, userId, userLogin });
     user.linkSession(this);
-
-    return await this.getProtoParent().create.call(this, { token, windowTabId, userId, userLogin });
+    
+    return this;
   }
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);

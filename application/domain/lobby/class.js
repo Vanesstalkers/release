@@ -78,8 +78,8 @@
   async userLeave({ sessionId, userId }) {
     this.set({ users: { [userId]: { sessions: this.users[userId].sessions.filter((id) => id !== sessionId) } } });
     if (this.users[userId].sessions.length === 0) {
-      this.set({ users: { [userId]: null } });
       this.unsubscribe(`user-${userId}`);
+      this.set({ users: { [userId]: null } });
     }
     await this.saveChanges();
   }
@@ -88,42 +88,17 @@
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
   }
-  async removeGame({ _id, canceledByUser }) {
-    const gameId = _id.toString();
-    // this.games.delete(gameId);
+  async gameFinished({ gameId }) {
+    this.unsubscribe(`game-${gameId}`);
     this.set({ games: { [gameId]: null } });
-    // this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
-
-    // const game = lib.repository.getCollection('game').get(gameId);
-    // lib.timers.timerDelete(game);
-    // game.set({ status: 'finished' });
-    // await game.broadcastData();
-
-    // const afterGameHelpers = {};
-    // const playerList = game.getObjects({ className: 'Player' });
-    // for (const player of playerList) {
-    //   const { userId } = player;
-    //   const repoUser = lib.store('user').get(userId);
-    //   const type = canceledByUser
-    //     ? userId === canceledByUser
-    //       ? 'lose'
-    //       : 'cancel'
-    //     : userId === game.winUserId
-    //     ? 'win'
-    //     : 'lose';
-    //   const helper = domain.game['tutorialGameEnd'][type];
-    //   afterGameHelpers[userId] = { user: { [userId]: { helper } } };
-    //   repoUser.currentTutorial = { active: 'tutorialGameEnd' };
-    //   repoUser.helper = helper;
-    // }
-    // this.broadcast(null, afterGameHelpers);
   }
-  updateGame({ _id, ...data }) {
-    // const gameId = _id.toString();
-    // const game = this.games.get(gameId);
-    // if (game) {
-    //   Object.assign(game, data);
-    //   this.broadcast({ game: { [gameId]: data } });
-    // }
+  async checkGameStatuses() {
+    for (const [gameId, game] of Object.entries(this.games)) {
+      if (game.status === 'finished') {
+        this.unsubscribe(`game-${gameId}`);
+        this.set({ games: { [gameId]: null } });
+      }
+    }
+    await this.saveChanges();
   }
 });

@@ -200,7 +200,7 @@ export default {
         };
       }
     },
-    menuAction({ action }) {
+    async menuAction({ action }) {
       switch (action) {
         case 'exit':
           this.menu = null;
@@ -219,9 +219,14 @@ export default {
           };
           break;
         case 'leaveGame':
-          api.lobby.leaveGame().catch((err) => {
-            prettyAlert(err.message);
-          });
+          await api.action
+            .call({
+              path: 'lib.game.api.leave',
+              args: [],
+            })
+            .catch((err) => {
+              prettyAlert(err.message);
+            });
           break;
       }
     },

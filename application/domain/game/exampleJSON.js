@@ -8,6 +8,7 @@
       playerHandLimit: 3,
       planesAtStart: 3, // изначальное количество блоков на поле
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
+      planesToChoosee: 2, // блоков на выбор игроку для добавления на поле
       acceptAutoPlayRoundStartCard: true,
       singlePlayer: true,
       cardsToRemove: ['audit', 'coffee', 'weekend'],
@@ -36,6 +37,7 @@
       playerHandLimit: 3,
       planesAtStart: 1, // изначальное количество блоков на поле
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
+      planesToChoosee: 2, // блоков на выбор игроку для добавления на поле
       acceptAutoPlayRoundStartCard: false,
       cardsToRemove: [],
     },
@@ -67,6 +69,7 @@
       playerHandLimit: 2,
       planesAtStart: 0, // изначальное количество блоков на поле
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
+      planesToChoosee: 2, // блоков на выбор игроку для добавления на поле
       acceptAutoPlayRoundStartCard: false,
       cardsToRemove: [],
     },

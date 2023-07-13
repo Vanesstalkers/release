@@ -108,6 +108,48 @@
 
       await this.saveChanges();
     }
+    async playerLeave({ userId }) {
+      lib.store.broadcaster.publishAction(`user-${userId}`, 'leaveGame', {});
+      if (this.status !== 'finished') {
+        this.logs({ msg: `Игрок {{player}} вышел из игры.`, userId });
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'leaveGame', {});
+        this.broadcastAction('gameFinished', { gameId: this.id() });
+        lib.timers.timerDelete(this);
+        this.set({ status: 'finished' });
+        await this.saveChanges();
+      }
+
+      // async removeGame({ _id, canceledByUser }) {
+      //   const gameId = _id.toString();
+      //   // this.games.delete(gameId);
+      //   this.set({ games: { [gameId]: null } });
+      //   // this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
+
+      //   // const game = lib.repository.getCollection('game').get(gameId);
+      //   // lib.timers.timerDelete(game);
+      //   // game.set({ status: 'finished' });
+      //   // await game.broadcastData();
+
+      //   // const afterGameHelpers = {};
+      //   // const playerList = game.getObjects({ className: 'Player' });
+      //   // for (const player of playerList) {
+      //   //   const { userId } = player;
+      //   //   const repoUser = lib.store('user').get(userId);
+      //   //   const type = canceledByUser
+      //   //     ? userId === canceledByUser
+      //   //       ? 'lose'
+      //   //       : 'cancel'
+      //   //     : userId === game.winUserId
+      //   //     ? 'win'
+      //   //     : 'lose';
+      //   //   const helper = domain.game['tutorialGameEnd'][type];
+      //   //   afterGameHelpers[userId] = { user: { [userId]: { helper } } };
+      //   //   repoUser.currentTutorial = { active: 'tutorialGameEnd' };
+      //   //   repoUser.helper = helper;
+      //   // }
+      //   // this.broadcast(null, afterGameHelpers);
+      // }
+    }
     getFreePlayerSlot() {
       return this.getPlayerList().find((player) => !player.ready);
     }

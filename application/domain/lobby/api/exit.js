@@ -1,7 +1,8 @@
 async () => {
-  const {
-    client: { userId },
-  } = context;
-  lib.store.broadcaster.publishAction(`lobby-main`, 'userLeave', { id: userId });
+  const { userId } = context;
+  const user = lib.store('user').get(userId);
+
+  user.leaveLobby({ sessionId });
+
   return { status: 'ok' };
 };

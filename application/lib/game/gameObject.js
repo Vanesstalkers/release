@@ -11,7 +11,7 @@
     if (!this._id) this._id = data._id || db.mongo.ObjectID();
     if (_col) this._col = _col;
     this.fakeId = data.fakeId;
-    this.activeEvent = data.activeEvent;
+    if (data.activeEvent) this.activeEvent = data.activeEvent;
     this.eventData = data.eventData || {};
 
     this.setParent(parent);
@@ -40,15 +40,18 @@
   updateFakeId() {
     this.fakeId = (Date.now() + Math.random()).toString();
   }
-  set(val, config) {
-    // !!! убрать после рефакторинга всех domain.game['!GameObject']
-    if (config) throw new Error('!config');
+  set(val, config = {}) {
     if (!this._col) {
       throw new Error(`${key}=${value} not saved to changes ('_col' is no defined)`);
     } else {
-      this.#game.set({ store: { [this._col]: { [this._id]: val } } }, config);
+      this.#game.setChanges({ store: { [this._col]: { [this._id]: val } } }, config);
     }
-    lib.utils.mergeDeep({ masterObj: this, target: this, source: val, config });
+    lib.utils.mergeDeep({
+      masterObj: this,
+      target: this,
+      source: val,
+      config: { deleteNull: true, ...config }, // удаляем ключи с null-значением
+    });
   }
   default_customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, data._code);
@@ -137,7 +140,7 @@
     return false;
   }
   game(game) {
-    if(!game) return this.#game;
+    if (!game) return this.#game;
     this.#game = game;
   }
   getStore() {

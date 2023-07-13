@@ -5,11 +5,18 @@ async (context) => {
 
   await user.enterLobby({ sessionId });
 
-  session.subscribe(`lobby-main`);
-  context.client.events.close.push(() => {
-    user.leaveLobby({ sessionId });
-    session.unsubscribe(`lobby-main`);
-  });
+  // lobby.api.enter вызывается при каждом открытии страницы - без логики с connectedToLobby будут дублироваться вызовы с subscribe/unsubscribe и leaveLobby
+  const lobbyName = `lobby-main`;
+  if (!session.connectedToLobby) session.connectedToLobby = {};
+  if (!session.connectedToLobby[lobbyName]) {
+    session.connectedToLobby[lobbyName] = true;
+
+    session.subscribe(lobbyName);
+    context.client.events.close.push(() => {
+      session.unsubscribe(lobbyName);
+      user.leaveLobby({ sessionId });
+    });
+  }
 
   return { status: 'ok' };
 };

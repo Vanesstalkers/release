@@ -247,12 +247,6 @@ export default {
         document.querySelector(val.selector).classList.add('tutorial-active');
       }
     },
-    'game.status': function (val) {
-      if (val === 'finished') {
-        localStorage.setItem('currentGame', '');
-        this.$router.push({ path: `/` });
-      }
-    },
     'state.isLandscape': function () {
       this.updatePlaneScale();
     },
@@ -261,6 +255,16 @@ export default {
     },
   },
   methods: {
+    async leaveGame() {
+      await api.action
+        .call({
+          path: 'lib.game.api.leave',
+          args: [],
+        })
+        .catch((err) => {
+          prettyAlert(err.message);
+        });
+    },
     sortActiveCards(arr) {
       return arr
         .map((id) => this.store.card?.[id] || {})
@@ -381,7 +385,9 @@ export default {
       .catch((err) => {
         prettyAlert(err.message);
         localStorage.setItem('currentGame', '');
-        this.$router.push({ path: `/` });
+        this.$router.push({ path: `/` }).catch((err) => {
+          console.log(err);
+        });
       });
 
     document.addEventListener('contextmenu', function (event) {

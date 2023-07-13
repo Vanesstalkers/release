@@ -6,7 +6,7 @@
     const gameDeck = game.getObjectByCode('Deck[plane]');
     const deck = player.getObjectByCode('Deck[plane]');
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < game.settings.planesToChoosee; i++) {
       const plane = gameDeck.getRandomItem();
       if (plane) plane.moveToTarget(deck);
     }

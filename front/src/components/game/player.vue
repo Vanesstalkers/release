@@ -178,10 +178,12 @@ export default {
   padding: 0px 10px;
   flex-direction: row;
   position: relative;
+  height: 0px;
   width: 100%;
 }
 #game.mobile-view.portrait-view .player-hands {
   justify-content: flex-start;
+  height: initial;
 }
 
 .hand-cards-list {
@@ -196,6 +198,7 @@ export default {
 }
 
 .hand-dices-list {
+  height: 0px;
   width: auto;
   flex-wrap: wrap;
   flex-direction: column;
@@ -235,7 +238,11 @@ export default {
   align-items: flex-end;
 }
 .player.iam .hand-planes {
+  height: 0px;
   width: 100%;
+}
+#game.mobile-view.portrait-view .player.iam .hand-planes {
+  height: initial;
 }
 .hand-planes .plane {
   position: relative;

@@ -97,11 +97,15 @@ const init = async () => {
 
   api.session.on('joinGame', (data) => {
     localStorage.setItem('currentGame', data.gameId);
-    router.push({ path: `/game/${data.gameId}` });
+    router.push({ path: `/game/${data.gameId}` }).catch((err) => {
+      console.log(err);
+    });
   });
   api.session.on('leaveGame', () => {
     localStorage.removeItem('currentGame');
-    router.push({ path: `/` });
+    router.push({ path: `/` }).catch((err) => {
+      console.log(err);
+    });
   });
 
   const token = localStorage.getItem('metarhia.session.token');
