@@ -20,6 +20,7 @@
     <div v-if="!iam" class="card-event">
       {{ cardDeckCount }}
     </div>
+    <div v-if="showLeaveBtn && iam" v-on:click="leaveGame" class="leave-game-btn">Выйти из игры</div>
   </div>
 </template>
 
@@ -45,6 +46,9 @@ export default {
   computed: {
     state() {
       return this.$root.state || {};
+    },
+    game() {
+      return this.getGame();
     },
     store() {
       return this.getStore();
@@ -92,6 +96,9 @@ export default {
         ).length || 0
       );
     },
+    showLeaveBtn() {
+      return this.game.status === 'finished';
+    },
   },
   methods: {
     async endRound() {
@@ -100,6 +107,16 @@ export default {
       await api.game.action({ name: 'endRound' }).catch((err) => {
         prettyAlert(err.message);
       });
+    },
+    async leaveGame() {
+      await api.action
+        .call({
+          path: 'lib.game.api.leave',
+          args: [],
+        })
+        .catch((err) => {
+          prettyAlert(err.message);
+        });
     },
   },
   mounted() {},
@@ -212,5 +229,18 @@ export default {
   margin: 10px;
   color: #ff5900;
   text-shadow: 4px 4px 0 #fff;
+}
+.leave-game-btn {
+  position: absolute;
+  bottom: 0px;
+  width: 100px;
+  font-size: 0.5em;
+  border: 1px solid black;
+  text-align: center;
+  cursor: pointer;
+  margin: 6px 10px;
+  background: #bb3030;
+  color: white;
+  font-size: 16px;
 }
 </style>

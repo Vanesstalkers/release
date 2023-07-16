@@ -92,63 +92,40 @@
       if (!player) throw new Error('Свободных мест не осталось');
 
       this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
-      lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', { gameId: this.id(), playerId: player.id() });
-
       player.set({ ready: true, userId });
       if (!this.getFreePlayerSlot()) this.updateStatus();
-
-      // await game.broadcastData();
-
-      // context.client.emit('session/joinGame', { gameId, playerId });
-      // lib.store('lobby').get('main').updateGame({ _id: game._id, playerList: game.getPlayerList() });
-      // // lib.broadcaster.pubClient.publish(
-      // //   `lobby-main`,
-      // //   JSON.stringify({ eventName: 'updateGame', eventData: { _id: game._id, playerList: game.getPlayerList() } })
-      // // );
-
       await this.saveChanges();
+
+      lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', { gameId: this.id(), playerId: player.id() });
     }
     async playerLeave({ userId }) {
-      lib.store.broadcaster.publishAction(`user-${userId}`, 'leaveGame', {});
       if (this.status !== 'finished') {
         this.logs({ msg: `Игрок {{player}} вышел из игры.`, userId });
-        lib.store.broadcaster.publishAction(`user-${userId}`, 'leaveGame', {});
-        this.broadcastAction('gameFinished', { gameId: this.id() });
-        lib.timers.timerDelete(this);
-        this.set({ status: 'finished' });
-        await this.saveChanges();
+        await this.endGame({ canceledByUser: userId });
       }
+      lib.store.broadcaster.publishAction(`user-${userId}`, 'leaveGame', {});
+    }
+    async endGame({ canceledByUser } = {}) {
+      lib.timers.timerDelete(this);
+      this.set({ status: 'finished' });
 
-      // async removeGame({ _id, canceledByUser }) {
-      //   const gameId = _id.toString();
-      //   // this.games.delete(gameId);
-      //   this.set({ games: { [gameId]: null } });
-      //   // this.broadcast({ lobby: { [this.id]: { gameMap: this.getGamesMap() } } });
+      const playerList = this.getObjects({ className: 'Player' });
+      const playerEndGameStatus = {};
+      for (const player of playerList) {
+        const { userId } = player;
+        const endGameStatus = canceledByUser
+          ? userId === canceledByUser
+            ? 'lose'
+            : 'cancel'
+          : userId === game.winUserId
+          ? 'win'
+          : 'lose';
+        player.set({ endGameStatus });
+        playerEndGameStatus[userId] = endGameStatus;
+      }
+      await this.saveChanges();
 
-      //   // const game = lib.repository.getCollection('game').get(gameId);
-      //   // lib.timers.timerDelete(game);
-      //   // game.set({ status: 'finished' });
-      //   // await game.broadcastData();
-
-      //   // const afterGameHelpers = {};
-      //   // const playerList = game.getObjects({ className: 'Player' });
-      //   // for (const player of playerList) {
-      //   //   const { userId } = player;
-      //   //   const repoUser = lib.store('user').get(userId);
-      //   //   const type = canceledByUser
-      //   //     ? userId === canceledByUser
-      //   //       ? 'lose'
-      //   //       : 'cancel'
-      //   //     : userId === game.winUserId
-      //   //     ? 'win'
-      //   //     : 'lose';
-      //   //   const helper = domain.game['tutorialGameEnd'][type];
-      //   //   afterGameHelpers[userId] = { user: { [userId]: { helper } } };
-      //   //   repoUser.currentTutorial = { active: 'tutorialGameEnd' };
-      //   //   repoUser.helper = helper;
-      //   // }
-      //   // this.broadcast(null, afterGameHelpers);
-      // }
+      this.broadcastAction('gameFinished', { gameId: this.id(), playerEndGameStatus });
     }
     getFreePlayerSlot() {
       return this.getPlayerList().find((player) => !player.ready);

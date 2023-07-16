@@ -45,4 +45,10 @@
     active: '[code="Deck[card_active]"]',
     buttons: [{ text: 'Спасибо', action: 'exit' }],
   },
+  leaveGame: {
+    pos: 'top-right',
+    text: 'Для выхода из игры необходимо нажать эту кнопку, либо выбрать соответствующий пункт в меню.',
+    active: '.leave-game-btn',
+    buttons: [{ text: 'Спасибо', action: 'exit' }],
+  }
 });

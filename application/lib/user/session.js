@@ -14,10 +14,10 @@
     const user = lib.store('user').get(userId);
     await this.getProtoParent().create.call(this, { token, windowTabId, userId, userLogin });
     user.linkSession(this);
-    
+
     return this;
   }
-  async load(from, config) {
+  async load(from, config = { linkSessionToUser: true }) {
     await this.getProtoParent().load.call(this, from, config);
 
     let user;
@@ -36,7 +36,7 @@
       user = lib.store('user').get(userOnline.id);
     }
 
-    user.linkSession(this);
+    if (config.linkSessionToUser) user.linkSession(this);
 
     return this;
   }
@@ -71,17 +71,29 @@
    * @param {*} data
    */
   processData(data) {
+    const client = this.client();
     try {
-      this.client().emit('db/smartUpdated', data);
+      client.emit('db/smartUpdated', data);
     } catch (err) {
-      // !!! заменить на проверку, что ws-подключение еще живо
+      // ошибки быть не должно, строчка ниже лежит как пример обработчика
+      // for (const callback of client.events.close) callback();
     }
   }
   send(handler, data) {
+    const client = this.client();
     try {
-      this.client().emit(handler, data);
+      client.emit(handler, data);
     } catch (err) {
-      // !!! заменить на проверку, что ws-подключение еще живо
+      // ошибки быть не должно, строчка ниже лежит как пример обработчика
+      // for (const callback of client.events.close) callback();
     }
+  }
+  async gameFinished({ gameId, playerEndGameStatus }) {
+    const user = this.user();
+    const endGameStatus = playerEndGameStatus[user.id()];
+
+    const tutorial = lib.helper.getTutorial('game-tutorial-finished');
+    user.set({ helper: tutorial[endGameStatus] });
+    await user.saveChanges();
   }
 });

@@ -11,7 +11,7 @@
           if (err !== 'not_found') throw err; // любая ошибка, кроме ожидаемой "not_found"
 
           sessionLoadResult = await session
-            .load({ fromDB: { query: { token } } }, { initStoreDisabled: true })
+            .load({ fromDB: { query: { token } } }, { initStore: false, linkSessionToUser: false })
             .then(async (res) => {
               if (res.reconnect) {
                 return { ...res };
@@ -49,14 +49,11 @@
       }
 
       context.client.events.close.push(() => {
-        session.unsubscribe(`user-${session.userId}`);
         session.user().unlinkSession(session);
+        session.unsubscribe(`user-${session.userId}`);
         console.log(`session disconnected (token=${session.token}`);
       });
 
-      const sessionData = {};
-      sessionData.sessionId = session.id();
-      sessionData.userId = session.userId;
       context.client.startSession(session.token, {
         sessionId: session.id(),
         userId: session.userId,

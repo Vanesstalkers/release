@@ -325,9 +325,7 @@ export default {
       return this.lobby?.games || {};
     },
     lobbyGameList() {
-      const list = Object.entries(this.lobbyGameMap)
-        // .filter(([id, user]) => user && user.name)
-        .map(([id, game]) => Object.assign(game, { id }));
+      const list = Object.entries(this.lobbyGameMap).map(([id, game]) => Object.assign(game, { id }));
       return list.map((game) => {
         if (game.playerMap) {
           const players = Object.keys(game.playerMap).map((id) => game.store?.player[id] || {});
@@ -372,10 +370,14 @@ export default {
         });
     },
     async joinGame({ gameId }) {
-      await api.action.call({
-        path: 'lib.game.api.join',
-        args: [{ gameId }],
-      });
+      await api.action
+        .call({
+          path: 'lib.game.api.join',
+          args: [{ gameId }],
+        })
+        .catch((err) => {
+          prettyAlert(err.message);
+        });
     },
     showInfo(name) {
       api.action.call({
@@ -518,9 +520,23 @@ export default {
     resize();
     window.addEventListener('resize', resize);
 
-    await api.action.call({ path: 'domain.lobby.api.enter' });
+    await api.action
+      .call({
+        path: 'domain.lobby.api.enter',
+      })
+      .catch((err) => {
+        prettyAlert(err.message);
+      });
   },
-  async beforeDestroy() {},
+  async beforeDestroy() {
+    await api.action
+      .call({
+        path: 'domain.lobby.api.exit',
+      })
+      .catch((err) => {
+        prettyAlert(err.message);
+      });
+  },
 };
 </script>
 <style lang="scss">

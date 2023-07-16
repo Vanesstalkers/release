@@ -5,12 +5,10 @@ async (context, { gameId }) => {
 
   if (gameId !== user.gameId) throw new Error('Пользователь не участвует в игре');
 
-  session.gameId = gameId;
-  session.playerId = user.playerId;
   session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
-  context.client.events.close.push(() => {
+  context.client.events.close.unshift(() => {
     session.unsubscribe(`game-${gameId}`);
   });
 
-  return { status: 'ok', playerId: user.playerId };
+  return { status: 'ok', gameId, playerId: user.playerId };
 };

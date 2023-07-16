@@ -1,6 +1,7 @@
-async () => {
-  const { userId } = context;
-  const user = lib.store('user').get(userId);
+async (context) => {
+  const { sessionId } = context;
+  const session = lib.store('session').get(sessionId);
+  const user = session.user();
 
   user.leaveLobby({ sessionId });
 

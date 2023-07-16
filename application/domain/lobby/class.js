@@ -76,12 +76,22 @@
     await this.saveChanges();
   }
   async userLeave({ sessionId, userId }) {
-    this.set({ users: { [userId]: { sessions: this.users[userId].sessions.filter((id) => id !== sessionId) } } });
-    if (this.users[userId].sessions.length === 0) {
-      this.unsubscribe(`user-${userId}`);
-      this.set({ users: { [userId]: null } });
+    // this.users[userId] может не быть, если отработало несколько user.leaveLobby (из context.client.events.close)
+    const user = this.users[userId];
+    if (user) {
+      this.set({
+        users: {
+          [userId]: {
+            sessions: user.sessions.filter((id) => id !== sessionId),
+          },
+        },
+      });
+      if (user.sessions.length === 0) {
+        this.unsubscribe(`user-${userId}`);
+        this.set({ users: { [userId]: null } });
+      }
+      await this.saveChanges();
     }
-    await this.saveChanges();
   }
   async addGame(gameData) {
     const gameId = gameData.id;

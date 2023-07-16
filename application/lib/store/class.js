@@ -157,7 +157,7 @@
     storeId() {
       return this.#col + '-' + this.#id;
     }
-    async load({ fromData = null, fromDB = {} }, { initStoreDisabled = false } = {}) {
+    async load({ fromData = null, fromDB = {} }, { initStore = true } = {}) {
       if (fromData) {
         Object.assign(this, fromData);
       } else {
@@ -169,7 +169,7 @@
             throw 'not_found';
           } else {
             Object.assign(this, dbData);
-            if (!this.#id && !initStoreDisabled) {
+            if (!this.#id && initStore) {
               this.initStore(dbData._id);
               if (!this.channel()) this.initChannel();
             }

@@ -55,10 +55,11 @@
     await this.saveChanges();
   }
   leaveLobby({ sessionId }) {
-    const session = lib.store('session').get(sessionId);
     const lobbyName = `lobby-main`;
-    delete session.connectedToLobby[lobbyName];
-    lib.store.broadcaster.publishAction(lobbyName, 'userLeave', { sessionId, userId: this.id() });
+    lib.store.broadcaster.publishAction(lobbyName, 'userLeave', {
+      sessionId,
+      userId: this.id(),
+    });
   }
 
   async joinGame({ gameId, playerId }) {
@@ -66,6 +67,8 @@
     await this.saveChanges();
 
     for (const session of this.sessions()) {
+      session.set({ gameId });
+      await session.saveChanges();
       session.send('session/joinGame', { gameId, playerId });
     }
 
@@ -113,6 +116,12 @@
     //       type: 'game',
     //       pos: { top: false, left: true },
     //     },
+    //     leaveGame: {
+    //       selector: '.leave-game-btn',
+    //       tutorial: 'tutorialGameLinks',
+    //       type: 'game',
+    //       pos: { top: true, left: true },
+    //     }
     //   };
     //   repoUser.helperLinks = helperLinks;
     // }
@@ -141,8 +150,8 @@
 
     for (const session of this.sessions()) {
       session.unsubscribe(`game-${gameId}`);
-      session.gameId = null;
-      session.playerId = null;
+      session.set({ gameId: null });
+      await session.saveChanges();
       session.send('session/leaveGame', {});
     }
   }

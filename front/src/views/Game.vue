@@ -211,7 +211,7 @@ export default {
       return this.getGame();
     },
     logs() {
-      return this.store.logs || {};
+      return this.game.logs || {};
     },
     statusLabel() {
       switch (this.game.status) {
@@ -282,16 +282,6 @@ export default {
     },
   },
   methods: {
-    async leaveGame() {
-      await api.action
-        .call({
-          path: 'lib.game.api.leave',
-          args: [],
-        })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
-    },
     sortActiveCards(arr) {
       return arr
         .map((id) => this.store.card?.[id] || {})
