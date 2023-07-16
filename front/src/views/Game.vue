@@ -16,9 +16,9 @@
       <div style="display: flex">
         <div class="chat gui-btn" />
         <div class="log gui-btn" v-on:click="showLog = !showLog" />
-        <div class="move gui-btn" v-on:click="showControls = !showControls" />
+        <div class="move gui-btn" v-on:click="showMoveControls = !showMoveControls" />
       </div>
-      <div v-if="showControls" class="gameplane-controls">
+      <div v-if="showMoveControls" class="gameplane-controls">
         <div class="zoom-minus" v-on:click="zoomGamePlane({ deltaY: 1 })" />
         <div class="move-top" v-on:click="gamePlaneTranslateY -= 100" />
         <div class="zoom-plus" v-on:click="zoomGamePlane({ deltaY: -1 })" />
@@ -93,7 +93,7 @@
 
     <GUIWrapper :pos="['bottom', 'right']" :wrapperClass="['session-player']">
       <player
-        :playerId="state.sessionPlayerId"
+        :playerId="gameState.sessionPlayerId"
         :customClass="[`scale-${state.guiScale}`]"
         :iam="true"
         :showControls="showPlayerControls"
@@ -117,6 +117,8 @@
 </template>
 
 <script>
+import { reactive, provide } from 'vue';
+import { config as gamePlaneConfig, addMouseEvents, removeMouseEvents } from '../../lib/gameMouseEvents';
 import {} from '../components/game/utils';
 
 import GUIWrapper from '../components/gui-wrapper.vue';
@@ -137,6 +139,9 @@ export default {
   },
   data() {
     return {
+      showLog: false,
+      showMoveControls: false,
+
       gamePlaneCustomStyleData: {},
       gamePlaneScale: 1,
       gamePlaneScaleMin: 0.3,
@@ -144,35 +149,57 @@ export default {
       gamePlaneTranslateX: 0,
       gamePlaneTranslateY: 0,
       gamePlaneRotation: 0,
-      gamePlaneConfig: {
-        isDragging: false,
-        isTouchMoved: false,
-        currentX: 0,
-        currentY: 0,
-        initialX: 0,
-        initialY: 0,
-        distanceX: 0,
-        distanceY: 0,
-        initialDistance: 0,
-        xOffset: 0,
-        yOffset: 0,
-
-        isRotating: false,
-        initialRotateAngle: 0,
-        rotation: 0,
-        rotationLast: 0,
-      },
-      showLog: false,
-      showControls: false,
-      gameId: this.$route.params.id,
     };
+  },
+  setup: function () {
+    const gameState = reactive({
+      gameId: '',
+      sessionPlayerId: '',
+      pickedDiceId: '',
+      selectedDiceSideId: '',
+      shownCard: '',
+      selectedCard: '',
+    });
+
+    function getGame() {
+      return this.$root.state.store.game?.[gameState.gameId] || {};
+    }
+    function getStore() {
+      return this.getGame().store || {};
+    }
+    function sessionPlayerIsActive() {
+      return (
+        gameState.sessionPlayerId ===
+        Object.keys(this.getGame().playerMap || {}).find((id) => this.getStore().player?.[id]?.active)
+      );
+    }
+    provide('gameGlobals', {
+      getGame,
+      getStore,
+      gameState,
+      currentRound() {
+        return this.store.game?.[gameState.gameId]?.round;
+      },
+      sessionPlayerIsActive,
+      actionsDisabled() {
+        return this.store.player?.[gameState.sessionPlayerId]?.eventData?.actionsDisabled;
+      },
+      hideZonesAvailability() {
+        const store = this.$root.state.store.game?.[gameState.gameId].store;
+        for (const id of Object.keys(store.zone)) {
+          if (store.zone[id].available) store.zone[id].available = false;
+        }
+      },
+    });
+
+    return { getGame, getStore, gameState, gamePlaneConfig, sessionPlayerIsActive };
   },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore() || {};
     },
     gamePlaneControlStyle() {
       const transform = [];
@@ -181,7 +208,7 @@ export default {
       return { transform: transform.join(' '), scale: this.gamePlaneScale };
     },
     game() {
-      return this.store.game?.[this.gameId] || {};
+      return this.getGame();
     },
     logs() {
       return this.store.logs || {};
@@ -203,12 +230,12 @@ export default {
     },
     playerIds() {
       const ids = Object.keys(this.game.playerMap || {}).sort((id1, id2) => (id1 > id2 ? 1 : -1));
-      const curPlayerIdx = ids.indexOf(this.state.sessionPlayerId);
+      const curPlayerIdx = ids.indexOf(this.gameState.sessionPlayerId);
       const result = ids.slice(curPlayerIdx + 1).concat(ids.slice(0, curPlayerIdx));
       return result;
     },
     helper() {
-      return this.store.player?.[this.state.sessionPlayerId]?.helper;
+      return this.store.player?.[this.gameState.sessionPlayerId]?.helper;
     },
     deckList() {
       return Object.keys(this.game.deckMap).map((id) => this.store.deck?.[id]) || [];
@@ -217,7 +244,7 @@ export default {
       return this.deckList.find((deck) => deck.subtype === 'active') || {};
     },
     possibleAddPlanePositions() {
-      if (!this.$root.sessionPlayerIsActive) return [];
+      if (!this.sessionPlayerIsActive()) return [];
       return (this.game.availablePorts || []).map(
         ({ joinPortId, joinPortDirect, targetPortId, targetPortDirect, position }) => {
           return {
@@ -289,7 +316,7 @@ export default {
         .action({
           name: 'addPlane',
           data: {
-            gameId: this.$route.params.id,
+            gameId: this.gameState.gameId,
             joinPortId: event.target.attributes.joinPortId.value,
             targetPortId: event.target.attributes.targetPortId.value,
             joinPortDirect: event.target.attributes.joinPortDirect.value,
@@ -375,12 +402,12 @@ export default {
     await api.action
       .call({
         path: 'lib.game.api.enter',
-        args: [{ gameId: this.gameId }],
+        args: [{ gameId: this.$route.params.id }],
       })
       .then((data) => {
         console.log('api.game.enter', data);
-        this.$root.state.gameId = this.gameId;
-        this.$root.state.sessionPlayerId = data.playerId;
+        this.gameState.gameId = data.gameId;
+        this.gameState.sessionPlayerId = data.playerId;
       })
       .catch((err) => {
         prettyAlert(err.message);
@@ -390,105 +417,11 @@ export default {
         });
       });
 
-    document.addEventListener('contextmenu', function (event) {
-      event.preventDefault();
-    });
-
-    const self = this;
-    const config = this.gamePlaneConfig;
-    document.body.addEventListener('mousedown', function (event) {
-      if (event.target.classList.contains('scroll-off') || event.target.classList.contains('gui')) return;
-      if (event.button === 2) {
-        config.initialRotateAngle = event.clientX;
-        config.isRotating = true;
-      } else {
-        config.initialX = event.clientX - config.xOffset;
-        config.initialY = event.clientY - config.yOffset;
-        config.isDragging = true;
-      }
-    });
-    document.body.addEventListener('mouseup', function (event) {
-      if (event.button === 2) {
-        config.rotationLast = config.rotation;
-        config.isRotating = false;
-      } else {
-        config.isDragging = false;
-      }
-    });
-    document.body.addEventListener('mousemove', function (event) {
-      if (config.isRotating) {
-        config.rotation = config.rotationLast + (event.clientX - config.initialRotateAngle) / 2;
-        self.gamePlaneRotation = config.rotation;
-      }
-      if (config.isDragging) {
-        config.currentX = event.clientX - config.initialX;
-        config.currentY = event.clientY - config.initialY;
-
-        config.xOffset = config.currentX;
-        config.yOffset = config.currentY;
-
-        self.gamePlaneTranslateX = config.currentX;
-        self.gamePlaneTranslateY = config.currentY;
-      }
-    });
-
-    document.body.addEventListener('touchstart', function (event) {
-      if (event.target.closest('.helper-dialog')) return;
-      const touches = event.touches;
-      if (touches.length === 2) {
-        const [touch1, touch2] = touches;
-        config.initialDistance = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-
-        config.rotationLast = config.rotation;
-        config.initialRotateAngle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
-      } else {
-        config.initialX = touches[0].pageX;
-        config.initialY = touches[0].pageY;
-        config.xOffset = self.gamePlaneTranslateX;
-        config.yOffset = self.gamePlaneTranslateY;
-        config.isTouchMoved = false;
-      }
-    });
-    document.body.addEventListener('touchmove', function (event) {
-      if (event.target.closest('.helper-dialog')) return;
-      const touches = event.touches;
-      if (touches.length === 2) {
-        const [touch1, touch2] = touches;
-        const distance = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-        const delta = distance / config.initialDistance;
-
-        const angle = Math.atan2(touch2.pageY - touch1.pageY, touch2.pageX - touch1.pageX);
-        config.rotation = config.rotationLast + ((angle - config.initialRotateAngle) * 180) / Math.PI;
-        self.gamePlaneRotation = config.rotation;
-
-        // имитируем плавность
-        if (delta < 0.5) return;
-        else config.initialDistance = distance;
-        self.gamePlaneScale += (delta - 1) * 0.5;
-      } else {
-        config.currentX = event.touches[0].pageX;
-        config.currentY = event.touches[0].pageY;
-        config.distanceX = config.currentX - config.initialX;
-        config.distanceY = config.currentY - config.initialY;
-
-        if (Math.abs(config.distanceX) > 10 || Math.abs(config.distanceY) > 10) {
-          config.isTouchMoved = true;
-          self.gamePlaneTranslateX = config.distanceX + config.xOffset;
-          self.gamePlaneTranslateY = config.distanceY + config.yOffset;
-        }
-      }
-    });
-    document.body.addEventListener('touchend', function (event) {
-      if (!config.isTouchMoved) {
-        // handle tap event on the movable element
-        // event.preventDefault();
-      } else {
-      }
-    });
+    addMouseEvents(this);
   },
   async beforeDestroy() {
-    console.log('beforeDestroy');
-    api.game.exit();
+    removeMouseEvents();
+    delete this.$root.state.store.game[this.gameState.gameId];
   },
 };
 </script>

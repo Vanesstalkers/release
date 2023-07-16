@@ -22,6 +22,7 @@
 </template>
 
 <script>
+import { inject } from 'vue';
 import planeZoneSides from './planeZoneSides.vue';
 import dice from './dice.vue';
 
@@ -34,12 +35,15 @@ export default {
     zoneId: String,
     linkLines: Object,
   },
+  setup() {
+    return inject('gameGlobals');
+  },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     zone() {
       return this.store.zone?.[this.zoneId] || {};
@@ -47,14 +51,14 @@ export default {
   },
   methods: {
     async putDice() {
-      if (this.state.pickedDiceId) {
+      if (this.gameState.pickedDiceId) {
         await api.game
-          .action({ name: 'replaceDice', data: { diceId: this.state.pickedDiceId, zoneId: this.zoneId } })
+          .action({ name: 'replaceDice', data: { diceId: this.gameState.pickedDiceId, zoneId: this.zoneId } })
           .then((res) => {
             if (!res.gameFinished) {
               // иначе может отработать уже после выхода в лобби, где нет игрового store
-              this.$root.state.pickedDiceId = '';
-              this.$root.hideZonesAvailability();
+              this.gameState.pickedDiceId = '';
+              this.hideZonesAvailability();
             }
           })
           .catch((err) => {

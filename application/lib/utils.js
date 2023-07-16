@@ -105,7 +105,18 @@
 
     for (const key of Object.keys(source)) {
       if (!masterObj[key]) {
-        if (!(deleteNull && source[key] === null)) target[key] = source[key];
+        if (source[key] !== null) {
+          if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            if (!target[key]) target[key] = {};
+            lib.utils.mergeDeep({
+              target: target[key],
+              source: source[key],
+              masterObj: {},
+              config,
+              keyPath: [...keyPath, key],
+            });
+          } else target[key] = source[key];
+        } else if (!deleteNull) target[key] = source[key];
       } else if (typeof masterObj[key] !== typeof source[key] || masterObj[key] === null || source[key] === null) {
         if (deleteNull && source[key] === null) delete target[key];
         else target[key] = source[key];

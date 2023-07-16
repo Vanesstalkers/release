@@ -92,12 +92,9 @@ export default {
     state() {
       return this.$root.state || {};
     },
-    store() {
-      return this.state.store || {};
-    },
     helperData() {
-      const data = this.store.user?.[this.state.currentUser]?.helper || {};
-      console.log('helperData=', data);
+      const data = this.state.store.user?.[this.state.currentUser]?.helper || {};
+      // console.log('helperData=', data);
       return data;
     },
     helperClass() {
@@ -171,10 +168,14 @@ export default {
         a.click();
       } else {
         // await api.helper.action({ action, step, tutorial });
-        await api.action.call({
-          path: 'lib.helper.api.action',
-          args: [{ action, step, tutorial }],
-        });
+        await api.action
+          .call({
+            path: 'lib.helper.api.action',
+            args: [{ action, step, tutorial }],
+          })
+          .catch((err) => {
+            prettyAlert(err.message);
+          });
         if (tutorial) this.menu = null;
       }
     },

@@ -47,7 +47,7 @@
               :key="id"
               :cardId="id"
               :canPlay="iam"
-              :isSelected="id === state.selectedCard"
+              :isSelected="id === gameState.selectedCard"
             />
           </div>
         </div>
@@ -60,6 +60,8 @@
 </template>
 
 <script>
+import { inject } from 'vue';
+
 import plane from './plane.vue';
 import dice from './dice.vue';
 import card from './card.vue';
@@ -81,12 +83,15 @@ export default {
   data() {
     return {};
   },
+  setup() {
+    return inject('gameGlobals');
+  },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     player() {
       return this.store.player?.[this.playerId];
@@ -122,7 +127,7 @@ export default {
       return this.planeInHandIds.length > 0;
     },
     showDecks() {
-      return this.$root.sessionPlayerIsActive && this.player.activeEvent?.showDecks;
+      return this.sessionPlayerIsActive() && this.player.activeEvent?.showDecks;
     },
   },
   methods: {},

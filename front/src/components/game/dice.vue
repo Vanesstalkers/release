@@ -42,13 +42,14 @@
         :class="['el', side.activeEvent ? 'active-event' : '', side.eventData.fakeValue ? 'fake-value' : '']"
         v-on:click="(e) => (side.activeEvent ? (e.stopPropagation(), openDiceSideValueSelect(side._id)) : null)"
       >
-        <dice-side-value-select v-if="state.selectedDiceSideId === side._id" v-on:select="pickActiveEventDiceSide" />
+        <dice-side-value-select v-if="gameState.selectedDiceSideId === side._id" v-on:select="pickActiveEventDiceSide" />
       </div>
     </template>
   </div>
 </template>
 
 <script>
+import { inject } from 'vue';
 import diceSideValueSelect from './diceSideValueSelect.vue';
 
 export default {
@@ -60,12 +61,16 @@ export default {
     inHand: Boolean,
     iam: Boolean,
   },
+  setup() {
+    return inject('gameGlobals');
+  },
+
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     dice() {
       const dice = this.store.dice?.[this.diceId];
@@ -79,16 +84,16 @@ export default {
       });
     },
     locked() {
-      return this.dice.locked || this.$root.actionsDisabled;
+      return this.dice.locked || this.actionsDisabled();
     },
     activeEvent() {
-      return this.$root.sessionPlayerIsActive && this.dice.activeEvent;
+      return this.sessionPlayerIsActive() && this.dice.activeEvent;
     },
     hide() {
       return this.inHand && !this.iam && !this.dice.visible;
     },
     replaceAllowed() {
-      return this.dice.placedAtRound !== this.$root.currentRound;
+      return this.dice.placedAtRound !== this.currentRound();
     },
   },
   methods: {
@@ -103,21 +108,21 @@ export default {
         });
     },
     openDiceSideValueSelect(targetId) {
-      this.$root.state.selectedDiceSideId = targetId;
+      this.gameState.selectedDiceSideId = targetId;
     },
     async pickActiveEventDiceSide(fakeValue) {
       await api.game
-        .action({ name: 'eventTrigger', data: { eventData: { targetId: this.state.selectedDiceSideId, fakeValue } } })
+        .action({ name: 'eventTrigger', data: { eventData: { targetId: this.gameState.selectedDiceSideId, fakeValue } } })
         .catch((err) => {
           prettyAlert(err.message);
         });
-      this.$root.state.selectedDiceSideId = '';
+      this.gameState.selectedDiceSideId = '';
     },
     async pickDice() {
       if (!this.iam) return;
       if (this.locked) return;
-      this.$root.state.pickedDiceId = this.diceId;
-      this.$root.hideZonesAvailability()
+      this.gameState.pickedDiceId = this.diceId;
+      this.hideZonesAvailability();
       await api.game.action({ name: 'getZonesAvailability', data: { diceId: this.diceId } }).catch((err) => {
         prettyAlert(err.message);
       });

@@ -10,17 +10,22 @@
 </template>
 
 <script>
+import { inject } from 'vue';
+
 export default {
   props: {
     portId: String,
     linkLines: Object,
+  },
+  setup() {
+    return inject('gameGlobals');
   },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     port() {
       return this.store.port?.[this.portId];

@@ -8,7 +8,7 @@
   >
     <div class="card-info-btn" v-on:click.stop="showInfo(card.name)" />
     <div
-      v-if="canPlay && $root.sessionPlayerIsActive && !$root.actionsDisabled && !card.played"
+      v-if="canPlay && sessionPlayerIsActive() && !actionsDisabled() && !card.played"
       v-on:click.stop="playCard"
       class="play-btn"
     >
@@ -18,6 +18,8 @@
 </template>
 
 <script>
+import { inject } from 'vue';
+
 export default {
   props: {
     cardId: String,
@@ -28,12 +30,15 @@ export default {
   data() {
     return {};
   },
+  setup() {
+    return inject('gameGlobals');
+  },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     card() {
       if (this.cardData) return this.cardData;
@@ -53,10 +58,10 @@ export default {
       });
     },
     toggleSelect() {
-      this.$root.state.selectedCard = this.isSelected ? null : this.cardId;
+      this.gameState.selectedCard = this.isSelected ? null : this.cardId;
     },
     showInfo(name) {
-      this.$root.state.shownCard = name;
+      this.gameState.shownCard = name;
     },
   },
   mounted() {},

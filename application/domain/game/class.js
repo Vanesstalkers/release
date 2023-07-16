@@ -396,10 +396,7 @@
   }
   setWinner({ player }) {
     this.set({ winUserId: player.userId });
-    // const playerList = this.getObjects({ className: 'Player' });
-    // for (const player of playerList) {
-
-    // }
+    this.logs({ msg: `Игрок {{player}} победил в игре.`, userId: player.userId });
   }
 
   callHandler({ handler, data = {} }) {
@@ -458,13 +455,6 @@
     });
   }
 
-  secureBroadcast(data, broadcastClients) {
-    for (const client of broadcastClients) {
-      const broadcastData = this.prepareFakeData({ userId: client.userId, data });
-      client.emit('db/smartUpdated', broadcastData);
-    }
-  }
-
   broadcastData(data, { customChannel } = {}) {
     const subscribers = this.channel().subscribers.entries();
     for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers) {
@@ -504,14 +494,11 @@
            * отправляем данные в формате хранилища на клиенте
            */
           case 'vue-store':
-            const store = {
-              ...this.wrapPublishData({ ...data, store: undefined }),
-              ...data.store,
-            };
-            publishData = {
-              ...(userId ? this.prepareFakeData({ userId, data: store }) : store),
+            publishData = this.wrapPublishData({
+              ...data,
+              store: this.prepareFakeData({ userId, data: data.store }),
               logs: this.logs(),
-            };
+            });
             break;
           case 'all':
           default:

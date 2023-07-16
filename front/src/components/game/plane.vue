@@ -4,7 +4,7 @@
     :id="plane._id"
     :class="['plane', activeEvent ? 'active-event' : '', ...plane.customClass, ...Object.values(customClass)]"
     :style="customStyle"
-    v-on:click.stop="e => (activeEvent ? choosePlane() : selectPlane(e))"
+    v-on:click.stop="(e) => (activeEvent ? choosePlane() : selectPlane(e))"
   >
     <div class="zone-wraper">
       <plane-zone v-for="id in zoneIds" :key="id" v-bind:zoneId="id" :linkLines="linkLines" />
@@ -36,6 +36,7 @@
 </template>
 
 <script>
+import { inject } from 'vue';
 import planeZone from './planeZone.vue';
 import planePort from './planePort.vue';
 
@@ -53,12 +54,15 @@ export default {
     inHand: Boolean,
     gamePlaneScale: Number,
   },
+  setup() {
+    return inject('gameGlobals');
+  },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     plane() {
       return this.store.plane?.[this.planeId] || {};
@@ -86,7 +90,7 @@ export default {
       return Object.keys(this.plane.portMap || {});
     },
     activeEvent() {
-      return this.$root.sessionPlayerIsActive && this.plane.activeEvent;
+      return this.sessionPlayerIsActive() && this.plane.activeEvent;
     },
   },
   methods: {
@@ -94,13 +98,15 @@ export default {
       const $plane = event.target.closest('.plane');
       if ($plane.closest('.player.iam')) {
         // this.$store.commit('setAvailablePorts', []);
-        await api.game.action({ name: 'getPlanePortsAvailability', data: { joinPlaneId: this.planeId } }).catch(err => {
-          prettyAlert(err.message);
-        });
+        await api.game
+          .action({ name: 'getPlanePortsAvailability', data: { joinPlaneId: this.planeId } })
+          .catch((err) => {
+            prettyAlert(err.message);
+          });
       }
     },
     async choosePlane() {
-      await api.game.action({ name: 'eventTrigger', data: { eventData: { targetId: this.planeId } } }).catch(err => {
+      await api.game.action({ name: 'eventTrigger', data: { eventData: { targetId: this.planeId } } }).catch((err) => {
         prettyAlert(err.message);
       });
     },

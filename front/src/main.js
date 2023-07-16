@@ -16,6 +16,7 @@ Vue.config.productionTip = false;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
+  window.prettyAlert = alert;
 
   router.beforeEach((to, from, next) => {
     const currentGame = localStorage.getItem('currentGame');
@@ -30,53 +31,18 @@ const init = async () => {
 
   const state = {
     currentUser: '',
-    gameId: '',
-    sessionPlayerId: '',
     isMobile: false,
     isLandscape: true,
     isPortrait: false,
     guiScale: 1,
-    pickedDiceId: '',
-    selectedDiceSideId: '',
-    shownCard: '',
-    selectedCard: '',
     store: {
-      // без этого не работают глобальные computed и methods
-      game: {},
-      player: {},
-      zone: {},
+      user: {},
     },
   };
   window.state = state;
   window.app = new Vue({
     router,
-    // store,
     data: { state },
-    computed: {
-      sessionPlayerIsActive: () => {
-        console.log(
-          'sessionPlayerIsActive: () => {',
-          Object.keys((state.store.game?.[state.gameId] || {}).playerMap || {}).map(
-            (id) => state.store.player?.[id].userId
-          )
-        );
-        return (
-          state.sessionPlayerId ===
-          Object.keys((state.store.game?.[state.gameId] || {}).playerMap || {}).find(
-            (id) => state.store.player?.[id]?.active
-          )
-        );
-      },
-      currentRound: () => state.store.game?.[state.gameId]?.round,
-      actionsDisabled: () => state.store.player?.[state.sessionPlayerId]?.eventData?.actionsDisabled,
-    },
-    methods: {
-      hideZonesAvailability: () => {
-        for (const id of Object.keys(state.store.zone)) {
-          if (state.store.zone[id].available) state.store.zone[id].available = false;
-        }
-      },
-    },
     render: function (h) {
       return h(App);
     },
@@ -159,6 +125,10 @@ const init = async () => {
     }
   });
 
+  document.addEventListener('contextmenu', function (event) {
+    event.preventDefault();
+  });
+
   new MutationObserver(function (mutationsList, observer) {
     for (const mutation of mutationsList) {
       if (mutation.type === 'childList') {
@@ -195,7 +165,12 @@ init();
 function mergeDeep({ target, source }) {
   for (const key of Object.keys(source)) {
     if (!target[key]) {
-      if (source[key] !== null) Vue.set(target, key, source[key]);
+      if (source[key] !== null) {
+        if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          Vue.set(target, key, {});
+          mergeDeep({ target: target[key], source: source[key] });
+        } else Vue.set(target, key, source[key]);
+      }
     } else if (typeof target[key] !== typeof source[key] || target[key] === null || source[key] === null) {
       if (source[key] === null) Vue.delete(target, key);
       else Vue.set(target, key, source[key]);

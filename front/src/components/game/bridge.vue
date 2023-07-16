@@ -7,6 +7,7 @@
 </template>
 
 <script>
+import { inject } from 'vue';
 import planeZone from './planeZone.vue';
 
 export default {
@@ -20,12 +21,15 @@ export default {
   data() {
     return { customClass: {} };
   },
+  setup() {
+    return inject('gameGlobals');
+  },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     bridge() {
       return this.store.bridge?.[this.bridgeId] || {};

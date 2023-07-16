@@ -10,7 +10,7 @@
     ]"
     :style="customStyle"
   >
-    <div v-if="showControls && iam && $root.sessionPlayerIsActive" v-on:click="endRound" class="end-round-btn">
+    <div v-if="showControls && iam && sessionPlayerIsActive()" v-on:click="endRound" class="end-round-btn">
       Закончить раунд
     </div>
     <div v-if="player.active && player.timerEndTime" class="end-round-timer">{{ this.localTimer }}</div>
@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { inject } from 'vue';
+
 export default {
   props: {
     playerId: String,
@@ -37,12 +39,15 @@ export default {
       localTimerId: null,
     };
   },
+  setup() {
+    return inject('gameGlobals');
+  },
   computed: {
     state() {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      return this.getStore();
     },
     player() {
       const player = this.store.player?.[this.playerId] || {};
@@ -67,7 +72,7 @@ export default {
       return style;
     },
     choiceEnabled() {
-      return this.$root.sessionPlayerIsActive && this.player.activeEvent?.choiceEnabled;
+      return this.sessionPlayerIsActive() && this.player.activeEvent?.choiceEnabled;
     },
     dominoDeckCount() {
       return (
@@ -90,8 +95,8 @@ export default {
   },
   methods: {
     async endRound() {
-      this.$root.hideZonesAvailability();
-      this.$root.state.pickedDiceId = '';
+      this.hideZonesAvailability();
+      this.gameState.pickedDiceId = '';
       await api.game.action({ name: 'endRound' }).catch((err) => {
         prettyAlert(err.message);
       });
