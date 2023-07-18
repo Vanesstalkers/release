@@ -52,18 +52,18 @@ export default {
   methods: {
     async putDice() {
       if (this.gameState.pickedDiceId) {
-        await api.game
-          .action({ name: 'replaceDice', data: { diceId: this.gameState.pickedDiceId, zoneId: this.zoneId } })
-          .then((res) => {
-            if (!res.gameFinished) {
-              // иначе может отработать уже после выхода в лобби, где нет игрового store
-              this.gameState.pickedDiceId = '';
-              this.hideZonesAvailability();
-            }
-          })
-          .catch((err) => {
-            prettyAlert(err.message);
-          });
+        await this.handleGameApi(
+          { name: 'replaceDice', data: { diceId: this.gameState.pickedDiceId, zoneId: this.zoneId } },
+          {
+            onSuccess: (res) => {
+              if (!res.gameFinished) {
+                // иначе может отработать уже после выхода в лобби, где нет игрового store
+                this.gameState.pickedDiceId = '';
+                this.hideZonesAvailability();
+              }
+            },
+          }
+        );
       }
     },
   },

@@ -161,6 +161,16 @@ export default {
       selectedCard: '',
     });
 
+    async function handleGameApi(data, { onSuccess, onError } = {}) {
+      if (!onError)
+        onError = (err) => {
+          prettyAlert(err.message);
+        };
+      await api.action
+        .call({ path: 'lib.game.api.action', args: [data] })
+        .then(onSuccess)
+        .catch(onError);
+    }
     function getGame() {
       return this.$root.state.store.game?.[gameState.gameId] || {};
     }
@@ -174,6 +184,7 @@ export default {
       );
     }
     provide('gameGlobals', {
+      handleGameApi,
       getGame,
       getStore,
       gameState,
@@ -192,7 +203,7 @@ export default {
       },
     });
 
-    return { getGame, getStore, gameState, gamePlaneConfig, sessionPlayerIsActive };
+    return { handleGameApi, getGame, getStore, gameState, gamePlaneConfig, sessionPlayerIsActive };
   },
   computed: {
     state() {
@@ -291,32 +302,23 @@ export default {
     },
     async takeDice() {
       // return;
-      await api.game.action({ name: 'takeDice', data: { count: 3 } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'takeDice', data: { count: 3 } });
     },
     async takeCard() {
       // return;
-      await api.game.action({ name: 'takeCard', data: { count: 5 } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'takeCard', data: { count: 5 } });
     },
     async addPlane(event) {
-      await api.game
-        .action({
-          name: 'addPlane',
-          data: {
-            gameId: this.gameState.gameId,
-            joinPortId: event.target.attributes.joinPortId.value,
-            targetPortId: event.target.attributes.targetPortId.value,
-            joinPortDirect: event.target.attributes.joinPortDirect.value,
-            targetPortDirect: event.target.attributes.targetPortDirect.value,
-          },
-        })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
-      // this.$store.commit('setAvailablePorts', []);
+      await this.handleGameApi({
+        name: 'addPlane',
+        data: {
+          gameId: this.gameState.gameId,
+          joinPortId: event.target.attributes.joinPortId.value,
+          targetPortId: event.target.attributes.targetPortId.value,
+          joinPortDirect: event.target.attributes.joinPortDirect.value,
+          targetPortDirect: event.target.attributes.targetPortDirect.value,
+        },
+      });
     },
     updatePlaneScale() {
       if (this.$el instanceof HTMLElement) {

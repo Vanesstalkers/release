@@ -214,14 +214,6 @@
         config: { deleteNull: true, ...config }, // удаляем ключи с null-значением
       });
     }
-    markNew(obj) {
-      // !!! сомнительная реализация, т.к. эти данные повторно сохранятся в БД
-      if (this.#disableChanges) return;
-      const col = obj.col;
-      const _id = obj._id;
-      if (!this.#changes[col]) this.#changes[col] = {};
-      this.#changes[col][_id] = obj;
-    }
     getChanges() {
       return this.#changes;
     }
@@ -230,6 +222,9 @@
     }
     disableChanges() {
       this.#disableChanges = true;
+    }
+    checkChangesDisabled() {
+      return this.#disableChanges;
     }
     clearChanges() {
       this.#changes = {};

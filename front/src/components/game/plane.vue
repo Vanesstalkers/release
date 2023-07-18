@@ -97,18 +97,11 @@ export default {
     async selectPlane(event) {
       const $plane = event.target.closest('.plane');
       if ($plane.closest('.player.iam')) {
-        // this.$store.commit('setAvailablePorts', []);
-        await api.game
-          .action({ name: 'getPlanePortsAvailability', data: { joinPlaneId: this.planeId } })
-          .catch((err) => {
-            prettyAlert(err.message);
-          });
+        await this.handleGameApi({ name: 'getPlanePortsAvailability', data: { joinPlaneId: this.planeId } });
       }
     },
     async choosePlane() {
-      await api.game.action({ name: 'eventTrigger', data: { eventData: { targetId: this.planeId } } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'eventTrigger', data: { eventData: { targetId: this.planeId } } });
     },
     customBG(pid) {
       let storageFillData = localStorage.getItem('gamePlaneBackgroundData');

@@ -53,9 +53,7 @@ export default {
   methods: {
     async playCard() {
       if (this.card.played) return;
-      await api.game.action({ name: 'playCard', data: { cardId: this.cardId } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'playCard', data: { cardId: this.cardId } });
     },
     toggleSelect() {
       this.gameState.selectedCard = this.isSelected ? null : this.cardId;

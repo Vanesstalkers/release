@@ -188,4 +188,33 @@
 
       return newActivePlayer;
     }
+
+    async handleAction({ name: eventName, data: eventData = {}, sessionUserId: userId }) {
+      try {
+        const player = this.getPlayerList().find((player) => player.userId === userId);
+        if (!player) throw new Error('player not found');
+
+        const activePlayer = this.getActivePlayer();
+        if (player._id !== activePlayer._id && eventName !== 'leaveGame')
+          throw new Error('Игрок не может совершить это действие, так как сейчас не его ход.');
+        else if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
+          throw new Error('Игрок не может совершать действия в этот ход.');
+
+        const event = domain.game[eventName];
+        const result = event(this, eventData);
+        const { clientCustomUpdates } = result;
+
+        await this.saveChanges();
+
+        if (clientCustomUpdates) {
+          lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
+            type: 'smartUpdated',
+            data: clientCustomUpdates,
+          });
+        }
+      } catch (err) {
+        console.log(err);
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', { data: { error: err.message } });
+      }
+    }
   };

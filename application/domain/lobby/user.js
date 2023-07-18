@@ -67,7 +67,7 @@
     await this.saveChanges();
 
     for (const session of this.sessions()) {
-      session.set({ gameId });
+      session.set({ gameId, playerId });
       await session.saveChanges();
       session.send('session/joinGame', { gameId, playerId });
     }
@@ -150,7 +150,7 @@
 
     for (const session of this.sessions()) {
       session.unsubscribe(`game-${gameId}`);
-      session.set({ gameId: null });
+      session.set({ gameId: null, playerId: null });
       await session.saveChanges();
       session.send('session/leaveGame', {});
     }

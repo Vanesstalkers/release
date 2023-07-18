@@ -42,7 +42,10 @@
         :class="['el', side.activeEvent ? 'active-event' : '', side.eventData.fakeValue ? 'fake-value' : '']"
         v-on:click="(e) => (side.activeEvent ? (e.stopPropagation(), openDiceSideValueSelect(side._id)) : null)"
       >
-        <dice-side-value-select v-if="gameState.selectedDiceSideId === side._id" v-on:select="pickActiveEventDiceSide" />
+        <dice-side-value-select
+          v-if="gameState.selectedDiceSideId === side._id"
+          v-on:select="pickActiveEventDiceSide"
+        />
       </div>
     </template>
   </div>
@@ -98,24 +101,24 @@ export default {
   },
   methods: {
     async chooseDice() {
-      await api.game
-        .action({
-          name: 'eventTrigger',
-          data: { eventData: { targetId: this.diceId, targetPlayerId: this.$parent.playerId } },
-        })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+      await this.handleGameApi({
+        name: 'eventTrigger',
+        data: {
+          eventData: {
+            targetId: this.diceId,
+            targetPlayerId: this.$parent.playerId,
+          },
+        },
+      });
     },
     openDiceSideValueSelect(targetId) {
       this.gameState.selectedDiceSideId = targetId;
     },
     async pickActiveEventDiceSide(fakeValue) {
-      await api.game
-        .action({ name: 'eventTrigger', data: { eventData: { targetId: this.gameState.selectedDiceSideId, fakeValue } } })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+      await this.handleGameApi({
+        name: 'eventTrigger',
+        data: { eventData: { targetId: this.gameState.selectedDiceSideId, fakeValue } },
+      });
       this.gameState.selectedDiceSideId = '';
     },
     async pickDice() {
@@ -123,24 +126,16 @@ export default {
       if (this.locked) return;
       this.gameState.pickedDiceId = this.diceId;
       this.hideZonesAvailability();
-      await api.game.action({ name: 'getZonesAvailability', data: { diceId: this.diceId } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'getZonesAvailability', data: { diceId: this.diceId } });
     },
     async rotateDice() {
-      await api.game.action({ name: 'rotateDice', data: { diceId: this.diceId } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'rotateDice', data: { diceId: this.diceId } });
     },
     async deleteDice() {
-      await api.game.action({ name: 'deleteDice', data: { diceId: this.diceId } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'deleteDice', data: { diceId: this.diceId } });
     },
     async restoreDice() {
-      await api.game.action({ name: 'restoreDice', data: { diceId: this.diceId } }).catch((err) => {
-        prettyAlert(err.message);
-      });
+      await this.handleGameApi({ name: 'restoreDice', data: { diceId: this.diceId } });
     },
   },
 };

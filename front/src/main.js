@@ -118,7 +118,7 @@ const init = async () => {
 
   document.addEventListener('click', async (event) => {
     if (event.target.classList.contains('active-event')) {
-      await api.game.action({
+      await this.handleGameApi({
         name: 'eventTrigger',
         data: { eventData: { targetId: event.target.attributes.id?.value } },
       });

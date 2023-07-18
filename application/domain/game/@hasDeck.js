@@ -22,9 +22,7 @@
     deleteDeck(deckToDelete) {
       deckToDelete.deleteFromParentsObjectStorage();
       const { parentDeckContainer } = deckToDelete.settings;
-      this.set({
-        [parentDeckContainer]: this[parentDeckContainer].filter((id) => id !== deckToDelete._id),
-      });
+      this.set({ [parentDeckContainer]: { [deckToDelete._id]: null } });
     },
   }),
 });

@@ -104,9 +104,8 @@ export default {
     async endRound() {
       this.hideZonesAvailability();
       this.gameState.pickedDiceId = '';
-      await api.game.action({ name: 'endRound' }).catch((err) => {
-        prettyAlert(err.message);
-      });
+
+      await this.handleGameApi({ name: 'endRound' });
     },
     async leaveGame() {
       await api.action

@@ -8,7 +8,7 @@
   #fakeParent = null;
 
   constructor(data, { col: _col, parent } = {}) {
-    if (!this._id) this._id = data._id || db.mongo.ObjectID();
+    if (!this._id) this._id = data._id || db.mongo.ObjectID().toString();
     if (_col) this._col = _col;
     this.fakeId = data.fakeId;
     if (data.activeEvent) this.activeEvent = data.activeEvent;

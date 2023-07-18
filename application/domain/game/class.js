@@ -313,7 +313,7 @@
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     this.set({
       eventHandlers: {
-        [handler]: this.eventHandlers[handler].filter((_id) => _id !== source._id.toString()),
+        [handler]: { [source._id]: null },
       },
     });
   }
@@ -437,10 +437,10 @@
     if (player.timerEndTime < Date.now()) {
       clearInterval(timerId);
       if (this.status === 'inProcess') {
-        api.game.action({
+        this.handleAction({
           name: 'endRound',
           data: { timerOverdue: true },
-          customContext: { gameId: this.id(), playerId: player._id },
+          sessionUserId: player.userId,
         });
       } else {
         lib.timers.timerDelete(this);

@@ -82,7 +82,7 @@
     return zones;
   }
   removeItem(itemToRemove) {
-    this.set({ itemMap: this.itemMap.filter((id) => id !== itemToRemove._id) });
+    this.set({ itemMap: { [itemToRemove._id]: null } });
     this.updateValues();
   }
   getDeletedItem() {
