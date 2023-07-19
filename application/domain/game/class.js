@@ -313,7 +313,7 @@
     if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
     this.set({
       eventHandlers: {
-        [handler]: { [source._id]: null },
+        [handler]: this.eventHandlers[handler].filter((id) => id !== source._id),
       },
     });
   }
@@ -388,7 +388,7 @@
         domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
       case 'inProcess':
-        lib.store('lobby').get('main').removeGame({ _id: this.id() });
+        this.endGame();
         return; // обновлять игру не нужно, так как она удалена
     }
 

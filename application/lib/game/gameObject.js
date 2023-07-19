@@ -10,7 +10,7 @@
   constructor(data, { col: _col, parent } = {}) {
     if (!this._id) this._id = data._id || db.mongo.ObjectID().toString();
     if (_col) this._col = _col;
-    this.fakeId = data.fakeId;
+    this.fakeId = data.fakeId || {};
     if (data.activeEvent) this.activeEvent = data.activeEvent;
     this.eventData = data.eventData || {};
 
@@ -37,8 +37,9 @@
   id() {
     return this._id;
   }
-  updateFakeId() {
-    this.fakeId = (Date.now() + Math.random()).toString();
+  updateFakeId({ parentId }) {
+    if (!parentId) throw new Error('parentId not found');
+    this.fakeId[parentId] = (Date.now() + Math.random()).toString();
   }
   set(val, config = {}) {
     if (!this._col) {
@@ -117,7 +118,7 @@
     this.#fakeParent = parent;
   }
   updateParent(newParent) {
-    this.updateFakeId();
+    this.updateFakeId({ parentId: newParent.id() });
     this.setParent(newParent);
   }
   getParent() {

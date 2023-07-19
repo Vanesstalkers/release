@@ -51,6 +51,7 @@
           break;
         case 'game':
           this.set({ games: map });
+          this.checkGameStatuses();
           break;
         default:
           throw new Error(`Unexpected  (key=${key}`);

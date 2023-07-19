@@ -30,8 +30,8 @@
     const parent = this.getParent();
     if (parent.matches({ className: 'Deck' })) {
       if (!parent.access[player?._id] && !this.visible) {
-        visibleId = this.fakeId;
-        preparedData = { _id: this.fakeId };
+        visibleId = this.fakeId[parent.id()];
+        preparedData = { _id: visibleId };
         if (data.activeEvent !== undefined) preparedData.activeEvent = data.activeEvent;
       }
     }

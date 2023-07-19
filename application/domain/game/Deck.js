@@ -13,14 +13,16 @@
   }
   prepareFakeData({ data, player }) {
     let result = {};
+    const fakeIdParent = this.id();
     const parent = this.getParent();
+    const game = this.game();
     if (parent.matches({ className: 'Game' })) {
       for (const [key, value] of Object.entries(data)) {
         if (key === 'itemMap' && !this.access[player?._id]) {
           const ids = {};
           for (const [idx, [id, val]] of Object.entries(value).entries()) {
-            const item = this.game().getObjectById(id); // item мог быть перемещен
-            ids[item.fakeId] = val;
+            const item = game.getObjectById(id); // item мог быть перемещен
+            ids[item.fakeId[fakeIdParent]] = val;
           }
           result.itemMap = ids;
         } else {
@@ -35,11 +37,11 @@
             if (parent === player) {
               ids[id] = val;
             } else {
-              const item = this.getObjectById(id);
+              const item = game.getObjectById(id); // item мог быть перемещен
               if (item.visible) {
                 ids[id] = val;
               } else {
-                ids[item.fakeId] = val;
+                ids[item.fakeId[fakeIdParent]] = val;
               }
             }
           }
@@ -69,17 +71,18 @@
     return Object.keys(this.itemMap).length;
   }
   addItem(item) {
+    const parentId = this.id();
     const itemClass = this.getItemClass();
     if (item.constructor != itemClass) {
       item = new itemClass(item, { parent: this });
-      if (!item.fakeId) item.updateFakeId();
+      if (!item.fakeId?.[parentId]) item.updateFakeId({ parentId });
     }
     this.game().markNew(item);
     this.set({ itemMap: { [item._id]: {} } });
     return true;
   }
   removeItem(itemToRemove, { deleteFromStorage = false } = {}) {
-    this.set({ itemMap: { ...this.itemMap, [itemToRemove._id]: null } });
+    this.set({ itemMap: { [itemToRemove._id]: null } });
     if (deleteFromStorage) this.deleteFromObjectStorage(itemToRemove);
   }
   moveAllItems({ target }) {

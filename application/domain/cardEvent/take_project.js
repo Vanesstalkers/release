@@ -25,9 +25,10 @@
       const targetPlayer = game.getObjectById(targetPlayerId);
       if (!targetPlayer) return;
       const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
+      const handId = targetPlayerHand.id();
       const dice = targetPlayerHand
         .getObjects({ className: 'Dice' })
-        .find((dice) => dice.fakeId === fakeId || dice._id.toString() === fakeId);
+        .find((dice) => dice.fakeId[handId] === fakeId || dice.id() === fakeId);
       if (!dice) return;
 
       const playerHand = activePlayer.getObjectByCode('Deck[domino]');
@@ -55,13 +56,14 @@
       const activePlayer = game.getActivePlayer();
 
       for (const player of game.getObjects({ className: 'Player' }).filter((p) => p !== activePlayer)) {
+        const playerId = player.id();
         const dice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
         if (dice) {
           domain.cardEvent['take_project'].handlers.eventTrigger.call(this, {
             game,
             player: activePlayer,
-            targetId: dice.fakeId,
-            targetPlayerId: player._id,
+            targetId: dice.fakeId[playerId],
+            targetPlayerId: playerId,
           });
         }
       }

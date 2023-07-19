@@ -117,7 +117,7 @@
           ? userId === canceledByUser
             ? 'lose'
             : 'cancel'
-          : userId === game.winUserId
+          : userId === this.winUserId
           ? 'win'
           : 'lose';
         player.set({ endGameStatus });
