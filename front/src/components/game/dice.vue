@@ -1,6 +1,5 @@
 <template>
   <div
-    v-if="dice._id"
     :code="dice.code"
     :class="[
       'domino-dice',
@@ -76,14 +75,13 @@ export default {
       return this.getStore();
     },
     dice() {
-      const dice = this.store.dice?.[this.diceId];
-      return dice._id ? dice : { _id: this.diceId };
+      return this.store.dice?.[this.diceId];
     },
     sideList() {
       const sideList = this.dice.sideList || [{}, {}];
       return sideList.map(({ _id }) => {
         const side = this.store.diceside?.[_id];
-        return side._id ? side : { eventData: {} };
+        return side?._id ? side : { eventData: {} };
       });
     },
     locked() {
