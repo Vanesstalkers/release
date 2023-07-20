@@ -28,11 +28,13 @@
   constructor(data, { parent }) {
     super(data, { col: 'port', parent });
 
-    this.left = data.left;
-    this.top = data.top;
-    this.direct = data.direct;
-    this.links = data.links || {};
-    this.linkedBridge = data.linkedBridge;
+    this.set({
+      left: data.left,
+      top: data.top,
+      direct: data.direct,
+      links: data.links || {},
+      linkedBridge: data.linkedBridge,
+    });
   }
 
   getDirect() {

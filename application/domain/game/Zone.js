@@ -4,26 +4,30 @@
   constructor(data, { parent }) {
     super(data, { col: 'zone', parent });
 
-    this.left = data.left || 0;
-    this.top = data.top || 0;
-    this.vertical = data.vertical;
+    this.set({
+      left: data.left || 0,
+      top: data.top || 0,
+      vertical: data.vertical,
+    });
 
     if (data.sideList) {
       const store = this.game().getStore();
-      this.sideList = [
-        new domain.game.ZoneSide(store.zoneside[data.sideList[0]._id], { parent: this }),
-        new domain.game.ZoneSide(store.zoneside[data.sideList[1]._id], { parent: this }),
-      ];
+      this.set({
+        sideList: [
+          new domain.game.ZoneSide(store.zoneside[data.sideList[0]._id], { parent: this }),
+          new domain.game.ZoneSide(store.zoneside[data.sideList[1]._id], { parent: this }),
+        ],
+      });
     } else {
-      const game = this.game();
-      this.sideList = [
-        new domain.game.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
-        new domain.game.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
-      ];
-      game.markNew(this.sideList[0]);
-      game.markNew(this.sideList[1]);
+      this.set({
+        sideList: [
+          new domain.game.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
+          new domain.game.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
+        ],
+      });
     }
 
+    const itemMap = {};
     if (data.itemMap) {
       data.itemList = [];
       for (const _id of Object.keys(data.itemMap)) {
@@ -34,8 +38,9 @@
       const itemClass = this.getItemClass();
       // !!! странная конструкция (с присваиванием item) - надо перепроверить
       if (item.constructor != itemClass) item = new itemClass(item, { parent: this });
-      this.itemMap[item._id] = {};
+      itemMap[item._id] = {};
     }
+    this.set({ itemMap });
   }
   customObjectCode() {
     return this.default_customObjectCode(...arguments);

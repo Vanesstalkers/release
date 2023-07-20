@@ -14,6 +14,8 @@
   }
 
   fromJSON(data, { newGame } = {}) {
+    this.disableChanges(); // игра запишется в БД в store.create
+
     if (data.store) this.store = data.store;
     this.logs(data.logs);
     this.addTime = data.addTime;
@@ -73,7 +75,7 @@
     }
     for (const item of data.bridgeList || []) this.addBridge(item);
 
-    this.clearChanges();
+    this.enableChanges();
     return this;
   }
   addPlayer(data) {
@@ -181,7 +183,6 @@
   addBridge(data) {
     const store = this.getStore();
     const bridge = new domain.game.Bridge(data, { parent: this });
-    this.markNew(bridge);
     this.set({ bridgeMap: { [bridge._id]: {} } });
 
     if (data.zoneMap) {
@@ -190,7 +191,6 @@
     }
     for (const item of data.zoneList || []) {
       const zone = new domain.game.Zone(item, { parent: bridge });
-      this.markNew(zone);
       bridge.set({ zoneMap: { [zone._id]: {} } });
     }
 

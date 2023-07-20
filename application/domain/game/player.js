@@ -6,9 +6,11 @@
       ...domain.game['@hasPlane'].decorate(),
     });
 
-    this.userId = data.userId;
-    this.active = data.active;
-    this.ready = data.ready;
-    this.timerEndTime = data.timerEndTime;
+    this.set({
+      userId: data.userId,
+      active: data.active,
+      ready: data.ready,
+      timerEndTime: data.timerEndTime,
+    });
   }
 });

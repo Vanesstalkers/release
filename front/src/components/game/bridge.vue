@@ -1,5 +1,5 @@
 <template>
-  <div v-if="bridge._id" :class="['bridge', ...Object.values(customClass)]" :id="bridge._id" :style="customStyle">
+  <div :class="['bridge', ...Object.values(customClass)]" :id="bridge._id" :style="customStyle">
     <div class="zone-wraper">
       <plane-zone v-for="id in zoneIds" :key="id" v-bind:zoneId="id" />
     </div>

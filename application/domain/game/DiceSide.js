@@ -2,6 +2,6 @@
   constructor(data, { parent }) {
     super(data, { col: 'diceside', parent });
 
-    this.value = data.value;
+    this.set({ value: data.value });
   }
 });

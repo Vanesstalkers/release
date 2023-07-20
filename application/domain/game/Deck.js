@@ -5,11 +5,13 @@
   constructor(data, { parent }) {
     super(data, { col: 'deck', parent });
 
-    this.type = data.type;
-    this.subtype = data.subtype;
-    this.itemType = data.itemType;
-    this.settings = data.settings;
-    this.access = data.access;
+    this.set({
+      type: data.type,
+      subtype: data.subtype,
+      itemType: data.itemType,
+      settings: data.settings,
+      access: data.access,
+    });
   }
   prepareFakeData({ data, player }) {
     let result = {};
@@ -77,7 +79,11 @@
       item = new itemClass(item, { parent: this });
       if (!item.fakeId?.[parentId]) item.updateFakeId({ parentId });
     }
-    this.game().markNew(item);
+    this.game().markNew(item, { broadcastOnly: true });
+    if (item.sideList) {
+      this.game().markNew(item.sideList[0], { broadcastOnly: true });
+      this.game().markNew(item.sideList[1], { broadcastOnly: true });
+    }
     this.set({ itemMap: { [item._id]: {} } });
     return true;
   }

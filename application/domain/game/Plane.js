@@ -7,17 +7,16 @@
   constructor(data, { parent }) {
     super(data, { col: 'plane', parent });
 
-    this.release = data.release || false;
-    this.left = data.left || 0;
-    this.top = data.top || 0;
-    this.rotation = data.rotation || 0;
-    this.customClass = data.customClass || [];
-    if (this.isCardPlane()) {
-      this.width = 120;
-      this.height = 180;
-    }
-    if (data.width) this.width = data.width;
-    if (data.height) this.height = data.height;
+    this.set({
+      width: data.width || this.width,
+      height: data.height || this.height,
+      release: data.release || false,
+      left: data.left || 0,
+      top: data.top || 0,
+      rotation: data.rotation || 0,
+      customClass: data.customClass || [],
+    });
+    if (this.isCardPlane()) this.set({ width: 120, height: 180 });
 
     if (data.zoneMap) {
       data.zoneList = [];
@@ -25,7 +24,6 @@
     }
     for (const item of data.zoneList || []) {
       const zone = new domain.game.Zone(item, { parent: this });
-      this.game().markNew(zone);
       this.set({ zoneMap: { [zone._id]: {} } });
     }
     if (data.zoneLinks) {
@@ -70,7 +68,6 @@
 
   addPort(data) {
     const port = new domain.game.Port(data, { parent: this });
-    this.game().markNew(port);
     this.set({ portMap: { [port._id]: {} } });
   }
   getZone() {

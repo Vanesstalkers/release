@@ -198,15 +198,16 @@
     }
 
     setChanges(val, config = {}) {
+      if (this.#disableChanges) return;
       lib.utils.mergeDeep({
-        masterObj: this,
+        masterObj: config.masterObject || this,
         target: this.#changes,
         source: lib.utils.structuredClone(val),
         config, // все получатели #changes должны знать об удаленных ключах, поэтому ключи с null-значением сохраняем (по дефолту deleteNull = false)
       });
     }
     set(val, config = {}) {
-      if (!this.#disableChanges) this.setChanges(val, config);
+      this.setChanges(val, config);
       lib.utils.mergeDeep({
         masterObj: this,
         target: this,
@@ -234,8 +235,6 @@
 
       const changes = this.getChanges();
       if (!Object.keys(changes).length) return;
-      // let _id = this.#id.length === 24 ? this.#id : '64a2d4a89ba5a1a9fccdbef6';
-      // if (_id.length === 24) {
       if (this.#id.length === 24) {
         const $update = { $set: {}, $unset: {} };
         const flattenChanges = lib.utils.flatten(changes);
@@ -250,8 +249,6 @@
         if (Object.keys($update.$set).length === 0) delete $update.$set;
         if (Object.keys($update.$unset).length === 0) delete $update.$unset;
         await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, $update);
-        // console.log('db.mongo.updateOne=', { col: this.#col, _id, $update });
-        // await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(_id) }, $update);
       }
       if (typeof this.broadcastData === 'function') this.broadcastData(changes);
 

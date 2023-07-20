@@ -8,6 +8,8 @@
   #fakeParent = null;
 
   constructor(data, { col: _col, parent } = {}) {
+    const newObject = data._id ? false : true;
+
     if (!this._id) this._id = data._id || db.mongo.ObjectID().toString();
     if (_col) this._col = _col;
     this.fakeId = data.fakeId || {};
@@ -16,13 +18,8 @@
 
     this.setParent(parent);
     this.addToParentsObjectStorage();
-    if (parent) {
-      const game = parent.game();
-      this.game(game);
-      if (!game.store[this._col]) game.store[this._col] = {};
-      game.store[this._col][this._id] = this;
-    }
 
+    // строго после setParent, потому что parent может вызваться в getCodeTemplate
     const customObjectCode = Object.getPrototypeOf(this).customObjectCode;
     if (data.code) {
       this.code = data.code;
@@ -32,6 +29,14 @@
       this.code = customObjectCode.call(this, { codeTemplate, replacementFragment }, data);
     } else {
       this.code = this.getCodeTemplate(this.constructor.name + '[' + (data._code || '') + ']');
+    }
+
+    if (parent) {
+      const game = parent.game();
+      this.game(game);
+      if (newObject) game.markNew(this);
+      if (!game.store[this._col]) game.store[this._col] = {};
+      game.store[this._col][this._id] = this;
     }
   }
   id() {

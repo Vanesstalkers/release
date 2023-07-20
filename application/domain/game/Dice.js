@@ -2,22 +2,28 @@
   constructor(data, { parent }) {
     super(data, { col: 'dice', parent });
 
-    this.deleted = data.deleted;
-    this.visible = data.visible;
-    this.locked = data.locked;
-    this.placedAtRound = data.placedAtRound;
+    this.set({
+      deleted: data.deleted,
+      visible: data.visible,
+      locked: data.locked,
+      placedAtRound: data.placedAtRound,
+    });
 
     if (data.sideList) {
       const store = this.game().getStore();
-      this.sideList = [
-        new domain.game.DiceSide(store.diceside[data.sideList[0]._id], { parent: this }),
-        new domain.game.DiceSide(store.diceside[data.sideList[1]._id], { parent: this }),
-      ];
+      this.set({
+        sideList: [
+          new domain.game.DiceSide(store.diceside[data.sideList[0]._id], { parent: this }),
+          new domain.game.DiceSide(store.diceside[data.sideList[1]._id], { parent: this }),
+        ],
+      });
     } else {
-      this.sideList = [
-        new domain.game.DiceSide({ _code: 1, value: data[0] }, { parent: this }),
-        new domain.game.DiceSide({ _code: 2, value: data[1] }, { parent: this }),
-      ];
+      this.set({
+        sideList: [
+          new domain.game.DiceSide({ _code: 1, value: data[0] }, { parent: this }),
+          new domain.game.DiceSide({ _code: 2, value: data[1] }, { parent: this }),
+        ],
+      });
       if (Math.random() > 0.5) this.sideList.reverse(); // code останется в первичном виде
     }
   }

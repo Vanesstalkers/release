@@ -30,7 +30,12 @@
   }
   dice.moveToTarget(zone);
   dice.set({ placedAtRound: game.round });
-  game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
+
+  // у других игроков в хранилище нет данных об этом dice
+  game.markNew(dice, { broadcastOnly: true });
+  game.markNew(dice.sideList[0], { broadcastOnly: true });
+  game.markNew(dice.sideList[1], { broadcastOnly: true });
+
   if (zone.checkForRelease()) {
     const playerCardDeck = player.getObjectByCode('Deck[card]');
     game.smartMoveRandomCard({ target: playerCardDeck });

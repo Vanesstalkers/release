@@ -6,10 +6,12 @@
   constructor(data, { parent }) {
     super(data, { col: 'bridge', parent });
 
-    this.release = data.release || false;
-    this.left = data.left;
-    this.top = data.top;
-    this.rotation = data.rotation || 0;
-    this.bridgeToCardPlane = data.bridgeToCardPlane;
+    this.set({
+      release: data.release || false,
+      left: data.left,
+      top: data.top,
+      rotation: data.rotation || 0,
+      bridgeToCardPlane: data.bridgeToCardPlane,
+    });
   }
 });

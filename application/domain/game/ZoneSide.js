@@ -2,9 +2,11 @@
   constructor(data, { parent }) {
     super(data, { col: 'zoneside', parent });
 
-    this.value = data.value || undefined;
-    this.links = data.links || {};
-    this.expectedValues = data.expectedValues || {};
+    this.set({
+      value: data.value,
+      links: data.links || {},
+      expectedValues: data.expectedValues || {},
+    });
   }
 
   addLink(link) {

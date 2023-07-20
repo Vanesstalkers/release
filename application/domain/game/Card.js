@@ -4,9 +4,11 @@
   constructor(data, { parent }) {
     super(data, { col: 'card', parent });
 
-    this.title = data.title;
-    this.name = data.name;
-    this.played = data.played;
+    this.set({
+      title: data.title,
+      name: data.name,
+      played: data.played,
+    });
     this.#events = domain.cardEvent[this.name];
   }
   moveToTarget(target) {

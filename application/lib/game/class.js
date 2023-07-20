@@ -59,6 +59,10 @@
       );
     }
 
+    markNew(obj, { broadcastOnly = false } = {}) {
+      this.setChanges({ store: { [obj._col]: { [obj._id]: obj } } }/* , { masterObject: {} } */);
+    }
+
     logs(data) {
       if (!data) return this.#logs;
 
