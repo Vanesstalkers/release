@@ -3,6 +3,7 @@
 
   constructor(data, { parent }) {
     super(data, { col: 'zone', parent });
+    this.broadcastableFields(['_id', 'sideList', 'itemMap', 'left', 'top', 'vertical']);
 
     this.set({
       left: data.left || 0,

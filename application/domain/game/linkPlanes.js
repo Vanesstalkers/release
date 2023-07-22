@@ -75,5 +75,5 @@
     }
   }
 
-  return { result: 'success', targetLinkPoint, joinLinkPoint };
+  return { status: 'ok', targetLinkPoint, joinLinkPoint };
 };

@@ -96,7 +96,7 @@
     obj[head] = rest.length ? lib.utils.setDeep(obj[head], rest.join('.'), value) : value;
     return obj;
   },
-  mergeDeep({ target, source, masterObj, config = {}, keyPath = [] }) {
+  mergeDeep({ target, source, masterObj = {}, config = {}, keyPath = [] }) {
     const { reset = [], deleteNull = false } = config;
     // обнуляем ключи в заданных объектах (для передачи обновлений клиенту и БД)
     if (reset.includes(keyPath.join('.'))) {

@@ -27,6 +27,7 @@
 
   constructor(data, { parent }) {
     super(data, { col: 'port', parent });
+    this.broadcastableFields(['_id', 'code', 'width', 'height', 'left', 'top', 'links', 'linkedBridge']);
 
     this.set({
       left: data.left,

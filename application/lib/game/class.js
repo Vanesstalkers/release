@@ -3,6 +3,7 @@
     #logs = {};
     store = {};
     playerMap = {};
+    #broadcastData = {};
 
     constructor() {
       const storeData = { col: 'game' };
@@ -10,7 +11,7 @@
       super(storeData, gameObjectData);
     }
 
-    prepareFakeData({ data, userId }) {
+    prepareBroadcastData({ data, userId }) {
       const result = {};
       const player = this.getPlayerByUserId(userId);
 
@@ -22,8 +23,8 @@
           } else {
             const obj = this.getObjectById(id);
             // объект может быть удален (!!! костыль)
-            if (obj && typeof obj.prepareFakeData === 'function') {
-              const { visibleId, preparedData } = obj.prepareFakeData({ data: changes, player });
+            if (obj && typeof obj.prepareBroadcastData === 'function') {
+              const { visibleId, preparedData } = obj.prepareBroadcastData({ data: changes, player });
               result[col][visibleId] = preparedData;
             } else result[col][id] = changes;
           }
@@ -60,7 +61,16 @@
     }
 
     markNew(obj, { broadcastOnly = false } = {}) {
-      this.setChanges({ store: { [obj._col]: { [obj._id]: obj } } }/* , { masterObject: {} } */);
+      const changes = { store: { [obj._col]: { [obj._id]: obj } } };
+      if (broadcastOnly) {
+        if (!this.#broadcastData) this.#broadcastData = {};
+        lib.utils.mergeDeep({
+          target: this.#broadcastData,
+          source: lib.utils.structuredClone(changes),
+        });
+      } else {
+        this.setChanges(changes);
+      }
     }
 
     logs(data) {
@@ -212,7 +222,7 @@
 
         if (clientCustomUpdates) {
           lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
-            type: 'smartUpdated',
+            type: 'db/smartUpdated',
             data: clientCustomUpdates,
           });
         }
@@ -220,5 +230,66 @@
         console.log(err);
         lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', { data: { error: err.message } });
       }
+    }
+
+    broadcastData(data, { customChannel } = {}) {
+      const broadcastCustomData = !customChannel && this.#broadcastData;
+      if (broadcastCustomData) lib.utils.mergeDeep({ target: data, source: this.#broadcastData });
+
+      const subscribers = this.channel().subscribers.entries();
+      for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers) {
+        if (!customChannel || subscriberChannel === customChannel) {
+          let publishData;
+          const { rule = 'all', fields = [], pathRoot, path, userId } = accessConfig;
+          switch (rule) {
+            /**
+             * фильтруем данные через кастомный обработчик
+             */
+            case 'custom':
+              if (!pathRoot || !path)
+                throw new Error(
+                  `Custom rule handler path or pathRoot (subscriberChannel="${subscriberChannel}") not found`
+                );
+              const splittedPath = path.split('.');
+              const method = lib.utils.getDeep(pathRoot === 'domain' ? domain : lib, splittedPath);
+              if (typeof method !== 'function')
+                throw new Error(
+                  `Custom rule handler (subscriberChannel="${subscriberChannel}", path="${path}") not found`
+                );
+              publishData = this.wrapPublishData(method(data));
+              break;
+            /**
+             * отправляем только выбранные поля (и вложенные в них объекты)
+             */
+            case 'fields':
+              publishData = this.wrapPublishData(
+                Object.fromEntries(
+                  Object.entries(data).filter(([key, value]) =>
+                    fields.find((field) => key === field || key.indexOf(field + '.') === 0)
+                  )
+                )
+              );
+              break;
+            /**
+             * отправляем данные в формате хранилища на клиенте
+             */
+            case 'vue-store':
+              publishData = this.wrapPublishData({
+                ...data,
+                store: this.prepareBroadcastData({ userId, data: data.store }),
+                // !!! это неправильно
+                logs: this.logs(),
+              });
+              break;
+            case 'all':
+            default:
+              publishData = this.wrapPublishData(data);
+          }
+          if (!Object.keys(publishData).length) continue;
+          lib.store.broadcaster.publishData(subscriberChannel, publishData);
+        }
+      }
+
+      if (broadcastCustomData) this.#broadcastData = null;
     }
   };

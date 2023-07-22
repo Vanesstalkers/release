@@ -1,6 +1,16 @@
 (class Dice extends lib.game.gameObject {
   constructor(data, { parent }) {
     super(data, { col: 'dice', parent });
+    this.broadcastableFields([
+      '_id',
+      'code',
+      'sideList',
+      'deleted',
+      'visible',
+      'locked',
+      'placedAtRound',
+      'activeEvent',
+    ]);
 
     this.set({
       deleted: data.deleted,
@@ -30,15 +40,23 @@
   customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, '' + data[0] + data[1]);
   }
-  prepareFakeData({ data, player }) {
+  prepareBroadcastData({ data, player }) {
     let visibleId = this._id;
-    let preparedData = data;
+    let preparedData = {};
+    const bFields = this.broadcastableFields();
+    let fake = false;
     const parent = this.getParent();
     if (parent.matches({ className: 'Deck' })) {
       if (!parent.access[player?._id] && !this.visible) {
+        fake = true;
         visibleId = this.fakeId[parent.id()];
-        preparedData = { _id: visibleId };
+        preparedData = {};
         if (data.activeEvent !== undefined) preparedData.activeEvent = data.activeEvent;
+      }
+    }
+    if (!fake) {
+      for (const [key, value] of Object.entries(data)) {
+        if (bFields.includes(key)) preparedData[key] = value;
       }
     }
     return { visibleId, preparedData };

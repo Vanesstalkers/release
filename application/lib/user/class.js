@@ -53,9 +53,9 @@
     sessions() {
       return this.#sessions.values();
     }
-    broadcastToSessions({ data, type = 'msg' } = {}) {
+    broadcastToSessions({ data, type = 'session/msg' } = {}) {
       for (const session of this.sessions()) {
-        session.send(`session/${type}`, data);
+        session.send(type, data);
       }
     }
   };

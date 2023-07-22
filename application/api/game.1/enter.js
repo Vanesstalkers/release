@@ -43,7 +43,7 @@
 
       let data;
       try {
-        data = game.prepareFakeData({
+        data = game.prepareBroadcastData({
           userId,
           data: { ...game.store, game: { [gameId]: { ...game, store: undefined } }, logs: game.logs },
         });

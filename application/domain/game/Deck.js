@@ -4,6 +4,7 @@
 
   constructor(data, { parent }) {
     super(data, { col: 'deck', parent });
+    this.broadcastableFields(['_id', 'code', 'type', 'subtype', 'itemMap']);
 
     this.set({
       type: data.type,
@@ -13,8 +14,9 @@
       access: data.access,
     });
   }
-  prepareFakeData({ data, player }) {
-    let result = {};
+  prepareBroadcastData({ data, player }) {
+    let preparedData = {};
+    const bFields = this.broadcastableFields();
     const fakeIdParent = this.id();
     const parent = this.getParent();
     const game = this.game();
@@ -26,9 +28,9 @@
             const item = game.getObjectById(id); // item мог быть перемещен
             ids[item.fakeId[fakeIdParent]] = val;
           }
-          result.itemMap = ids;
+          preparedData.itemMap = ids;
         } else {
-          result[key] = value;
+          if (bFields.includes(key)) preparedData[key] = value;
         }
       }
     } else if (parent.matches({ className: 'Player' })) {
@@ -47,15 +49,17 @@
               }
             }
           }
-          result.itemMap = ids;
+          preparedData.itemMap = ids;
         } else {
-          result[key] = value;
+          if (bFields.includes(key)) preparedData[key] = value;
         }
       }
     } else {
-      result = data;
+      for (const [key, value] of Object.entries(data)) {
+        if (bFields.includes(key)) preparedData[key] = value;
+      }
     }
-    return { visibleId: this._id, preparedData: result };
+    return { visibleId: this._id, preparedData };
   }
 
   customObjectCode({ codeTemplate, replacementFragment }, data) {

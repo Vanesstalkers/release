@@ -6,6 +6,19 @@
 
   constructor(data, { parent }) {
     super(data, { col: 'plane', parent });
+    this.broadcastableFields([
+      '_id',
+      'code',
+      'zoneMap',
+      'portMap',
+      'width',
+      'height',
+      'left',
+      'top',
+      'rotation',
+      'customClass',
+      'activeEvent',
+    ]);
 
     this.set({
       width: data.width || this.width,

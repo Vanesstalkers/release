@@ -1,6 +1,7 @@
 (class ZoneSide extends lib.game.gameObject {
   constructor(data, { parent }) {
     super(data, { col: 'zoneside', parent });
+    this.broadcastableFields(['_id', 'code', 'value', 'links']);
 
     this.set({
       value: data.value,

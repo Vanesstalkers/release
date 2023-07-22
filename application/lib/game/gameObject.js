@@ -6,6 +6,7 @@
   #parentList;
   #_objects = {};
   #fakeParent = null;
+  #broadcastableFields = null;
 
   constructor(data, { col: _col, parent } = {}) {
     const newObject = data._id ? false : true;
@@ -154,5 +155,22 @@
   }
   getFlattenStore() {
     return Object.values(this.getStore()).reduce((obj, item) => ({ ...obj, ...item }), {});
+  }
+  broadcastableFields(data) {
+    if (!data) return this.#broadcastableFields;
+    this.#broadcastableFields = data;
+  }
+  prepareBroadcastData({ data, player }) {
+    let visibleId = this._id;
+    let preparedData;
+    if (!this.#broadcastableFields) {
+      preparedData = data;
+    } else {
+      preparedData = {};
+      for (const [key, value] of Object.entries(data)) {
+        if (this.#broadcastableFields.includes(key)) preparedData[key] = value;
+      }
+    }
+    return { visibleId, preparedData };
   }
 });

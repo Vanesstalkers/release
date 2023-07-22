@@ -5,6 +5,7 @@
       ...domain.game['@hasDeck'].decorate(),
       ...domain.game['@hasPlane'].decorate(),
     });
+    this.broadcastableFields(['_id', 'code', 'active', 'timerEndTime', 'eventData', 'activeEvent']);
 
     this.set({
       userId: data.userId,

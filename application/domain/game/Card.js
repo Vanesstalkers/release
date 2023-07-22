@@ -3,6 +3,7 @@
 
   constructor(data, { parent }) {
     super(data, { col: 'card', parent });
+    this.broadcastableFields(['_id', 'name', 'played', 'eventData']);
 
     this.set({
       title: data.title,

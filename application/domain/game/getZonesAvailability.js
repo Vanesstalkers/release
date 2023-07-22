@@ -31,5 +31,8 @@
   }
   game.enableChanges();
 
-  return { status: 'ok', clientCustomUpdates: { zone: availableZones } };
+  return {
+    status: 'ok',
+    clientCustomUpdates: game.wrapPublishData({ store: { zone: availableZones } }),
+  };
 };
