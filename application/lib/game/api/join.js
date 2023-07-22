@@ -6,11 +6,14 @@ async (context, { gameId }) => {
 
   const user = lib.store('user').get(userId);
   for (const session of user.sessions()) {
-    // на случай повторного вызова api до обработки playerJoin 
+    // на случай повторного вызова api до обработки playerJoin
     // (session.saveChanges будет выполнен в user.joinGame)
     session.set({ gameId });
   }
 
-  lib.store.broadcaster.publishAction(`game-${gameId}`, 'playerJoin', { userId });
+  lib.store.broadcaster.publishAction(`game-${gameId}`, 'playerJoin', {
+    userId,
+    userName: user.name || user.login,
+  });
   return { status: 'ok' };
 };

@@ -157,7 +157,7 @@
 
   flatten(obj, keys = []) {
     const acc = {};
-    // ??? проверить, нужен ли baseKey 
+    // ??? проверить, нужен ли baseKey
     const baseKey = Object.values(keys).join('.');
     if (baseKey) acc[baseKey] = {};
     return Object.keys(obj).reduce((acc, key) => {
@@ -293,5 +293,8 @@
   structuredClone(data) {
     // !!! заменить на натив в node17
     return JSON.parse(JSON.stringify(data));
+  },
+  keysToNull(obj) {
+    return Object.fromEntries(Object.keys(obj).map((key) => [key, null]));
   },
 });

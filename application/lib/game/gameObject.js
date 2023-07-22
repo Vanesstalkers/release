@@ -1,4 +1,4 @@
-(class {
+(class gameObject {
   _id;
   _col;
   #game;

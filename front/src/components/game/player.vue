@@ -97,12 +97,9 @@ export default {
       return this.store.player?.[this.playerId];
     },
     dominoDecks() {
-      return this.deckIds.map(
-        (id) =>
-          this.store.deck?.[id] ||
-          {}.filter((deck) => deck.type === 'domino').sort(({ subtype }) => (subtype ? -1 : 1)) ||
-          []
-      );
+      return (
+        this.deckIds.map((id) => this.store.deck?.[id] || {}).filter((deck) => deck.type === 'domino') || []
+      ).sort(({ subtype }) => (subtype ? -1 : 1));
     },
     cardDecks() {
       return this.deckIds.map((id) => this.store.deck?.[id]).filter((deck) => deck.type === 'card') || [];

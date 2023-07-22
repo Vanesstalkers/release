@@ -70,7 +70,7 @@
         const itemSide = item.sideList[sideIndex];
         side.set({ value: itemSide.value });
       } else {
-        side.set({ value: undefined });
+        side.set({ value: null });
       }
       for (const linkCode of Object.values(side.links)) {
         this.game().getObjectByCode(linkCode).updateExpectedValues();

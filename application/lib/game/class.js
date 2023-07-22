@@ -11,7 +11,7 @@
       super(storeData, gameObjectData);
     }
 
-    prepareBroadcastData({ data, userId }) {
+    prepareBroadcastData({ data = {}, userId }) {
       const result = {};
       const player = this.getPlayerByUserId(userId);
 
@@ -80,10 +80,10 @@
       if (!data.time) data.time = Date.now();
 
       if (data.msg.includes('{{player}}')) {
-        const userId = data.userId || this.getActivePlayer().userId;
-        const logUser = lib.store('user').get(userId);
-        const logUserTitle = logUser.name || logUser.login;
-        data.msg = data.msg.replace(/{{player}}/g, `"${logUserTitle}"`);
+        const player = data.userId
+          ? this.getObjects({ className: 'Player' }).find(({ userId }) => userId === data.userId)
+          : this.getActivePlayer();
+        data.msg = data.msg.replace(/{{player}}/g, `"${player.userName}"`);
       }
 
       const id = (Date.now() + Math.random()).toString().replace('.', '_');
@@ -101,12 +101,13 @@
     getPlayerByUserId(id) {
       return this.getPlayerList().find((player) => player.userId === id);
     }
-    async playerJoin({ userId }) {
+    async playerJoin({ userId, userName }) {
       const player = this.getFreePlayerSlot();
       if (!player) throw new Error('Свободных мест не осталось');
 
+      player.set({ ready: true, userId, userName });
       this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
-      player.set({ ready: true, userId });
+      
       if (!this.getFreePlayerSlot()) this.updateStatus();
       await this.saveChanges();
 

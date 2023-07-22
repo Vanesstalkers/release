@@ -14,10 +14,12 @@
     this.set({ links: { [link._id]: link.code } });
   }
   updateExpectedValues() {
-    const expectedValues = {};
+    const expectedValues = lib.utils.keysToNull(this.expectedValues);
     for (const linkCode of Object.values(this.links)) {
       const link = this.game().getObjectByCode(linkCode);
-      if (link.value !== undefined) expectedValues[link.value] = true;
+      if (link.value != null)
+        // "!= null" === "a !== null && a !== undefined"
+        expectedValues[link.value] = true;
     }
     this.set({ expectedValues });
   }
