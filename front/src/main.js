@@ -106,6 +106,7 @@ const init = async () => {
     const height = window.innerHeight;
     state.isMobile = isMobile() ? true : false;
     state.isLandscape = height < width;
+    state.isPortrait = !state.isLandscape;
     state.guiScale = width < 1000 ? 1 : width < 1500 ? 2 : width < 2000 ? 3 : width < 3000 ? 4 : 5;
   };
 
@@ -115,15 +116,6 @@ const init = async () => {
   // });
   window.addEventListener('resize', checkDevice);
   checkDevice();
-
-  document.addEventListener('click', async (event) => {
-    if (event.target.classList.contains('active-event')) {
-      await this.handleGameApi({
-        name: 'eventTrigger',
-        data: { eventData: { targetId: event.target.attributes.id?.value } },
-      });
-    }
-  });
 
   document.addEventListener('contextmenu', function (event) {
     event.preventDefault();

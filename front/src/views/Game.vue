@@ -101,7 +101,11 @@
     </GUIWrapper>
     <GUIWrapper
       :pos="state.isMobile && state.isPortrait ? ['bottom', 'right'] : ['bottom', 'left']"
-      :offset="state.isMobile && state.isPortrait ? { bottom: 10 + 10 + 180 * 0.6 } : {}"
+      :offset="
+        state.isMobile && state.isPortrait
+          ? { bottom: 10 + 10 + 180 * 0.6 + ((sessionUserCardDeckLength || 1) - 1) * 20 }
+          : {}
+      "
       :wrapperClass="['players']"
       :contentClass="['gui-small']"
     >
@@ -118,6 +122,7 @@
 
 <script>
 import { reactive, provide } from 'vue';
+import { addEvents, removeEvents } from '../../lib/gameEvents';
 import { config as gamePlaneConfig, addMouseEvents, removeMouseEvents } from '../../lib/gameMouseEvents';
 import {} from '../components/game/utils';
 
@@ -245,8 +250,20 @@ export default {
       const result = ids.slice(curPlayerIdx + 1).concat(ids.slice(0, curPlayerIdx));
       return result;
     },
+    sessionPlayer() {
+      return this.store.player?.[this.gameState.sessionPlayerId] || {};
+    },
+    sessionUserCardDeckLength() {
+      return (
+        Object.keys(
+          Object.keys(this.sessionPlayer.deckMap || {})
+            .map((id) => this.store.deck?.[id] || {})
+            .filter((deck) => deck.type === 'card' && !deck.subtype)[0]?.itemMap || {}
+        ).length || 0
+      );
+    },
     helper() {
-      return this.store.player?.[this.gameState.sessionPlayerId]?.helper;
+      return this.sessionPlayer?.helper;
     },
     deckList() {
       return Object.keys(this.game.deckMap).map((id) => this.store.deck?.[id]) || [];
@@ -385,7 +402,7 @@ export default {
       if (this.gamePlaneScale > this.gamePlaneScaleMax) this.gamePlaneScale = this.gamePlaneScaleMax;
     },
     closeCardInfo() {
-      this.$root.state.shownCard = '';
+      this.$set(this.$root.state, 'shownCard', '');
     },
   },
   async created() {},
@@ -409,9 +426,11 @@ export default {
         });
       });
 
+    addEvents(this);
     addMouseEvents(this);
   },
   async beforeDestroy() {
+    removeEvents();
     removeMouseEvents();
     delete this.$root.state.store.game[this.gameState.gameId];
   },
@@ -443,10 +462,6 @@ export default {
   margin-left: -100px;
 }
 
-.gui {
-  position: absolute;
-  cursor: pointer;
-}
 .gui-resizeable.scale-1 {
   scale: 0.8;
 }
@@ -576,36 +591,6 @@ export default {
 }
 #game.mobile-view .game-status-label {
   font-size: 1.5em;
-}
-
-.gui.players {
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  bottom: 10px;
-  left: 10px;
-  transform-origin: left bottom;
-}
-.gui.players.scale-1 {
-  transform: scale(0.4);
-}
-.gui.players.scale-2 {
-  transform: scale(0.6);
-}
-.gui.players.scale-3 {
-  transform: scale(0.8);
-}
-.gui.players.scale-4 {
-  transform: scale(1);
-}
-.gui.players.scale-5 {
-  transform: scale(1.2);
-}
-#game.mobile-view.portrait-view .gui.players {
-  bottom: 120px;
-  left: auto;
-  right: 20px;
-  transform-origin: right bottom;
 }
 
 .plane {

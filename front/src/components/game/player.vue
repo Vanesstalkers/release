@@ -6,13 +6,9 @@
           <plane v-for="id in planeInHandIds" :key="id" :planeId="id" :inHand="true" />
         </div>
         <div v-if="!hasPlaneInHand" class="hand-dices-list">
-          <div
-            v-for="deck in dominoDecks"
-            :key="deck._id"
-            :style="{ width: '0px', height: '150px', position: 'relative' }"
-          >
+          <div v-for="deck in dominoDecks" :key="deck._id" class="hand-dices-list-content">
             <div
-              v-if="!state.isPortrait || iam"
+              v-if="iam || showDecks || !state.isPortrait"
               class="hand-dices"
               :style="
                 iam || (state.isMobile && state.isPortrait)
@@ -107,14 +103,6 @@ export default {
     deckIds() {
       return Object.keys(this.player.deckMap || {});
     },
-    deckCounters() {
-      return this.iam
-        ? null
-        : {
-            domino: Object.keys(this.dominoDecks.find((deck) => !deck.subtype)?.itemMap || {}).length || 0,
-            card: Object.keys(this.cardDecks.find((deck) => !deck.subtype)?.itemMap || {}).length || 0,
-          };
-    },
     planeInHandIds() {
       return Object.keys(
         this.deckIds.map((id) => this.store.deck?.[id]).find((deck) => deck.type === 'plane')?.itemMap || {}
@@ -141,6 +129,7 @@ export default {
 }
 .player:not(.iam) > .inner-content {
   display: flex;
+  align-items: flex-end;
   flex-direction: row-reverse;
 }
 #game.mobile-view.portrait-view .player:not(.iam) > .inner-content {
@@ -149,6 +138,7 @@ export default {
 
 .player.iam > .inner-content {
   display: flex;
+  align-items: flex-end;
   position: absolute;
   right: 0px;
   bottom: 0px;
@@ -167,10 +157,6 @@ export default {
 
 .workers {
   z-index: 1; /* карточка воркера должна быть видна при размещении игровых зон из руки */
-  align-self: flex-end;
-}
-.player.iam .workers {
-  align-self: flex-end;
 }
 
 .player-hands {
@@ -200,13 +186,16 @@ export default {
 }
 
 .hand-dices-list {
-  height: 0px;
-  width: auto;
+  display: flex;
   flex-wrap: wrap;
   flex-direction: column;
+  height: auto;
+  width: auto;
 }
-.player.iam .hand-dices-list {
-  flex-direction: column-reverse;
+.hand-dices-list > .hand-dices-list-content {
+  width: 0px;
+  height: 150px;
+  position: relative;
 }
 .hand-dices {
   display: flex;
@@ -242,9 +231,11 @@ export default {
 .player.iam .hand-planes {
   height: 0px;
   width: 100%;
+  margin-bottom: 150px;
 }
 #game.mobile-view.portrait-view .player.iam .hand-planes {
   height: initial;
+  margin-bottom: 0px;
 }
 .hand-planes .plane {
   position: relative;

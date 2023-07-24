@@ -59,7 +59,7 @@ export default {
       this.gameState.selectedCard = this.isSelected ? null : this.cardId;
     },
     showInfo(name) {
-      this.gameState.shownCard = name;
+      this.$set(this.$root.state, 'shownCard', name);
     },
   },
   mounted() {},
