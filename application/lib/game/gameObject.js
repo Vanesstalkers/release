@@ -35,7 +35,7 @@
     if (parent) {
       const game = parent.game();
       this.game(game);
-      if (newObject) game.markNew(this);
+      if (newObject) game.markNew(this, { saveToDB: true });
       if (!game.store[this._col]) game.store[this._col] = {};
       game.store[this._col][this._id] = this;
     }

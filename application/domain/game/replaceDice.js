@@ -32,9 +32,9 @@
   dice.set({ placedAtRound: game.round });
 
   // у других игроков в хранилище нет данных об этом dice
-  game.markNew(dice, { broadcastOnly: true });
-  game.markNew(dice.sideList[0], { broadcastOnly: true });
-  game.markNew(dice.sideList[1], { broadcastOnly: true });
+  game.markNew(dice);
+  game.markNew(dice.sideList[0]);
+  game.markNew(dice.sideList[1]);
 
   if (zone.checkForRelease()) {
     const playerCardDeck = player.getObjectByCode('Deck[card]');
@@ -61,10 +61,10 @@
   // все удаленные dice заменены
   if (notReplacedDeletedDices.length === 0) {
     const deck = game.getObjectByCode('Deck[domino]');
-    deletedDices.forEach((dice) => {
+    for (const dice of deletedDices) {
       dice.set({ deleted: null });
       dice.moveToTarget(deck); // возвращаем удаленные dice в deck
-    });
+    }
   }
 
   game.callEventHandlers({ handler: 'replaceDice' });

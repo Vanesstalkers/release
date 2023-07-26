@@ -79,7 +79,7 @@ export default {
   border-radius: 10px;
   margin: 0px 0px 0px 5px;
   box-shadow: inset 0px 20px 20px 0px black;
-  /* background-image: url(/img/cards/release/back-side.jpg); */
+  background-image: url(../../../public/img/cards/release/back-side.jpg);
   background-color: grey;
 }
 .card-event.selected {

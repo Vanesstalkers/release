@@ -49,7 +49,7 @@
       if (item.access === 'all') item.access = this.playerMap;
       this.addDeck(item, { deckItemClass });
     }
-    if (newGame === true) {
+    if (newGame) {
       const cardsJSON = domain.game.cardsJSON.filter((card) => !this.settings.cardsToRemove.includes(card.name));
 
       for (const [deckCode, json] of [

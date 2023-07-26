@@ -15,7 +15,7 @@
     >
       <div style="display: flex">
         <div class="chat gui-btn" />
-        <div class="log gui-btn" v-on:click="showLog = !showLog" />
+        <div class="log gui-btn" v-on:click="showLogs" />
         <div class="move gui-btn" v-on:click="showMoveControls = !showMoveControls" />
       </div>
       <div v-if="showMoveControls" class="gameplane-controls">
@@ -404,6 +404,17 @@ export default {
     closeCardInfo() {
       this.$set(this.$root.state, 'shownCard', '');
     },
+    async showLogs() {
+      if (this.showLog) return (this.showLog = false);
+      await api.action
+        .call({ path: 'lib.game.api.showLogs', args: [{ lastItemTime: Object.values(this.logs).pop()?.time }] })
+        .then(() => {
+          this.showLog = true;
+        })
+        .catch((err) => {
+          prettyAlert(err.message);
+        });
+    },
   },
   async created() {},
   async mounted() {
@@ -601,10 +612,10 @@ export default {
   display: block;
 }
 .plane.card-event.card-event-req_legal {
-  ---background-image: 'url(/img/cards/release/req_legal.jpg)';
+  background-image: url(../../public/img/cards/release/req_legal.jpg);
 }
 .plane.card-event.card-event-req_tax {
-  ---background-image: 'url(/img/cards/release/req_tax.jpg)';
+  background-image: url(../../public/img/cards/release/req_tax.jpg);
 }
 .fake-plane {
   position: absolute;

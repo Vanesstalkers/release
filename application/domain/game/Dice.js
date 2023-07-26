@@ -73,6 +73,9 @@
     if (moveResult) {
       this.set({ visible: null });
       this.updateParent(target);
+      if (target.getParent() === this.game()) {
+        this.game().markDelete(this); // удаляем локальную информацию о dice (с реальным _id)
+      }
     } else {
       currentParent.addItem(this);
     }

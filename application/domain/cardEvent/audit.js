@@ -15,7 +15,7 @@
       const targetPlayerHand = targetPlayer.getObjectByCode('Deck[domino]');
       for (const dice of targetPlayerHand.getObjects({ className: 'Dice' })) {
         dice.set({ visible: true });
-        game.markNew(dice, { broadcastOnly: true }); // у других игроков в хранилище нет данных об этом dice
+        game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
       }
       targetPlayerHand.set({ itemMap: targetPlayerHand.itemMap }); // инициирует рассылку изменений с пересчетом видимости
 

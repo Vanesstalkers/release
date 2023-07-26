@@ -83,10 +83,10 @@
       item = new itemClass(item, { parent: this });
       if (!item.fakeId?.[parentId]) item.updateFakeId({ parentId });
     }
-    this.game().markNew(item, { broadcastOnly: true });
+    this.game().markNew(item);
     if (item.sideList) {
-      this.game().markNew(item.sideList[0], { broadcastOnly: true });
-      this.game().markNew(item.sideList[1], { broadcastOnly: true });
+      this.game().markNew(item.sideList[0]);
+      this.game().markNew(item.sideList[1]);
     }
     this.set({ itemMap: { [item._id]: {} } });
     return true;

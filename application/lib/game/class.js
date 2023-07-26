@@ -3,7 +3,7 @@
     #logs = {};
     store = {};
     playerMap = {};
-    #broadcastData = {};
+    #broadcastObject = {};
 
     constructor() {
       const storeData = { col: 'game' };
@@ -18,7 +18,10 @@
       for (const [col, ids] of Object.entries(data)) {
         result[col] = {};
         for (const [id, changes] of Object.entries(ids)) {
-          if (col === 'game' || col === 'player' || changes.fake) {
+          if (changes === null) {
+            // тут удаление через markDelete
+            result[col][id] = null;
+          } else if (col === 'game' || col === 'player' || changes.fake) {
             result[col][id] = changes;
           } else {
             const obj = this.getObjectById(id);
@@ -38,12 +41,35 @@
       if (!gameJSON) throw new Error(`Not found initial game data (type='${type}').`);
       const gameData = lib.utils.structuredClone(gameJSON);
       this.fromJSON(gameData, { newGame: true });
+      delete this._id; // удаляем _id от gameObject, чтобы он не попал в БД
 
       await this.getProtoParent().create.call(this, { ...this });
 
       const initiatedGame = await db.redis.hget('games', this.id());
       if (!initiatedGame) await this.addGameToCache();
 
+      return this;
+    }
+    async load({ fromData = null, fromDB = {} }, { initStore = true } = {}) {
+      if (fromData) {
+        Object.assign(this, fromData);
+      } else {
+        let { id, query } = fromDB;
+        if (!query && id) query = { _id: db.mongo.ObjectID(id) };
+        if (query) {
+          const dbData = await db.mongo.findOne(this.col(), query);
+          if (dbData === null) {
+            throw 'not_found';
+          } else {
+            this.fromJSON(dbData);
+            if (!this.id() && initStore) {
+              this.initStore(dbData._id);
+              if (!this.channel()) this.initChannel();
+            }
+          }
+        }
+      }
+      if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
       return this;
     }
 
@@ -60,16 +86,20 @@
       );
     }
 
-    markNew(obj, { broadcastOnly = false } = {}) {
-      const changes = { store: { [obj._col]: { [obj._id]: obj } } };
-      if (broadcastOnly) {
-        if (!this.#broadcastData) this.#broadcastData = {};
-        lib.utils.mergeDeep({
-          target: this.#broadcastData,
-          source: lib.utils.structuredClone(changes),
-        });
+    markNew(obj, { saveToDB = false } = {}) {
+      if (saveToDB) {
+        this.setChanges({ store: { [obj._col]: { [obj._id]: obj } } });
       } else {
-        this.setChanges(changes);
+        if (!this.#broadcastObject[obj._col]) this.#broadcastObject[obj._col] = {};
+        this.#broadcastObject[obj._col][obj._id] = true;
+      }
+    }
+    markDelete(obj, { saveToDB = false } = {}) {
+      if (saveToDB) {
+        this.setChanges({ store: { [obj._col]: { [obj._id]: null } } });
+      } else {
+        if (!this.#broadcastObject[obj._col]) this.#broadcastObject[obj._col] = {};
+        this.#broadcastObject[obj._col][obj._id] = null;
       }
     }
 
@@ -89,6 +119,13 @@
       const id = (Date.now() + Math.random()).toString().replace('.', '_');
       this.#logs[id] = data;
     }
+    async showLogs({ userId, sessionId, lastItemTime }) {
+      let logs = this.logs();
+      if (lastItemTime) {
+        logs = Object.fromEntries(Object.entries(logs).filter(([{}, { time }]) => time > lastItemTime));
+      }
+      this.broadcastData({ logs }, { customChannel: `session-${sessionId}` });
+    }
 
     isSinglePlayer() {
       return this.settings.singlePlayer;
@@ -107,7 +144,7 @@
 
       player.set({ ready: true, userId, userName });
       this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
-      
+
       if (!this.getFreePlayerSlot()) this.updateStatus();
       await this.saveChanges();
 
@@ -234,8 +271,19 @@
     }
 
     broadcastData(data, { customChannel } = {}) {
-      const broadcastCustomData = !customChannel && this.#broadcastData;
-      if (broadcastCustomData) lib.utils.mergeDeep({ target: data, source: this.#broadcastData });
+      const broadcastObject = !customChannel && this.#broadcastObject;
+      if (broadcastObject) {
+        for (const col of Object.keys(this.#broadcastObject)) {
+          for (const _id of Object.keys(this.#broadcastObject[col])) {
+            const objectData =
+              this.#broadcastObject[col][_id] === null ? null : lib.utils.structuredClone(this.store[col][_id]);
+            lib.utils.mergeDeep({
+              target: data,
+              source: { store: { [col]: { [_id]: objectData } } },
+            });
+          }
+        }
+      }
 
       const subscribers = this.channel().subscribers.entries();
       for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers) {
@@ -277,9 +325,7 @@
             case 'vue-store':
               publishData = this.wrapPublishData({
                 ...data,
-                store: this.prepareBroadcastData({ userId, data: data.store }),
-                // !!! это неправильно
-                logs: this.logs(),
+                ...(data.store ? { store: this.prepareBroadcastData({ userId, data: data.store }) } : {}),
               });
               break;
             case 'all':
@@ -291,6 +337,6 @@
         }
       }
 
-      if (broadcastCustomData) this.#broadcastData = null;
+      if (broadcastObject) this.#broadcastObject = {};
     }
   };
