@@ -73,6 +73,9 @@ const init = async () => {
       console.log(err);
     });
   });
+  api.session.on('msg', ({ msg }) => {
+    prettyAlert(msg);
+  });
 
   const token = localStorage.getItem('metarhia.session.token');
   const session = await api.auth.initSession({ token, windowTabId: window.name, demo: true });

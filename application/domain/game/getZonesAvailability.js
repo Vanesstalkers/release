@@ -17,6 +17,10 @@
       if (zone.findParent({ className: 'Bridge' })) result = result.concat(...zone.getNearZones());
       return result;
     }, []);
+
+    // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
+    for (const dice of deletedDices) dice.getParent().removeItem(dice);
+
     game.getZonesAvailability(dice).forEach((status, zone) => {
       if (zone != currentZone) {
         if (deletedDicesZones.length) {
@@ -28,6 +32,9 @@
         }
       }
     });
+
+    // * восстанавливаем состояние
+    for (const dice of deletedDices) dice.getParent().addItem(dice);
   }
   game.enableChanges();
 

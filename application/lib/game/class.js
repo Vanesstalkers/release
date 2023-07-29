@@ -252,6 +252,7 @@
         else if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
           throw new Error('Игрок не может совершать действия в этот ход.');
 
+        // т.к. в catch сохранения нет, то внутри event не должно быть throw, которые отменят какие либо изменения
         const event = domain.game[eventName];
         const result = event(this, eventData);
         const { clientCustomUpdates } = result;
@@ -265,8 +266,7 @@
           });
         }
       } catch (err) {
-        console.log(err);
-        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', { data: { error: err.message } });
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', { data: { msg: err.message } });
       }
     }
 

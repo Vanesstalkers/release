@@ -218,7 +218,20 @@
     this.disableChanges();
     {
       dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
-      for (const zone of this.getObjects({ className: 'Zone' })) {
+
+      const zoneList = [];
+      zoneList.push(
+        ...this.getObjects({ className: 'Plane', directParent: this }).reduce((arr, plane) => {
+          return arr.concat(plane.getObjects({ className: 'Zone' }));
+        }, [])
+      );
+      zoneList.push(
+        ...this.getObjects({ className: 'Bridge', directParent: this }).reduce((arr, bridge) => {
+          return arr.concat(bridge.getObjects({ className: 'Zone' }));
+        }, [])
+      );
+
+      for (const zone of zoneList) {
         const isAvailableStatus = zone.checkIsAvailable(dice);
         result.set(zone, isAvailableStatus);
       }
@@ -399,7 +412,7 @@
     this.logs({ msg: `Игрок {{player}} победил в игре.`, userId: player.userId });
   }
 
-  callHandler({ handler, data = {} }) {
+  callHandler({ handler, data: { noAvailablePorts = false } = {} }) {
     const player = this.getActivePlayer();
     switch (handler) {
       case 'addPlane':
@@ -408,7 +421,7 @@
           const playerPlaneDeck = player.getObjectByCode('Deck[plane]');
           const planeList = playerPlaneDeck.getObjects({ className: 'Plane' });
           for (const plane of planeList) plane.moveToTarget(gamePlaneDeck);
-          if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart) {
+          if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart && noAvailablePorts !== true) {
             this.changeActivePlayer();
             lib.timers.timerRestart(this);
             return { saveHandler: true };
@@ -432,18 +445,32 @@
   }
   onTimerTick({ timerId, data: { time = null } = {} }) {
     const player = this.getActivePlayer();
-    console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки
-    if (this.finished) return clearInterval(timerId);
-    if (player.timerEndTime < Date.now()) {
-      clearInterval(timerId);
-      if (this.status === 'inProcess') {
-        this.handleAction({
-          name: 'endRound',
-          data: { timerOverdue: true },
-          sessionUserId: player.userId,
-        });
-      } else {
-        lib.timers.timerDelete(this);
+    console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
+    if (this.status === 'finished') {
+      lib.timers.timerDelete(this);
+    } else if (player.timerEndTime < Date.now()) {
+      switch (this.status) {
+        case 'prepareStart':
+          const planeDeck = player.getObjectByCode('Deck[plane]');
+          const plane = planeDeck.getObjects({ className: 'Plane' })[0];
+          if (plane) domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+
+          const availablePort = this.availablePorts[0];
+          if (availablePort) domain.game.addPlane(this, { ...availablePort });
+          this.addEventHandler({ handler: 'addPlane', source: this });
+
+          this.saveChanges();
+
+          break;
+        case 'inProcess':
+          this.handleAction({
+            name: 'endRound',
+            data: { timerOverdue: true },
+            sessionUserId: player.userId,
+          });
+          break;
+        default:
+          lib.timers.timerDelete(this);
       }
     }
   }

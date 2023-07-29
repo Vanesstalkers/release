@@ -3,9 +3,8 @@
   const joinPlane = joinPort.getParent();
   const targetPort = game.getObjectById(targetPortId);
 
-  game.set({ availablePorts: [] });
-
   game.disableChanges();
+  joinPort.updateDirect(joinPortDirect);
   const targetPortIsAvailable =
     game
       .getAvailablePortsToJoinPlane({ joinPort })
@@ -17,16 +16,16 @@
       ) !== undefined;
   game.enableChanges();
 
-  if (targetPortIsAvailable) {
-    joinPort.updateDirect(joinPortDirect);
-    targetPort.updateDirect(targetPortDirect);
-    game.linkPlanes({ joinPort, targetPort });
-    joinPlane.getParent().removeItem(joinPlane, { deleteFromStorage: true });
-    game.addPlane(joinPlane);
+  if (!targetPortIsAvailable) throw new Error('Блок игрового поля не может быть добавлен к этой зоне интеграции');
 
-    game.callEventHandlers({ handler: 'addPlane' });
-    return { status: 'ok' };
-  } else {
-    return { status: 'err', message: 'Блок игрового поля не может быть добавлен к этой зоне интеграции' };
-  }
+  game.set({ availablePorts: [] });
+
+  joinPort.updateDirect(joinPortDirect);
+  targetPort.updateDirect(targetPortDirect);
+  game.linkPlanes({ joinPort, targetPort });
+  joinPlane.getParent().removeItem(joinPlane, { deleteFromStorage: true });
+  game.addPlane(joinPlane);
+
+  game.callEventHandlers({ handler: 'addPlane' });
+  return { status: 'ok' };
 };

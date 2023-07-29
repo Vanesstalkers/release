@@ -74,6 +74,9 @@ export default {
     store() {
       return this.getStore();
     },
+    game() {
+      return this.getGame();
+    },
     dice() {
       return this.store.dice?.[this.diceId];
     },

@@ -194,7 +194,7 @@ export default {
       getStore,
       gameState,
       currentRound() {
-        return this.store.game?.[gameState.gameId]?.round;
+        return this.game?.round;
       },
       sessionPlayerIsActive,
       actionsDisabled() {

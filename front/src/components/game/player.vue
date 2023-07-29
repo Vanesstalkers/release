@@ -16,7 +16,7 @@
                       position: 'absolute',
                       right: '0px',
                       bottom: '0px',
-                      height: 'auto',
+                      height: '0px',
                       width: 'auto',
                       transformOrigin: 'right bottom',
                     }
@@ -24,7 +24,7 @@
                       position: 'absolute',
                       left: '0px',
                       bottom: '0px',
-                      height: 'auto',
+                      height: '0px',
                       width: 'auto',
                       transformOrigin: 'left bottom',
                     }

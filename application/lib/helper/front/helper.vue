@@ -246,7 +246,7 @@ export default {
 
     const self = this;
     window.prettyAlert = (data) => {
-      console.log({ alertData: data });
+      if(data === 'Forbidden') data += ` (попробуйте обновить страницу)`;
       const message = data.message || data;
       self.alert = message;
     };

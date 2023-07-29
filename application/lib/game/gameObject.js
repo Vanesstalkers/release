@@ -127,6 +127,9 @@
     this.updateFakeId({ parentId: newParent.id() });
     this.setParent(newParent);
   }
+  parent() {
+    return this.#fakeParent || this.#parent;
+  }
   getParent() {
     return this.#fakeParent || this.#parent;
   }
