@@ -23,9 +23,16 @@
       return { timerOverdueOff: true };
     },
     timerOverdue: function ({ game }) {
-      domain.cardEvent['dream'].handlers.eventTrigger.call(this, {
-        game,
-        target: game.getObjects({ className: 'Plane', directParent: game }).find((plane) => !plane.isCardPlane()),
+      this.callHandler({
+        handler: 'eventTrigger',
+        data: {
+          target: game
+            .getObjects({
+              className: 'Plane',
+              directParent: game,
+            })
+            .find((plane) => !plane.isCardPlane()),
+        },
       });
     },
   },

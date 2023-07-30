@@ -26,12 +26,11 @@
 
       return { timerOverdueOff: true };
     },
-    timerOverdue: function ({ game }) {
-      const player = game.getActivePlayer();
+    timerOverdue: function ({ game, player }) {
       const target = game.isSinglePlayer()
         ? player
         : game.getObjects({ className: 'Player' }).find((p) => p !== player);
-      domain.cardEvent['audit'].handlers.eventTrigger.call(this, { game, target });
+      this.callHandler({ handler: 'eventTrigger', data: { target } });
     },
   },
 });

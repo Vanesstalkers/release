@@ -42,10 +42,12 @@
               ids[id] = val;
             } else {
               const item = game.getObjectById(id); // item мог быть перемещен
+              const fakeId = item.fakeId[fakeIdParent];
               if (item.visible) {
                 ids[id] = val;
+                ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
               } else {
-                ids[item.fakeId[fakeIdParent]] = val;
+                ids[fakeId] = val;
               }
             }
           }

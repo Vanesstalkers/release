@@ -315,7 +315,7 @@
   }
 
   addEventHandler({ handler, source }) {
-    if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
+    if (!this.eventHandlers[handler]) this.set({ eventHandlers: { [handler]: [] } });
     this.set({
       eventHandlers: {
         [handler]: this.eventHandlers[handler].concat(source.id()),
@@ -323,7 +323,7 @@
     });
   }
   deleteEventHandler({ handler, source }) {
-    if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
+    if (!this.eventHandlers[handler]) throw new Error(`eventHandler not found (code=${this.code}, handler=${handler})`);
     this.set({
       eventHandlers: {
         [handler]: this.eventHandlers[handler].filter((id) => id !== source._id),
@@ -331,7 +331,7 @@
     });
   }
   callEventHandlers({ handler, data }) {
-    if (!this.eventHandlers[handler]) throw new Error('eventHandler not found');
+    if (!this.eventHandlers[handler]) throw new Error(`eventHandler not found (code=${this.code}, handler=${handler})`);
     for (const sourceId of this.eventHandlers[handler]) {
       const source = this.getObjectById(sourceId);
       const { saveHandler, timerOverdueOff } = source.callHandler({ handler, data }) || {};

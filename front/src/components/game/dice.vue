@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="dice"
     :code="dice.code"
     :class="[
       'domino-dice',

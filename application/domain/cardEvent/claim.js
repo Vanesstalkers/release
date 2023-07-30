@@ -1,8 +1,7 @@
 ({
   init: function ({ game, player }) {
     if (game.isSinglePlayer()) {
-      const target = game.getActivePlayer();
-      domain.cardEvent['claim'].handlers.eventTrigger.call(this, { game, target });
+      this.callHandler({ handler: 'eventTrigger', data: { target: player } });
       return { removeHandlers: true };
     } else {
       game.set({ activeEvent: { sourceId: this._id } });
@@ -30,12 +29,11 @@
 
       return { timerOverdueOff: true };
     },
-    timerOverdue: function ({ game }) {
-      const player = game.getActivePlayer();
+    timerOverdue: function ({ game, player }) {
       const target = game.isSinglePlayer()
         ? player
         : game.getObjects({ className: 'Player' }).find((p) => p !== player);
-      domain.cardEvent['claim'].handlers.eventTrigger.call(this, { game, target });
+      this.callHandler({ handler: 'eventTrigger', data: { target } });
     },
   },
 });

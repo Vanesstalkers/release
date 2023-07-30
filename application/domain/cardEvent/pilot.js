@@ -21,8 +21,7 @@
       }
       return { timerOverdueOff: true };
     },
-    endRound: function ({ game }) {
-      const player = game.getActivePlayer();
+    endRound: function ({ game, player }) {
       if (!game.availablePorts.length) {
         const planeDeck = player.getObjectByCode('Deck[plane]');
         const plane = planeDeck.getObjects({ className: 'Plane' })[0];
@@ -30,10 +29,10 @@
       }
       const availablePort = game.availablePorts[0];
       if (availablePort) domain.game.addPlane(game, { ...availablePort });
-      domain.cardEvent['pilot'].handlers.addPlane({ game, player });
+      this.callHandler({ handler: 'addPlane' });
     },
-    timerOverdue: function ({ game }) {
-      domain.cardEvent['pilot'].handlers.endRound({ game });
+    timerOverdue: function ({ game, player }) {
+      this.callHandler({ handler: 'endRound' });
     },
   },
 });

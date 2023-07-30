@@ -48,17 +48,17 @@
 
       return { timerOverdueOff: true };
     },
-    endRound: function ({ game }) {
+    endRound: function ({ game, player }) {
       for (const dice of game.getObjects({ className: 'Dice' })) {
         if (dice.locked) dice.set({ locked: null });
       }
     },
-    timerOverdue: function ({ game }) {
-      function eventTrigger(dice) {
-        const player = game.getActivePlayer();
-        domain.cardEvent['refactoring'].handlers.eventTrigger.call(this, { game, player, target: dice });
-      }
+    timerOverdue: function ({ game, player }) {
+      const eventTrigger = (dice) => {
+        this.callHandler({ handler: 'eventTrigger', data: { target: dice } });
+      };
 
+      // находим первый попавшийся dice
       for (const plane of game.getObjects({ className: 'Plane' })) {
         for (const dice of plane.getObjects({ className: 'Dice' })) {
           return eventTrigger(dice);

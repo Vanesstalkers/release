@@ -40,10 +40,9 @@
         } else {
           const players = game.getObjects({ className: 'Player' });
           if (players.length === 2) {
-            domain.cardEvent['give_project'].handlers.eventTrigger.call(this, {
-              game,
-              player: activePlayer,
-              target: players.find((p) => p !== activePlayer),
+            this.callHandler({
+              handler: 'eventTrigger',
+              data: { target: players.find((p) => p !== activePlayer) },
             });
           } else {
             return { saveHandler: true };
@@ -62,8 +61,7 @@
         return complete({ game, dice });
       }
     },
-    timerOverdue: function ({ game }) {
-      const player = game.getActivePlayer();
+    timerOverdue: function ({ game, player }) {
       if (!game.activeEvent?.targetDiceId) {
         const targetDice = player.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' })[0];
         if (targetDice) game.set({ activeEvent: { targetDiceId: targetDice._id } });
@@ -76,7 +74,7 @@
         const target = game.isSinglePlayer()
           ? game
           : game.getObjects({ className: 'Player' }).find((p) => p !== player);
-        domain.cardEvent['give_project'].handlers.eventTrigger.call(this, { game, player, target });
+        this.callHandler({ handler: 'eventTrigger', data: { target } });
       }
     },
   },

@@ -54,11 +54,10 @@
         game.logs(`Костяшка "${dice.getTitle()}" восстановила свои значения, измененные событием "Костыль".`);
       }
     },
-    timerOverdue: function ({ game }) {
-      domain.cardEvent['crutch'].handlers.eventTrigger.call(this, {
-        game,
-        player: game.getActivePlayer(),
-        skipFakeValueSet: true,
+    timerOverdue: function ({ game, player }) {
+      this.callHandler({
+        handler: 'eventTrigger',
+        data: { skipFakeValueSet: true },
       });
     },
   },
