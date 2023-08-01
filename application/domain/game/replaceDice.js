@@ -36,24 +36,11 @@
   game.markNew(dice.sideList[0]);
   game.markNew(dice.sideList[1]);
 
-  if (zone.checkForRelease()) {
+  const releaseInitiated = zone.checkForRelease();
+  if (releaseInitiated) {
     const playerCardDeck = player.getObjectByCode('Deck[card]');
     game.smartMoveRandomCard({ target: playerCardDeck });
     lib.timers.timerRestart(game, { extraTime: game.settings.timerReleasePremium });
-
-    let finalRelease = true;
-    const planeList = game.getObjects({ className: 'Plane', directParent: game });
-    const bridgeList = game.getObjects({ className: 'Bridge', directParent: game });
-    for (const releaseItem of [...planeList, ...bridgeList]) {
-      if (!finalRelease) continue;
-      if (!releaseItem.release) finalRelease = false;
-    }
-    if (finalRelease) {
-      game.setWinner({ player });
-      game.updateStatus();
-      return { status: 'ok', gameFinished: true };
-    }
-
     game.logs(`Игрок {{player}} инициировал РЕЛИЗ, за что получает дополнительную карту события в руку.`);
   }
 
@@ -67,7 +54,7 @@
     }
   }
 
-  game.callEventHandlers({ handler: 'replaceDice' });
+  game.emitCardEvents('replaceDice');
 
   return { status: 'ok' };
 };

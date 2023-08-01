@@ -49,7 +49,7 @@
         });
       } catch (err) {
         // !!! нужно выяснить, в каких случаях возникают проблемы с первичным наполнением игры
-        game.updateStatus();
+        game.checkStatus();
         throw err;
       }
 

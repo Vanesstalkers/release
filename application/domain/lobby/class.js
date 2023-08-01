@@ -105,7 +105,7 @@
   }
   async checkGameStatuses() {
     for (const [gameId, game] of Object.entries(this.games)) {
-      if (game.status === 'finished') {
+      if (game.status === 'FINISHED') {
         this.unsubscribe(`game-${gameId}`);
         this.set({ games: { [gameId]: null } });
       }

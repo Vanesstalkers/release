@@ -28,11 +28,11 @@
         if (plane) domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
       }
       const availablePort = game.availablePorts[0];
-      if (availablePort) domain.game.addPlane(game, { ...availablePort });
-      this.callHandler({ handler: 'addPlane' });
+      if (availablePort) domain.game.linkPlaneToField(game, { ...availablePort });
+      this.emit('addPlane');
     },
     timerOverdue: function ({ game, player }) {
-      this.callHandler({ handler: 'endRound' });
+      this.emit('endRound');
     },
   },
 });

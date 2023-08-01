@@ -1,6 +1,4 @@
 (class Card extends lib.game.gameObject {
-  #events;
-
   constructor(data, { parent }) {
     super(data, { col: 'card', parent });
     this.broadcastableFields(['_id', 'name', 'played', 'eventData']);
@@ -10,7 +8,7 @@
       name: data.name,
       played: data.played,
     });
-    this.#events = domain.cardEvent[this.name];
+    this.events(domain.cardEvent[this.name]);
   }
   moveToTarget(target) {
     const currentParent = this.getParent();
@@ -24,10 +22,10 @@
     return moveResult;
   }
   getSelfConfig() {
-    return { handlers: Object.keys(this.#events.handlers || {}) };
+    return { handlers: Object.keys(this.events().handlers || {}) };
   }
   isPlayOneTime() {
-    return this.#events?.config?.playOneTime;
+    return this.events()?.config?.playOneTime;
   }
   restoreAvailable() {
     if (this.isPlayOneTime()) {
@@ -40,20 +38,13 @@
     const game = this.game();
     const player = game.getActivePlayer();
     const config = this.getSelfConfig();
-    for (const handler of config.handlers) game.addEventHandler({ handler, source: this });
-    if (this.#events.init) {
-      const { removeHandlers } = this.#events.init.call(this, { game, player }) || {};
-      if (removeHandlers) {
-        for (const handler of config.handlers) game.deleteEventHandler({ handler, source: this });
+    for (const event of config.handlers) game.addCardEvent({ event, source: this });
+    if (this.events().init) {
+      const { removeEvent } = this.events().init.call(this, { game, player }) || {};
+      if (removeEvent) {
+        for (const event of config.handlers) game.deleteCardEvent({ event, source: this });
       }
     }
     this.set({ played: Date.now() });
-  }
-  callHandler({ handler, data = {} }) {
-    if (!this.#events.handlers[handler]) throw new Error('eventHandler not found');
-    const game = this.game();
-    const player = game.getActivePlayer();
-    if (data.targetId) data.target = game.getObjectById(data.targetId);
-    return this.#events.handlers[handler].call(this, { game, player, ...data });
   }
 });

@@ -16,7 +16,7 @@
       const deck = player.getObjectByCode('Deck[domino_teamlead]');
       const itemIds = Object.keys(deck.itemMap);
 
-      if (itemIds.length > deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) return { saveHandler: true };
+      if (itemIds.length > deck.settings.itemsStartCount - deck.settings.itemsUsageLimit) return { saveEvent: true };
 
       const gameDominoDeck = game.getObjectByCode('Deck[domino]');
       for (const itemId of itemIds) {

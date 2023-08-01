@@ -6,7 +6,7 @@
     if (timerId) clearInterval(timerId);
 
     if (typeof owner.onTimerRestart === 'function') owner.onTimerRestart({ timerId, data });
-    
+
     this.activeTimers[ownerId] = setInterval(() => {
       if (typeof owner.onTimerTick === 'function') owner.onTimerTick({ timerId, data });
     }, 1000);

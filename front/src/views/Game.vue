@@ -66,7 +66,7 @@
         :targetPortDirect="position.targetPortDirect"
         :style="position.style"
         class="fake-plane"
-        v-on:click="addPlane"
+        v-on:click="linkPlaneToField"
       />
     </div>
 
@@ -231,18 +231,18 @@ export default {
     },
     statusLabel() {
       switch (this.game.status) {
-        case 'waitForPlayers':
+        case 'WAIT_FOR_PLAYERS':
           return 'Ожидание игроков';
-        case 'prepareStart':
+        case 'PREPARE_START':
           return 'Создание игрового поля';
-        case 'inProcess':
+        case 'IN_PROCESS':
           return 'Раунд ' + this.game.round;
-        case 'finished':
+        case 'FINISHED':
           return 'Игра закончена';
       }
     },
     showPlayerControls() {
-      return this.game.status === 'inProcess';
+      return this.game.status === 'IN_PROCESS';
     },
     playerIds() {
       const ids = Object.keys(this.game.playerMap || {}).sort((id1, id2) => (id1 > id2 ? 1 : -1));
@@ -325,9 +325,9 @@ export default {
       // return;
       await this.handleGameApi({ name: 'takeCard', data: { count: 5 } });
     },
-    async addPlane(event) {
+    async linkPlaneToField(event) {
       await this.handleGameApi({
-        name: 'addPlane',
+        name: 'linkPlaneToField',
         data: {
           gameId: this.gameState.gameId,
           joinPortId: event.target.attributes.joinPortId.value,

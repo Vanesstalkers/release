@@ -97,7 +97,7 @@ export default {
       );
     },
     showLeaveBtn() {
-      return this.game.status === 'finished';
+      return this.game.status === 'FINISHED';
     },
   },
   methods: {

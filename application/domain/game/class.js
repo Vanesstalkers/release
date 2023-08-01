@@ -20,10 +20,10 @@
     this.logs(data.logs);
     this.addTime = data.addTime;
     this.settings = data.settings;
-    this.status = data.status || 'waitForPlayers';
+    this.status = data.status || 'WAIT_FOR_PLAYERS';
     this.round = data.round || 0;
     if (data.activeEvent) this.activeEvent = data.activeEvent;
-    this.eventHandlers = data.eventHandlers || {
+    this.cardEvents = data.cardEvents || {
       endRound: [],
       timerOverdue: [],
       replaceDice: [],
@@ -66,7 +66,9 @@
     if (data.planeMap) {
       // восстановление игры из БД
       const planeIds = Object.keys(data.planeMap);
-      for (const _id of planeIds) this.addPlane(this.store.plane[_id]);
+      for (const _id of planeIds) {
+        this.addPlane(this.store.plane[_id], { preventEmitClassEvent: true });
+      }
     }
 
     if (data.bridgeMap) {
@@ -94,8 +96,8 @@
       player.addDeck(item, { deckItemClass });
     }
   }
-  linkPlanes({ joinPort, targetPort, fake }) {
-    const { targetLinkPoint } = domain.game.linkPlanes({ joinPort, targetPort });
+  createBridgeBetweenPlanes({ joinPort, targetPort, fake }) {
+    const { targetLinkPoint } = domain.game.getLinkCoordinates({ joinPort, targetPort });
 
     if (fake) return;
 
@@ -163,7 +165,7 @@
         if (!port.linkedBridge) {
           for (const portDirect of Object.keys(port.direct)) {
             port.updateDirect(portDirect);
-            this.linkPlanes({ joinPort: joinPort, targetPort: port, fake: true });
+            this.createBridgeBetweenPlanes({ joinPort: joinPort, targetPort: port, fake: true });
             const checkPlaneCollysion = this.checkPlaneCollysion(joinPlane);
             if (checkPlaneCollysion.collysionList.length === 0) {
               availablePorts.push({
@@ -287,148 +289,191 @@
       joinPort.updateDirect(joinPortDirect);
       const targetPort = this.getObjectById(targetPortId);
       targetPort.updateDirect(targetPortDirect);
-      this.linkPlanes({ joinPort, targetPort });
+      this.createBridgeBetweenPlanes({ joinPort, targetPort });
 
       this.set({ availablePorts: [] });
-
-      let availableZoneCount = 0;
-      for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
-        availableZoneCount += plane
-          .getObjects({ className: 'Zone' })
-          .filter((zone) => !zone.getNotDeletedItem()).length;
-      }
-      for (const bridge of this.getObjects({ className: 'Bridge', directParent: this })) {
-        availableZoneCount += bridge
-          .getObjects({ className: 'Zone' })
-          .filter((zone) => !zone.getNotDeletedItem()).length;
-      }
-      const dominoCount =
-        this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
-        this.getActivePlayer().getObjects({ className: 'Dice' }).length;
-
-      if (availableZoneCount > dominoCount) {
-        this.updateStatus();
-        return { status: 'ok', gameFinished: true };
-      }
       return;
     }
   }
 
-  addEventHandler({ handler, source }) {
-    if (!this.eventHandlers[handler]) this.set({ eventHandlers: { [handler]: [] } });
+  addCardEvent({ event, source }) {
+    if (!this.cardEvents[event]) this.set({ cardEvents: { [event]: [] } });
     this.set({
-      eventHandlers: {
-        [handler]: this.eventHandlers[handler].concat(source.id()),
+      cardEvents: {
+        [event]: this.cardEvents[event].concat(source.id()),
       },
     });
   }
-  deleteEventHandler({ handler, source }) {
-    if (!this.eventHandlers[handler]) throw new Error(`eventHandler not found (code=${this.code}, handler=${handler})`);
+  deleteCardEvent({ event, source }) {
+    if (!this.cardEvents[event]) throw new Error(`cardEvent not found (code=${this.code}, event=${event})`);
     this.set({
-      eventHandlers: {
-        [handler]: this.eventHandlers[handler].filter((id) => id !== source._id),
+      cardEvents: {
+        [event]: this.cardEvents[event].filter((id) => id !== source._id),
       },
     });
   }
-  callEventHandlers({ handler, data }) {
-    if (!this.eventHandlers[handler]) throw new Error(`eventHandler not found (code=${this.code}, handler=${handler})`);
-    for (const sourceId of this.eventHandlers[handler]) {
+  /**
+   * События карт
+   */
+  emitCardEvents(event, data) {
+    if (!this.cardEvents[event]) throw new Error(`cardEvent not found (code=${this.code}, event=${event})`);
+    for (const sourceId of this.cardEvents[event]) {
       const source = this.getObjectById(sourceId);
-      const { saveHandler, timerOverdueOff } = source.callHandler({ handler, data }) || {};
-      if (!saveHandler) this.deleteEventHandler({ handler, source });
-      if (timerOverdueOff) this.deleteEventHandler({ handler: 'timerOverdue', source });
+      const { saveEvent, timerOverdueOff } = source.emit(event, data) || {};
+      if (!saveEvent) this.deleteCardEvent({ event, source });
+      if (timerOverdueOff) this.deleteCardEvent({ event: 'timerOverdue', source });
     }
   }
-  clearEventHandlers() {
-    for (const handler of Object.keys(this.eventHandlers)) {
-      this.set({ eventHandlers: { [handler]: [] } });
+  clearCardEvents() {
+    for (const event of Object.keys(this.cardEvents)) {
+      this.set({ cardEvents: { [event]: [] } });
     }
   }
-  updateStatus() {
+  /**
+   * Проверяет и обновляет статус игры, если это необходимо
+   * @throws lib.game.endGameException
+   */
+  checkStatus({ cause } = {}) {
+    const activePlayer = this.getActivePlayer();
     const playerList = this.getObjects({ className: 'Player' });
     switch (this.status) {
-      case 'waitForPlayers':
-        const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-        for (let i = 0; i < this.settings.planesAtStart; i++) {
-          const plane = gamePlaneDeck.getRandomItem();
-          if (plane) {
-            gamePlaneDeck.removeItem(plane);
-            this.addPlane(plane);
-            if (i > 0) {
-              domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-              const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-              const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+      case 'WAIT_FOR_PLAYERS':
+        switch (cause) {
+          case 'PLAYER_JOIN':
+            if (this.getFreePlayerSlot()) return;
 
-              const joinPort = this.getObjectById(joinPortId);
-              joinPort.updateDirect(joinPortDirect);
-              const targetPort = this.getObjectById(targetPortId);
-              targetPort.updateDirect(targetPortDirect);
-              this.linkPlanes({ joinPort, targetPort });
+            const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+            for (let i = 0; i < this.settings.planesAtStart; i++) {
+              const plane = gamePlaneDeck.getRandomItem();
+              if (plane) {
+                gamePlaneDeck.removeItem(plane);
+                this.addPlane(plane, { preventEmitClassEvent: true });
+                if (i > 0) {
+                  domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+                  const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+                  const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
 
-              this.set({ availablePorts: [] });
+                  const joinPort = this.getObjectById(joinPortId);
+                  joinPort.updateDirect(joinPortDirect);
+                  const targetPort = this.getObjectById(targetPortId);
+                  targetPort.updateDirect(targetPortDirect);
+                  this.createBridgeBetweenPlanes({ joinPort, targetPort });
+
+                  this.set({ availablePorts: [] });
+                }
+              }
             }
-          }
-        }
 
-        const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
-        for (let i = 0; i < planesPlacedByPlayerCount; i++) {
-          const hand = playerList[i % playerList.length].getObjectByCode('Deck[plane]');
-          for (let j = 0; j < this.settings.planesToChoosee; j++) {
-            const plane = gamePlaneDeck.getRandomItem();
-            plane.moveToTarget(hand);
-          }
-        }
+            const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
+            for (let i = 0; i < planesPlacedByPlayerCount; i++) {
+              const hand = playerList[i % playerList.length].getObjectByCode('Deck[plane]');
+              for (let j = 0; j < this.settings.planesToChoosee; j++) {
+                const plane = gamePlaneDeck.getRandomItem();
+                plane.moveToTarget(hand);
+              }
+            }
 
-        this.set({ status: 'prepareStart' });
-        if (planesPlacedByPlayerCount > 0) {
-          this.addEventHandler({ handler: 'addPlane', source: this });
-          lib.timers.timerRestart(this);
-        } else {
-          this.updateStatus();
+            if (planesPlacedByPlayerCount > 0) {
+              lib.timers.timerRestart(this);
+            } else {
+              this.set({ status: 'PREPARE_START' });
+              this.checkStatus({ cause: 'START_GAME' });
+            }
+            break;
         }
         break;
-      case 'prepareStart':
-        const deck = this.getObjectByCode('Deck[domino]');
-        for (const player of playerList) {
-          const playerHand = player.getObjectByCode('Deck[domino]');
-          deck.moveRandomItems({ count: this.settings.playerHandStart, target: playerHand });
-          // const deckCard = this.getObjectByCode('Deck[card]');
-          // const playerHandCard = player.getObjectByCode('Deck[card]');
-          // deckCard.moveRandomItems({ count: 3, target: playerHandCard });
+
+      case 'PREPARE_START':
+        switch (cause) {
+          case 'PLAYFIELD_CREATING':
+            const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+            const playerPlaneDeck = activePlayer.getObjectByCode('Deck[plane]');
+            const planeList = playerPlaneDeck.getObjects({ className: 'Plane' });
+            for (const plane of planeList) plane.moveToTarget(gamePlaneDeck);
+            if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart && this.noAvailablePorts !== true) {
+              this.changeActivePlayer();
+              lib.timers.timerRestart(this);
+            } else {
+              this.checkStatus({ cause: 'START_GAME' });
+            }
+            break;
+
+          case 'START_GAME':
+            this.set({ status: 'IN_PROCESS' });
+
+            const deck = this.getObjectByCode('Deck[domino]');
+            for (const player of playerList) {
+              const playerHand = player.getObjectByCode('Deck[domino]');
+              deck.moveRandomItems({ count: this.settings.playerHandStart, target: playerHand });
+            }
+
+            this.handleAction({
+              name: 'endRound',
+              data: { forceActivePlayer: playerList[0] },
+              sessionUserId: activePlayer.userId,
+            });
+            break;
+
+          case 'PLAYER_TIMER_END':
+            const planeDeck = activePlayer.getObjectByCode('Deck[plane]');
+            const plane = planeDeck.getObjects({ className: 'Plane' })[0];
+            if (plane) domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+
+            const availablePort = this.availablePorts[0];
+            if (availablePort) domain.game.linkPlaneToField(this, { ...availablePort });
+            break;
         }
-
-        this.set({ status: 'inProcess' });
-        domain.game.endRound(this, { forceActivePlayer: playerList[0] });
         break;
-      case 'inProcess':
-        this.endGame();
-        return; // обновлять игру не нужно, так как она удалена
-    }
 
-    // lib.store('lobby').get('main').updateGame({ _id: this.id(), status: this.status });
-  }
-  setWinner({ player }) {
-    this.set({ winUserId: player.userId });
-    this.logs({ msg: `Игрок {{player}} победил в игре.`, userId: player.userId });
-  }
+      case 'IN_PROCESS':
+        switch (cause) {
+          case 'PLAYER_TIMER_END':
+            this.handleAction({
+              name: 'endRound',
+              data: { timerOverdue: true },
+              sessionUserId: activePlayer.userId,
+            });
+            break;
 
-  callHandler({ handler, data: { noAvailablePorts = false } = {} }) {
-    const player = this.getActivePlayer();
-    switch (handler) {
-      case 'addPlane':
-        if (this.status === 'prepareStart') {
-          const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-          const playerPlaneDeck = player.getObjectByCode('Deck[plane]');
-          const planeList = playerPlaneDeck.getObjects({ className: 'Plane' });
-          for (const plane of planeList) plane.moveToTarget(gamePlaneDeck);
-          if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart && noAvailablePorts !== true) {
-            this.changeActivePlayer();
-            lib.timers.timerRestart(this);
-            return { saveHandler: true };
-          } else {
-            this.updateStatus();
-            return { timerOverdueOff: true };
-          }
+          case 'FINAL_RELEASE':
+            let finalRelease = true;
+            const planeList = this.getObjects({ className: 'Plane', directParent: this });
+            const bridgeList = this.getObjects({ className: 'Bridge', directParent: this });
+            for (const releaseItem of [...planeList, ...bridgeList]) {
+              if (!finalRelease) continue;
+              if (!releaseItem.release) finalRelease = false;
+            }
+            if (finalRelease) this.endGame({ winningPlayer: activePlayer });
+            break;
+
+          case 'PLAYFIELD_CREATING':
+            let availableZoneCount = 0;
+            for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
+              availableZoneCount += plane
+                .getObjects({ className: 'Zone' })
+                .filter((zone) => !zone.getNotDeletedItem()).length;
+            }
+            for (const bridge of this.getObjects({ className: 'Bridge', directParent: this })) {
+              availableZoneCount += bridge
+                .getObjects({ className: 'Zone' })
+                .filter((zone) => !zone.getNotDeletedItem()).length;
+            }
+            const dominoCount =
+              this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
+              activePlayer.getObjects({ className: 'Dice' }).length;
+
+            if (availableZoneCount > dominoCount) this.endGame();
+            break;
+          default:
+            this.endGame();
+        }
+        break;
+
+      case 'FINISHED':
+        switch (cause) {
+          case 'PLAYER_TIMER_END':
+            lib.timers.timerDelete(this);
+            break;
         }
         break;
     }
@@ -437,41 +482,24 @@
   onTimerRestart({ timerId, data: { time = this.settings.timer, extraTime = 0 } = {} }) {
     const player = this.getActivePlayer();
     if (extraTime) {
-      player.set({ timerEndTime: player.timerEndTime + extraTime * 1000 });
+      player.set({ timerEndTime: (player.timerEndTime || 0) + extraTime * 1000 });
     } else {
       player.set({ timerEndTime: Date.now() + time * 1000 });
     }
     player.set({ timerUpdateTime: Date.now() });
   }
-  onTimerTick({ timerId, data: { time = null } = {} }) {
-    const player = this.getActivePlayer();
-    console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
-    if (this.status === 'finished') {
-      lib.timers.timerDelete(this);
-    } else if (player.timerEndTime < Date.now()) {
-      switch (this.status) {
-        case 'prepareStart':
-          const planeDeck = player.getObjectByCode('Deck[plane]');
-          const plane = planeDeck.getObjects({ className: 'Plane' })[0];
-          if (plane) domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-
-          const availablePort = this.availablePorts[0];
-          if (availablePort) domain.game.addPlane(this, { ...availablePort });
-          this.addEventHandler({ handler: 'addPlane', source: this });
-
-          this.saveChanges();
-
-          break;
-        case 'inProcess':
-          this.handleAction({
-            name: 'endRound',
-            data: { timerOverdue: true },
-            sessionUserId: player.userId,
-          });
-          break;
-        default:
-          lib.timers.timerDelete(this);
+  async onTimerTick({ timerId, data: { time = null } = {} }) {
+    try {
+      const player = this.getActivePlayer();
+      console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
+      if (player.timerEndTime < Date.now()) {
+        this.checkStatus({ cause: 'PLAYER_TIMER_END' });
+        await this.saveChanges();
       }
+    } catch (exception) {
+      if (exception instanceof lib.game.endGameException) {
+        await this.saveChanges();
+      } else throw exception;
     }
   }
   onTimerDelete({ timerId }) {

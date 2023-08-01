@@ -363,7 +363,7 @@ export default {
           args: [{ type }],
         })
         .then(({ gameId }) => {
-          // if (gameId) this.joinGame({ gameId });
+          if (gameId) this.joinGame({ gameId });
         })
         .catch((err) => {
           prettyAlert(err.message);

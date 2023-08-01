@@ -145,21 +145,28 @@
       player.set({ ready: true, userId, userName });
       this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 
-      if (!this.getFreePlayerSlot()) this.updateStatus();
+      this.checkStatus({ cause: 'PLAYER_JOIN' });
       await this.saveChanges();
 
       lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', { gameId: this.id(), playerId: player.id() });
     }
     async playerLeave({ userId }) {
-      if (this.status !== 'finished') {
+      if (this.status !== 'FINISHED') {
         this.logs({ msg: `Игрок {{player}} вышел из игры.`, userId });
-        await this.endGame({ canceledByUser: userId });
+        try {
+          this.endGame({ canceledByUser: userId });
+        } catch (exception) {
+          if (exception instanceof lib.game.endGameException) {
+            await this.saveChanges();
+          } else throw exception;
+        }
       }
       lib.store.broadcaster.publishAction(`user-${userId}`, 'leaveGame', {});
     }
-    async endGame({ canceledByUser } = {}) {
+    endGame({ winningPlayer, canceledByUser } = {}) {
       lib.timers.timerDelete(this);
-      this.set({ status: 'finished' });
+      this.set({ status: 'FINISHED' });
+      if (winningPlayer) this.setWinner({ player: winningPlayer });
 
       const playerList = this.getObjects({ className: 'Player' });
       const playerEndGameStatus = {};
@@ -169,15 +176,21 @@
           ? userId === canceledByUser
             ? 'lose'
             : 'cancel'
-          : userId === this.winUserId
-          ? 'win'
-          : 'lose';
+          : this.winUserId
+          ? userId === this.winUserId
+            ? 'win'
+            : 'lose'
+          : 'cancel';
         player.set({ endGameStatus });
         playerEndGameStatus[userId] = endGameStatus;
       }
-      await this.saveChanges();
-
       this.broadcastAction('gameFinished', { gameId: this.id(), playerEndGameStatus });
+
+      throw new lib.game.endGameException();
+    }
+    setWinner({ player }) {
+      this.set({ winUserId: player.userId });
+      this.logs({ msg: `Игрок {{player}} победил в игре.`, userId: player.userId });
     }
     getFreePlayerSlot() {
       return this.getPlayerList().find((player) => !player.ready);
@@ -252,7 +265,6 @@
         else if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
           throw new Error('Игрок не может совершать действия в этот ход.');
 
-        // т.к. в catch сохранения нет, то внутри event не должно быть throw, которые отменят какие либо изменения
         const event = domain.game[eventName];
         const result = event(this, eventData);
         const { clientCustomUpdates } = result;
@@ -265,8 +277,14 @@
             data: clientCustomUpdates,
           });
         }
-      } catch (err) {
-        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', { data: { msg: err.message } });
+      } catch (exception) {
+        if (exception instanceof lib.game.endGameException) {
+          await this.saveChanges();
+        } else {
+          lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
+            data: { msg: exception.message },
+          });
+        }
       }
     }
 

@@ -28,7 +28,7 @@
         domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
       }
       const availablePort = game.availablePorts[0];
-      if (availablePort) domain.game.addPlane(game, { ...availablePort });
+      if (availablePort) domain.game.linkPlaneToField(game, { ...availablePort });
     },
   },
 });

@@ -55,11 +55,8 @@ export default {
           { name: 'replaceDice', data: { diceId: this.gameState.pickedDiceId, zoneId: this.zoneId } },
           {
             onSuccess: (res) => {
-              if (!res.gameFinished) {
-                // иначе может отработать уже после выхода в лобби, где нет игрового store
-                this.gameState.pickedDiceId = '';
-                this.hideZonesAvailability();
-              }
+              this.gameState.pickedDiceId = '';
+              this.hideZonesAvailability();
             },
           }
         );

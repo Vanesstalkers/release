@@ -30,7 +30,7 @@
       const target = game.isSinglePlayer()
         ? player
         : game.getObjects({ className: 'Player' }).find((p) => p !== player);
-      this.callHandler({ handler: 'eventTrigger', data: { target } });
+      this.emit('eventTrigger', { target });
     },
   },
 });

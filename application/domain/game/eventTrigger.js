@@ -1,4 +1,4 @@
 (game, { eventData = {} }) => {
-  game.callEventHandlers({ handler: 'eventTrigger', data: eventData });
+  game.emitCardEvents('eventTrigger', eventData);
   return { status: 'ok' };
 };

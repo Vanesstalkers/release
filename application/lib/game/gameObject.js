@@ -1,4 +1,4 @@
-(class gameObject {
+(class GameObject {
   _id;
   _col;
   #game;
@@ -7,6 +7,7 @@
   #_objects = {};
   #fakeParent = null;
   #broadcastableFields = null;
+  #events;
 
   constructor(data, { col: _col, parent } = {}) {
     const newObject = data._id ? false : true;
@@ -175,5 +176,19 @@
       }
     }
     return { visibleId, preparedData };
+  }
+  events(data) {
+    if (!data) return this.#events;
+    this.#events = data;
+  }
+  emit(event, data = {}, config = {}) {
+    const { softCall = false } = config;
+    if (!this.#events?.handlers?.[event])
+      if (softCall) return;
+      else throw new Error(`event not found (event=${event})`);
+    const game = this.game();
+    const player = game.getActivePlayer();
+    if (data.targetId) data.target = game.getObjectById(data.targetId);
+    return this.#events.handlers[event].call(this, { game, player, ...data });
   }
 });

@@ -23,17 +23,9 @@
       return { timerOverdueOff: true };
     },
     timerOverdue: function ({ game }) {
-      this.callHandler({
-        handler: 'eventTrigger',
-        data: {
-          target: game
-            .getObjects({
-              className: 'Plane',
-              directParent: game,
-            })
-            .find((plane) => !plane.isCardPlane()),
-        },
-      });
+      const planes = game.getObjects({ className: 'Plane', directParent: game });
+      const target = planes.find((plane) => !plane.isCardPlane());
+      this.emit('eventTrigger', { target });
     },
   },
 });

@@ -4,7 +4,7 @@
       const deck = game.getObjectByCode('Deck[domino]');
       const hand = activePlayer.getObjectByCode('Deck[domino]');
       deck.moveRandomItems({ count: 1, target: hand });
-      return { removeHandlers: true };
+      return { removeEvent: true };
     } else {
       let diceFound = false;
       for (const player of game.getObjects({ className: 'Player' })) {
@@ -32,7 +32,7 @@
       }
     },
     eventTrigger: function ({ game, player: activePlayer, targetId: fakeId, targetPlayerId }) {
-      this.callHandler({ handler: 'resetEvent' });
+      this.emit('resetEvent');
 
       if (!fakeId || !targetPlayerId) return;
       const targetPlayer = game.getObjectById(targetPlayerId);
@@ -65,16 +65,13 @@
       }, []);
       const dice = dices[0];
       if (!dice) {
-        this.callHandler({ handler: 'resetEvent' });
+        this.emit('resetEvent');
       } else {
         const playerHand = dice.parent();
         const player = playerHand.parent();
-        this.callHandler({
-          handler: 'eventTrigger',
-          data: {
-            targetId: dice.fakeId[playerHand.id()],
-            targetPlayerId: player.id(),
-          },
+        this.emit('eventTrigger', {
+          targetId: dice.fakeId[playerHand.id()],
+          targetPlayerId: player.id(),
         });
       }
     },

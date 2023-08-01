@@ -1,8 +1,8 @@
 ({
   init: function ({ game, player }) {
     if (game.isSinglePlayer()) {
-      this.callHandler({ handler: 'eventTrigger', data: { target: player } });
-      return { removeHandlers: true };
+      this.emit('eventTrigger', { target: player });
+      return { removeEvent: true };
     } else {
       game.set({ activeEvent: { sourceId: this._id } });
       for (const player of game.getObjects({ className: 'Player' })) {
@@ -33,7 +33,7 @@
       const target = game.isSinglePlayer()
         ? player
         : game.getObjects({ className: 'Player' }).find((p) => p !== player);
-      this.callHandler({ handler: 'eventTrigger', data: { target } });
+      this.emit('eventTrigger', { target });
     },
   },
 });

@@ -40,12 +40,10 @@
         } else {
           const players = game.getObjects({ className: 'Player' });
           if (players.length === 2) {
-            this.callHandler({
-              handler: 'eventTrigger',
-              data: { target: players.find((p) => p !== activePlayer) },
-            });
+            const target = players.find((p) => p !== activePlayer);
+            this.emit('eventTrigger', { target });
           } else {
-            return { saveHandler: true };
+            return { saveEvent: true };
           }
         }
       } else {
@@ -74,7 +72,7 @@
         const target = game.isSinglePlayer()
           ? game
           : game.getObjects({ className: 'Player' }).find((p) => p !== player);
-        this.callHandler({ handler: 'eventTrigger', data: { target } });
+        this.emit('eventTrigger', { target });
       }
     },
   },

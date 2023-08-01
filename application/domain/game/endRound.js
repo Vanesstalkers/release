@@ -10,7 +10,7 @@
     return { status: 'ok' };
   }
 
-  if (game.status !== 'inProcess') {
+  if (game.status !== 'IN_PROCESS') {
     console.log('game', { status: game.status, id: game.id() });
     throw new Error('Действие запрещено.');
   }
@@ -40,7 +40,7 @@
       const source = game.getObjectById(game.activeEvent.sourceId);
       game.logs(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
     }
-    game.callEventHandlers({ handler: 'timerOverdue' });
+    game.emitCardEvents('timerOverdue');
   }
 
   if (game.activeEvent)
@@ -50,8 +50,8 @@
 
   // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
 
-  game.callEventHandlers({ handler: 'endRound' });
-  game.clearEventHandlers();
+  game.emitCardEvents('endRound');
+  game.clearCardEvents();
 
   // ЛОГИКА НАЧАЛА НОВОГО РАУНДА
 
@@ -139,13 +139,9 @@
     newRoundLogEvents.push(`Активировано ежедневное событие "${card.title}".`);
   }
 
-  // игра могла закончиться по результатам добавления новых plane на игровое поле
-  if (game.status !== 'finished') {
-    game.set({ round: newRoundNumber });
-    // lib.store('lobby').get('main').updateGame({ _id: game.id(), round: game.round });
-    lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
-    for (const logEvent of newRoundLogEvents) game.logs(logEvent);
-  }
+  game.set({ round: newRoundNumber });
+  lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
+  for (const logEvent of newRoundLogEvents) game.logs(logEvent);
 
   return { status: 'ok' };
 };

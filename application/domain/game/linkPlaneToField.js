@@ -22,10 +22,9 @@
 
   joinPort.updateDirect(joinPortDirect);
   targetPort.updateDirect(targetPortDirect);
-  game.linkPlanes({ joinPort, targetPort });
+  game.createBridgeBetweenPlanes({ joinPort, targetPort });
   joinPlane.getParent().removeItem(joinPlane, { deleteFromStorage: true });
   game.addPlane(joinPlane);
 
-  game.callEventHandlers({ handler: 'addPlane' });
   return { status: 'ok' };
 };

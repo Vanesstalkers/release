@@ -150,6 +150,7 @@
     if (parent.release) return false;
     if (parent.getObjects({ className: 'Zone' }).find((zone) => !zone.getNotDeletedItem())) return false;
     parent.set({ release: true });
+    this.game().checkStatus({ cause: 'FINAL_RELEASE' });
     return true;
   }
 });

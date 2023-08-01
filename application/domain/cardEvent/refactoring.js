@@ -14,7 +14,7 @@
       }
     }
     if (diceFound) game.set({ activeEvent: { sourceId: this._id } });
-    else return { removeHandlers: true };
+    else return { removeEvent: true };
   },
   handlers: {
     eventTrigger: function ({ game, player: activePlayer, target: dice }) {
@@ -55,7 +55,7 @@
     },
     timerOverdue: function ({ game, player }) {
       const eventTrigger = (dice) => {
-        this.callHandler({ handler: 'eventTrigger', data: { target: dice } });
+        this.emit('eventTrigger', { target: dice });
       };
 
       // находим первый попавшийся dice

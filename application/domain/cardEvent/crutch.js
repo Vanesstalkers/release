@@ -55,10 +55,7 @@
       }
     },
     timerOverdue: function ({ game, player }) {
-      this.callHandler({
-        handler: 'eventTrigger',
-        data: { skipFakeValueSet: true },
-      });
+      this.emit('eventTrigger', { skipFakeValueSet: true });
     },
   },
 });

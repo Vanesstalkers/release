@@ -5,6 +5,7 @@
     :class="['plane', activeEvent ? 'active-event' : '', ...plane.customClass, ...Object.values(customClass)]"
     :style="customStyle"
     v-on:click.stop="(e) => (activeEvent ? choosePlane() : selectPlane(e))"
+    :code="plane.code"
   >
     <div class="zone-wraper">
       <plane-zone v-for="id in zoneIds" :key="id" v-bind:zoneId="id" :linkLines="linkLines" />

@@ -29,7 +29,7 @@
     //     const gameData = await db.mongo.findOne('game', gameId);
     //     if (gameData) {
     //       game = new domain.game.class({ _id: gameId }).fromJSON(gameData);
-    //       if (game.status !== 'finished') {
+    //       if (game.status !== 'FINISHED') {
     //         lib.timers.timerRestart(game, { extraTime: 0 }); // перезапустит таймер с временем активного игрока (фича)
     //         lib.repository.getCollection('game').set(gameId, game);
     //         const lobby = lib.store('lobby').get('main');
@@ -44,7 +44,7 @@
     //       }
     //     }
     //   }
-    //   if (game && game.status !== 'finished') {
+    //   if (game && game.status !== 'FINISHED') {
     //     context.client.emit('session/joinGame', { gameId, playerId });
     //   } else {
     //     context.gameId = null;
@@ -134,7 +134,7 @@
     //   });
     // } catch (err) {
     //   // !!! нужно выяснить, в каких случаях возникают проблемы с первичным наполнением игры
-    //   game.updateStatus();
+    //   game.checkStatus();
     //   throw err;
     // }
 
