@@ -63,6 +63,9 @@
 
     return available;
   }
+  /**
+   * устанавливает value зоны в соответствии с размещенным в нем dice
+   */
   updateValues() {
     const item = this.getNotDeletedItem();
     this.sideList.forEach((side, sideIndex) => {
@@ -72,6 +75,7 @@
       } else {
         side.set({ value: null });
       }
+      // обновляем expectedValues у всех соседей
       for (const linkCode of Object.values(side.links)) {
         this.game().getObjectByCode(linkCode).updateExpectedValues();
       }

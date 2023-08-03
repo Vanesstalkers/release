@@ -104,7 +104,8 @@
     }
 
     for (const key of Object.keys(source)) {
-      if (!masterObj[key]) {
+      if (masterObj[key] == null) {
+        // masterObj[key] === null || masterObj[key] === undefined
         if (source[key] !== null) {
           if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
             if (!target[key]) target[key] = {};

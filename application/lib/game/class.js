@@ -323,17 +323,15 @@
                 throw new Error(
                   `Custom rule handler (subscriberChannel="${subscriberChannel}", path="${path}") not found`
                 );
-              publishData = this.wrapPublishData(method(data));
+              publishData = method(data);
               break;
             /**
              * отправляем только выбранные поля (и вложенные в них объекты)
              */
             case 'fields':
-              publishData = this.wrapPublishData(
-                Object.fromEntries(
-                  Object.entries(data).filter(([key, value]) =>
-                    fields.find((field) => key === field || key.indexOf(field + '.') === 0)
-                  )
+              publishData = Object.fromEntries(
+                Object.entries(data).filter(([key, value]) =>
+                  fields.find((field) => key === field || key.indexOf(field + '.') === 0)
                 )
               );
               break;
@@ -341,17 +339,17 @@
              * отправляем данные в формате хранилища на клиенте
              */
             case 'vue-store':
-              publishData = this.wrapPublishData({
+              publishData = {
                 ...data,
                 ...(data.store ? { store: this.prepareBroadcastData({ userId, data: data.store }) } : {}),
-              });
+              };
               break;
             case 'all':
             default:
-              publishData = this.wrapPublishData(data);
+              publishData = data;
           }
           if (!Object.keys(publishData).length) continue;
-          lib.store.broadcaster.publishData(subscriberChannel, publishData);
+          lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
         }
       }
 

@@ -13,6 +13,10 @@
   addLink(link) {
     this.set({ links: { [link._id]: link.code } });
   }
+  /**
+   * 
+   * (используется в zone.checkIsAvailable)
+   */
   updateExpectedValues() {
     const expectedValues = lib.utils.keysToNull(this.expectedValues);
     for (const linkCode of Object.values(this.links)) {

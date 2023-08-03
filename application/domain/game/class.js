@@ -407,11 +407,7 @@
               deck.moveRandomItems({ count: this.settings.playerHandStart, target: playerHand });
             }
 
-            this.handleAction({
-              name: 'endRound',
-              data: { forceActivePlayer: playerList[0] },
-              sessionUserId: activePlayer.userId,
-            });
+            domain.game.endRound(this, { forceActivePlayer: playerList[0] });
             break;
 
           case 'PLAYER_TIMER_END':
@@ -428,11 +424,7 @@
       case 'IN_PROCESS':
         switch (cause) {
           case 'PLAYER_TIMER_END':
-            this.handleAction({
-              name: 'endRound',
-              data: { timerOverdue: true },
-              sessionUserId: activePlayer.userId,
-            });
+            domain.game.endRound(this, { timerOverdue: true });
             break;
 
           case 'FINAL_RELEASE':
