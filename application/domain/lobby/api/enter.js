@@ -4,7 +4,7 @@ async (context) => {
   const user = lib.store('user').get(userId);
 
   const lobbyName = `lobby-main`;
-  session.subscribe(lobbyName);
+  session.subscribe(lobbyName, { rule: 'vue-store', userId: user.id() });
   context.client.events.close.unshift(() => {
     session.unsubscribe(lobbyName);
     user.leaveLobby({ sessionId });

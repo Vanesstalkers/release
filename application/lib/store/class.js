@@ -67,12 +67,16 @@
           wrapPublishData(data) {
             return { [this.col()]: { [this.id()]: data } };
           }
-          broadcastData(data, { customChannel } = {}) {
-            const subscribers = this.#channel.subscribers;
-            for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers.entries()) {
+          broadcastData(data, config = {}) {
+            const { customChannel } = config;
+
+            if (typeof this.broadcastDataBeforeHandler === 'function') this.broadcastDataBeforeHandler(data, config);
+
+            const subscribers = this.channel().subscribers.entries();
+            for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers) {
               if (!customChannel || subscriberChannel === customChannel) {
                 let publishData;
-                const { rule = 'all', fields = [], pathRoot, path } = accessConfig;
+                const { rule = 'all', fields = [], pathRoot, path, userId } = accessConfig;
                 switch (rule) {
                   /**
                    * фильтруем данные через кастомный обработчик
@@ -101,8 +105,14 @@
                     );
                     break;
                   /**
-                   * отправляем все изменения по всем полям
+                   * отправляем данные в формате хранилища на клиенте
                    */
+                  case 'vue-store':
+                    publishData =
+                      typeof this.broadcastDataVueStoreRuleHandler === 'function'
+                        ? this.broadcastDataVueStoreRuleHandler(data, { accessConfig })
+                        : data;
+                    break;
                   case 'all':
                   default:
                     publishData = data;
@@ -111,6 +121,8 @@
                 lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
               }
             }
+
+            if (typeof this.broadcastDataAfterHandler === 'function') this.broadcastDataAfterHandler(data, config);
           }
           broadcastAction(name, data, { customChannel } = {}) {
             for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
@@ -180,21 +192,17 @@
       return this;
     }
     async create(initialData = {}) {
-      try {
-        const { _id } = await db.mongo.insertOne(this.#col, initialData);
+      const { _id } = await db.mongo.insertOne(this.#col, initialData);
 
-        if (!_id) {
-          throw 'not_created';
-        } else {
-          Object.assign(this, initialData);
-          this.initStore(_id);
-          if (!this.channel()) this.initChannel();
-        }
-        if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
-        return this;
-      } catch (err) {
-        throw err;
+      if (!_id) {
+        throw 'not_created';
+      } else {
+        Object.assign(this, initialData);
+        this.initStore(_id);
+        if (!this.channel()) this.initChannel();
       }
+      if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
+      return this;
     }
 
     setChanges(val, config = {}) {

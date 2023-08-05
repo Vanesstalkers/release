@@ -7,6 +7,13 @@
   >
     <tutorial :inGame="true" />
 
+    <!-- <div :style="{ color: 'red', background: 'white', fontSize: '24px', zIndex: '100', position: 'absolute' }">
+      {{ gameState }}
+    </div> -->
+    <!-- <div :style="{ color: 'red', background: 'white', fontSize: '24px', zIndex: '100', position: 'absolute' }">
+      {{ store }}
+    </div> -->
+
     <GUIWrapper
       :pos="['top', 'left']"
       :offset="{ left: state.isMobile ? 60 : [60, 80, 110, 130, 160, 190][state.guiScale] }"
@@ -50,6 +57,7 @@
       <div class="close" v-on:click.stop="closeCardInfo" />
       <div class="img" :style="{ backgroundImage: `url(/img/cards/release/${state.shownCard}.jpg)` }" />
     </div>
+    <!-- <h1 :style="{ position: 'absolute', left: '0px', top: '0px',zIndex: '1000' }">{{ game.bridgeMap }}</h1> -->
     <div
       id="gamePlane"
       :style="{ ...gamePlaneCustomStyleData, opacity: 1, transformOrigin: 'left top', ...gamePlaneControlStyle }"
@@ -431,7 +439,6 @@ export default {
       })
       .catch((err) => {
         prettyAlert(err.message);
-        localStorage.setItem('currentGame', '');
         this.$router.push({ path: `/` }).catch((err) => {
           console.log(err);
         });

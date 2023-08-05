@@ -18,16 +18,10 @@ const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
   window.prettyAlert = alert;
 
-  router.beforeEach((to, from, next) => {
-    const currentGame = localStorage.getItem('currentGame');
-    console.log('currentGame=', currentGame);
-    if (to.name === 'Game') {
-      if (!currentGame) return next({ name: 'Lobby' });
-    } else {
-      if (currentGame) return next({ name: 'Game', params: { id: currentGame } });
-    }
-    return next();
-  });
+  // лежит как пример
+  // router.beforeEach((to, from, next) => {
+  //  return next({ name: 'Lobby' });
+  // });
 
   const state = {
     currentUser: '',
@@ -65,13 +59,11 @@ const init = async () => {
   });
 
   api.session.on('joinGame', (data) => {
-    localStorage.setItem('currentGame', data.gameId);
     router.push({ path: `/game/${data.gameId}` }).catch((err) => {
       console.log(err);
     });
   });
   api.session.on('leaveGame', () => {
-    localStorage.removeItem('currentGame');
     router.push({ path: `/` }).catch((err) => {
       console.log(err);
     });

@@ -59,37 +59,74 @@
     }
     await this.saveChanges();
   }
+  broadcastDataVueStoreRuleHandler(data, { accessConfig }) {
+    return {
+      ...data,
+      ...(data.users
+        ? {
+            users: Object.fromEntries(
+              Object.entries(lib.utils.clone(data.users)).map(([id, user]) => {
+                if (user.events) delete user.events;
+                if (user.sessions) {
+                  user.online = user.sessions.length > 0 ? true : false;
+                  delete user.sessions;
+                }
+                return [id, user];
+              })
+            ),
+          }
+        : {}),
+    };
+  }
 
-  async updateChat({ text, user }) {
+  async updateChat({ text, user, event }) {
     const time = Date.now();
-    const insertData = { text, user, time, parent: this.storeId() };
-    const { _id } = await db.mongo.insertOne('chat', insertData);
-    insertData._id = _id;
-    this.set({ chat: { [_id]: insertData } });
+    const chatEvent = { text, event, user, time, parent: this.storeId() };
+    const { _id } = await db.mongo.insertOne('chat', chatEvent);
+    chatEvent._id = _id.toString();
+    this.set({ chat: { [_id]: chatEvent } });
     await this.saveChanges();
+    return { chatEventId: chatEvent._id };
   }
   async userEnter({ sessionId, userId, name }) {
     if (!this.users[userId]) {
-      this.set({ users: { [userId]: { sessions: [] } } });
+      this.set({ users: { [userId]: { sessions: [], events: {} } } });
       this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name'] });
+    } else {
+      const { enter: lastEnterEventId } = this.users[userId].events;
+      this.set({ chat: { [lastEnterEventId]: null } });
     }
-    this.set({ users: { [userId]: { sessions: [...this.users[userId].sessions, sessionId] } } });
+    const { chatEventId } = await this.updateChat({ user: { id: userId }, event: 'enter' });
+
+    this.set({
+      users: {
+        [userId]: {
+          sessions: [...this.users[userId].sessions, sessionId],
+          events: { enter: chatEventId },
+        },
+      },
+    });
     await this.saveChanges();
   }
   async userLeave({ sessionId, userId }) {
-    // this.users[userId] может не быть, если отработало несколько user.leaveLobby (из context.client.events.close)
+    // может не быть user, если отработало несколько user.leaveLobby (из context.client.events.close)
     const user = this.users[userId];
     if (user) {
+      const { leave: lastLeaveEventId } = this.users[userId].events;
       this.set({
         users: {
           [userId]: {
             sessions: user.sessions.filter((id) => id !== sessionId),
           },
         },
+        chat: { [lastLeaveEventId]: null },
       });
-      if (user.sessions.length === 0) {
+
+      const deleteUserFromLobby = user.sessions.length === 0;
+      if (deleteUserFromLobby) {
         this.unsubscribe(`user-${userId}`);
-        this.set({ users: { [userId]: null } });
+        const { chatEventId } = await this.updateChat({ user: { id: userId }, event: 'leave' });
+        this.set({ users: { [userId]: { events: { leave: chatEventId } } } });
       }
       await this.saveChanges();
     }

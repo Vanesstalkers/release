@@ -175,12 +175,20 @@
             class="msg-list"
             :style="{ paddingBottom: '80px', paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px' }"
           >
-            <div v-for="msg in getChat" :key="msg._id" class="msg">
-              <div class="header">
-                <b>{{ msg.user.name }}</b>
-                <i>{{ msg.timeStr }}</i>
+            <div v-for="msg in getChat" :key="msg._id">
+              <div v-if="msg.text" class="msg">
+                <div class="header">
+                  <b>{{ msg.user.name }}</b>
+                  <i>{{ msg.timeStr }}</i>
+                </div>
+                {{ msg.text }}
               </div>
-              {{ msg.text }}
+              <div v-if="msg.event" class="event" :time="msg.timeStr">
+                Игрок <span>{{ lobbyUserMap[msg.user.id]?.name || '' }}</span>
+                {{
+                  msg.event === 'enter' ? 'зашел в лобби' : msg.event === 'leave' ? 'вышел из лобби' : 'что-то сделал'
+                }}
+              </div>
             </div>
           </div>
         </div>
@@ -319,11 +327,11 @@ export default {
     },
     lobbyUserList() {
       return Object.entries(this.lobbyUserMap)
-        .filter(([id, user]) => user && user.name)
+        .filter(([id, user]) => user && user.name && user.online)
         .map(([id, user]) => Object.assign(user, { id }));
     },
     lobbyUserGuestsCount() {
-      return Object.values(this.lobby?.users || {}).filter((user) => user && !user.name).length;
+      return Object.values(this.lobby?.users || {}).filter((user) => user && !user.name && user.online).length;
     },
     lobby() {
       return this.store.lobby?.main || {};
@@ -352,17 +360,15 @@ export default {
       });
     },
     getChat() {
-      return (
-        Object.entries(this.lobby?.chat || {})
-          // .filter(([id, msg]) => msg && msg.text)
-          .map(([id, msg]) =>
-            Object.assign({}, msg, {
-              id,
-              timeStr: new Date(msg.time).toLocaleString(),
-            })
-          )
-          .reverse()
-      );
+      const items = Object.entries(this.lobby?.chat || {})
+        .map(([id, msg]) =>
+          Object.assign({}, msg, {
+            id,
+            timeStr: new Date(msg.time).toLocaleString(),
+          })
+        )
+        .reverse();
+      return items;
     },
   },
   methods: {
@@ -384,7 +390,7 @@ export default {
       }
 
       if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
-      if (userId){
+      if (userId) {
         this.$root.state.currentUser = userId;
         await this.callLobbyEnter();
       }
@@ -395,7 +401,7 @@ export default {
     async login() {
       await this.initSession({ login: this.auth.login, password: this.auth.password });
     },
-    async callLobbyEnter(){
+    async callLobbyEnter() {
       await api.action
         .call({
           path: 'domain.lobby.api.enter',
@@ -578,7 +584,7 @@ export default {
 
     if (this.state.currentUser) {
       this.callLobbyEnter();
-    }else{
+    } else {
       this.initSession();
     }
   },
@@ -1037,21 +1043,30 @@ export default {
   font-size: 16px;
   width: 100%;
 }
-.chat .msg-list > .msg {
+.chat .msg-list .msg {
   padding: 8px;
   text-align: left;
 }
-.chat .msg-list > .msg > .header {
+.chat .msg-list .msg > .header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
 }
-.chat .msg-list > .msg > .header > b {
+.chat .msg-list .msg > .header > b {
   color: #f4e205;
 }
-.chat .msg-list > .msg > .header > i {
+.chat .msg-list .msg > .header > i {
   font-size: 12px;
 }
+
+.chat .msg-list .event {
+  padding: 8px;
+  color: #f4e205;
+}
+.chat .msg-list .event > span {
+  color: white;
+}
+
 .menu-item.pinned .chat-controls,
 .menu-item.tutorial-active .chat-controls {
   display: flex !important;

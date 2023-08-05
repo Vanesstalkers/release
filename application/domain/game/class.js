@@ -281,6 +281,12 @@
 
       gamePlaneDeck.removeItem(plane);
       this.addPlane(plane);
+      
+      const { userId } = this.getActivePlayer();
+      this.logs({
+        msg: `По завершению месяца (закончилась колода карт событий) добавлен новый блок на игровое поле.`,
+        userId,
+      });
 
       const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
       const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;

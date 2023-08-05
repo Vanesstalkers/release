@@ -288,7 +288,12 @@
       }
     }
 
-    broadcastData(data, { customChannel } = {}) {
+    /**
+     * Дополнительные обработчики для store.broadcastData
+     */
+    broadcastDataBeforeHandler(data, config = {}) {
+      const { customChannel } = config;
+
       const broadcastObject = !customChannel && this.#broadcastObject;
       if (broadcastObject) {
         for (const col of Object.keys(this.#broadcastObject)) {
@@ -302,57 +307,18 @@
           }
         }
       }
+    }
+    broadcastDataAfterHandler(data, config = {}) {
+      const { customChannel } = config;
 
-      const subscribers = this.channel().subscribers.entries();
-      for (const [subscriberChannel, { accessConfig = {} } = {}] of subscribers) {
-        if (!customChannel || subscriberChannel === customChannel) {
-          let publishData;
-          const { rule = 'all', fields = [], pathRoot, path, userId } = accessConfig;
-          switch (rule) {
-            /**
-             * фильтруем данные через кастомный обработчик
-             */
-            case 'custom':
-              if (!pathRoot || !path)
-                throw new Error(
-                  `Custom rule handler path or pathRoot (subscriberChannel="${subscriberChannel}") not found`
-                );
-              const splittedPath = path.split('.');
-              const method = lib.utils.getDeep(pathRoot === 'domain' ? domain : lib, splittedPath);
-              if (typeof method !== 'function')
-                throw new Error(
-                  `Custom rule handler (subscriberChannel="${subscriberChannel}", path="${path}") not found`
-                );
-              publishData = method(data);
-              break;
-            /**
-             * отправляем только выбранные поля (и вложенные в них объекты)
-             */
-            case 'fields':
-              publishData = Object.fromEntries(
-                Object.entries(data).filter(([key, value]) =>
-                  fields.find((field) => key === field || key.indexOf(field + '.') === 0)
-                )
-              );
-              break;
-            /**
-             * отправляем данные в формате хранилища на клиенте
-             */
-            case 'vue-store':
-              publishData = {
-                ...data,
-                ...(data.store ? { store: this.prepareBroadcastData({ userId, data: data.store }) } : {}),
-              };
-              break;
-            case 'all':
-            default:
-              publishData = data;
-          }
-          if (!Object.keys(publishData).length) continue;
-          lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
-        }
-      }
-
+      const broadcastObject = !customChannel && this.#broadcastObject;
       if (broadcastObject) this.#broadcastObject = {};
+    }
+    broadcastDataVueStoreRuleHandler(data, { accessConfig }) {
+      const { userId } = accessConfig;
+      return {
+        ...data,
+        ...(data.store ? { store: this.prepareBroadcastData({ userId, data: data.store }) } : {}),
+      };
     }
   };
