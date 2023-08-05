@@ -1,8 +1,24 @@
 <template>
   <div
     id="lobby"
-    :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
+    :class="[
+      state.isMobile ? 'mobile-view' : '',
+      state.isLandscape ? 'landscape-view' : 'portrait-view',
+      !state.currentUser ? 'need-auth' : '',
+    ]"
   >
+    <div v-if="!state.currentUser" class="auth">
+      <div class="form">
+        <h3>Вход в лобби</h3>
+        <div class="inputs">
+          <input v-model="auth.login" name="login" placeholder="login" />
+          <span :style="{ width: '10px' }"></span>
+          <input v-model="auth.password" name="password" placeholder="password" />
+        </div>
+        <button v-on:click="login">Войти с паролем</button>
+        <button class="new" v-on:click="createDemoUser">Создать нового пользователя</button>
+      </div>
+    </div>
     <helper />
 
     <!-- <div :style="{ zIndex: 100, position: 'absolute', background: 'red' }">{{ $root.state }}</div> -->
@@ -276,6 +292,7 @@ export default {
   },
   data() {
     return {
+      auth: { login: '', password: '' },
       userName: '',
       chatMsgText: '',
       disableSendMsgBtn: 0,
@@ -349,6 +366,45 @@ export default {
     },
   },
   methods: {
+    async initSession({ login, password, demo } = {}) {
+      const token = localStorage.getItem('metarhia.session.token');
+      const session = await api.auth
+        .initSession({ token, windowTabId: window.name, login, password, demo })
+        .catch((err) => {
+          console.log(err);
+          return {};
+        });
+
+      const { token: sessionToken, userId, reconnect } = session;
+      if (reconnect) {
+        const { workerId, ports } = reconnect;
+        const port = ports[workerId.substring(1) * 1 - 1];
+        location.href = `${location.origin}?port=${port}`;
+        return;
+      }
+
+      if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
+      if (userId){
+        this.$root.state.currentUser = userId;
+        await this.callLobbyEnter();
+      }
+    },
+    async createDemoUser() {
+      await this.initSession({ demo: true });
+    },
+    async login() {
+      await this.initSession({ login: this.auth.login, password: this.auth.password });
+    },
+    async callLobbyEnter(){
+      await api.action
+        .call({
+          path: 'domain.lobby.api.enter',
+        })
+        .catch((err) => {
+          prettyAlert(err.message);
+        });
+    },
+
     show(mask) {
       if (mask === '' && this.state.isMobile) return;
       this.bg.showMask = mask;
@@ -520,22 +576,20 @@ export default {
     resize();
     window.addEventListener('resize', resize);
 
-    await api.action
-      .call({
-        path: 'domain.lobby.api.enter',
-      })
-      .catch((err) => {
-        prettyAlert(err.message);
-      });
+    if (this.state.currentUser) {
+      this.callLobbyEnter();
+    }else{
+      this.initSession();
+    }
   },
   async beforeDestroy() {
-    await api.action
-      .call({
-        path: 'domain.lobby.api.exit',
-      })
-      .catch((err) => {
-        prettyAlert(err.message);
-      });
+    // await api.action
+    //   .call({
+    //     path: 'domain.lobby.api.exit',
+    //   })
+    //   .catch((err) => {
+    //     prettyAlert(err.message);
+    //   });
   },
 };
 </script>
@@ -1001,5 +1055,55 @@ export default {
 .menu-item.pinned .chat-controls,
 .menu-item.tutorial-active .chat-controls {
   display: flex !important;
+}
+
+#lobby > .auth {
+  z-index: 10001;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background-image: url(@/assets/clear-black-back.png);
+  background-size: cover;
+  display: grid;
+}
+#lobby > .auth > .form {
+  align-self: center;
+  justify-self: center;
+  width: 400px;
+  height: 200px;
+  border: 4px solid #f4e205;
+  display: flex;
+  flex-wrap: wrap;
+  color: #f4e205;
+}
+#lobby > .auth > .form > * {
+  width: 100%;
+}
+#lobby > .auth > .form > .inputs {
+  display: flex;
+  margin: 10px;
+}
+#lobby > .auth > .form > .inputs > input {
+  width: 50%;
+  font-size: 14px;
+  padding: 2px 8px;
+  background: transparent;
+  border: 2px solid #f4e205;
+  color: #f4e205;
+}
+#lobby > .auth > .form > button {
+  margin: 10px;
+  background-color: #f4e205;
+  border: 2px solid #f4e205;
+  cursor: pointer;
+}
+#lobby > .auth > .form > button:hover {
+  opacity: 0.7;
+}
+#lobby > .auth > .form > button.new {
+  background: transparent;
+  color: #f4e205;
 }
 </style>

@@ -50,7 +50,10 @@ const init = async () => {
 
   const protocol = location.protocol === 'http:' ? 'ws' : 'wss';
   const port = new URLSearchParams(location.search).get('port') || 8800;
-  const url = location.hostname === 'localhost' ? `localhost:${port}` : `${location.hostname}/api`;
+  const url =
+    location.hostname === 'localhost' || location.hostname.startsWith('192.168.')
+      ? `${location.hostname}:${port}`
+      : `${location.hostname}/api`;
   const metacom = Metacom.create(`${protocol}://${url}`);
   const { api } = metacom;
   window.api = api;
@@ -76,21 +79,6 @@ const init = async () => {
   api.session.on('msg', ({ msg }) => {
     prettyAlert(msg);
   });
-
-  const token = localStorage.getItem('metarhia.session.token');
-  const session = await api.auth.initSession({ token, windowTabId: window.name, demo: true });
-
-  const { token: sessionToken, userId, reconnect } = session;
-  if (reconnect) {
-    const { workerId, ports } = reconnect;
-    const port = ports[workerId.substring(1) * 1 - 1];
-    location.href = `${location.origin}?port=${port}`;
-    return;
-  }
-
-  if (!sessionToken) throw new Error('Ошибка инициализации сессии');
-  if (token !== sessionToken) localStorage.setItem('metarhia.session.token', sessionToken);
-  if (userId) state.currentUser = userId;
 
   window.app.$mount('#app');
 

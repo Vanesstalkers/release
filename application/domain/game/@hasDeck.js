@@ -14,8 +14,7 @@
         const store = this.getFlattenStore();
         for (const _id of Object.keys(data.itemMap)) data.itemList.push(store[_id]);
       }
-      for (const item of data.itemList || []) deck.addItem(item);
-
+      for (const item of data.itemList || []) deck.addItem(item);      
       return deck;
     },
     deleteDeck(deckToDelete) {

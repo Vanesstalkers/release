@@ -1,5 +1,6 @@
 (class Deck extends lib.game.gameObject {
   itemMap = {};
+  #updatedItems = {};
   #itemClass;
 
   constructor(data, { parent }) {
@@ -25,8 +26,18 @@
         if (key === 'itemMap' && !this.access[player?._id]) {
           const ids = {};
           for (const [idx, [id, val]] of Object.entries(value).entries()) {
-            const item = game.getObjectById(id); // item мог быть перемещен
-            ids[item.fakeId[fakeIdParent]] = val;
+            const updatedItemsEntries = Object.entries(this.#updatedItems[id] || {});
+            if (updatedItemsEntries.length) {
+              for (const [fakeId, action] of updatedItemsEntries) {
+                ids[fakeId] = action === 'remove' ? null : val;
+              }
+            } else {
+              // первичная рассылка из addSubscriber
+              const item = game.getObjectById(id); // ищем в game, потому что item мог быть перемещен
+              const fakeId = item.fakeId[fakeIdParent];
+              if (!fakeId) throw '!fakeId';
+              ids[fakeId] = val;
+            }
           }
           preparedData.itemMap = ids;
         } else {
@@ -41,13 +52,28 @@
             if (parent === player) {
               ids[id] = val;
             } else {
-              const item = game.getObjectById(id); // item мог быть перемещен
-              const fakeId = item.fakeId[fakeIdParent];
-              if (item.visible) {
-                ids[id] = val;
-                ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
+              const item = game.getObjectById(id); // ищем в game, потому что item мог быть перемещен
+              const updatedItemsEntries = Object.entries(this.#updatedItems[id] || {});
+              if (updatedItemsEntries.length) {
+                for (const [fakeId, action] of updatedItemsEntries) {
+                  if (action === 'remove') ids[fakeId] = null;
+                  else if (item.visible) {
+                    ids[id] = val;
+                    ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
+                  } else {
+                    ids[fakeId] = val;
+                  }
+                }
               } else {
-                ids[fakeId] = val;
+                // первичная рассылка из addSubscriber
+                const fakeId = item.fakeId[fakeIdParent];
+                if (!fakeId) throw '!fakeId';
+                if (item.visible) {
+                  ids[id] = val;
+                  ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
+                } else {
+                  ids[fakeId] = val;
+                }
               }
             }
           }
@@ -61,6 +87,8 @@
         if (bFields.includes(key)) preparedData[key] = value;
       }
     }
+
+    this.#updatedItems = {};
     return { visibleId: this._id, preparedData };
   }
 
@@ -81,21 +109,30 @@
   addItem(item) {
     const parentId = this.id();
     const itemClass = this.getItemClass();
-    if (item.constructor != itemClass) {
-      item = new itemClass(item, { parent: this });
-      if (!item.fakeId?.[parentId]) item.updateFakeId({ parentId });
-    }
+    if (item.constructor != itemClass) item = new itemClass(item, { parent: this });
     this.game().markNew(item);
     if (item.sideList) {
       this.game().markNew(item.sideList[0]);
       this.game().markNew(item.sideList[1]);
     }
+
     this.set({ itemMap: { [item._id]: {} } });
+    item.updateFakeId({ parentId });
+    this.markItemUpdated({ item, action: 'add' });
+
     return true;
   }
   removeItem(itemToRemove, { deleteFromStorage = false } = {}) {
     this.set({ itemMap: { [itemToRemove._id]: null } });
+    this.markItemUpdated({ item: itemToRemove, action: 'remove' });
     if (deleteFromStorage) this.deleteFromObjectStorage(itemToRemove);
+  }
+  /**
+   * Наполняем данные для рассылки фронту (о fakeId, которые нужно удалить из deck)
+   */
+  markItemUpdated({ item, action }) {
+    if (!this.#updatedItems[item._id]) this.#updatedItems[item._id] = {};
+    this.#updatedItems[item._id][item.fakeId[this.id()]] = action;
   }
   moveAllItems({ target }) {
     const store = this.getFlattenStore();

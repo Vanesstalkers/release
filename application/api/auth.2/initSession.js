@@ -51,7 +51,7 @@
       context.client.events.close.push(() => {
         session.user().unlinkSession(session);
         session.unsubscribe(`user-${session.userId}`);
-        console.log(`session disconnected (token=${session.token}`);
+        console.log(`session disconnected (token=${session.token}, windowTabId=${windowTabId}`);
       });
 
       context.client.startSession(session.token, {

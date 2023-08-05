@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div v-if="state.shownCard" class="shown-card">
+    <div v-if="state.shownCard" class="shown-card" v-on:click.stop="closeCardInfo">
       <div class="close" v-on:click.stop="closeCardInfo" />
       <div class="img" :style="{ backgroundImage: `url(/img/cards/release/${state.shownCard}.jpg)` }" />
     </div>

@@ -180,7 +180,7 @@
           ? userId === this.winUserId
             ? 'win'
             : 'lose'
-          : 'cancel';
+          : 'lose';
         player.set({ endGameStatus });
         playerEndGameStatus[userId] = endGameStatus;
       }

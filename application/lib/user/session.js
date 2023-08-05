@@ -1,5 +1,11 @@
 (class Session extends lib.store.class(class {}, { broadcastEnabled: true }) {
   #user;
+  // без этого правила на клиент попадут все данные юзера (в том числе логин и хэш пароля)
+  #userSubscribeConfig = {
+    rule: 'fields',
+    fields: ['name', 'currentTutorial', 'helper', 'helperLinks', 'finishedTutorials'],
+  };
+
   constructor({ id, client } = {}) {
     super({ col: 'session', id, client });
   }
@@ -28,7 +34,7 @@
         else throw err;
       });
       // вызов в initChannel при создании сессии не отработал, так как канала `user-${this.userId}` еще не было
-      this.subscribe(`user-${this.userId}`);
+      this.subscribe(`user-${this.userId}`, this.#userSubscribeConfig);
     } else {
       if (userOnline.workerId !== application.worker.id) {
         return { reconnect: { workerId: userOnline.workerId, port: userOnline.port } };
@@ -64,7 +70,7 @@
   }
   initChannel(data) {
     this.getProtoParent().initChannel.call(this, data);
-    this.subscribe(`user-${this.userId}`);
+    this.subscribe(`user-${this.userId}`, this.#userSubscribeConfig);
   }
   /**
    * Базовая функция класса для сохранения данных при получении обновлений

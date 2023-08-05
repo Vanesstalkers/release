@@ -142,6 +142,7 @@ export default {
   position: absolute;
   right: 0px;
   bottom: 0px;
+  height: 0px;
 }
 #game.mobile-view .player.iam > .inner-content > .player-hands {
   flex-wrap: nowrap;

@@ -373,10 +373,10 @@
               }
             }
 
+            this.set({ status: 'PREPARE_START' });
             if (planesPlacedByPlayerCount > 0) {
               lib.timers.timerRestart(this);
             } else {
-              this.set({ status: 'PREPARE_START' });
               this.checkStatus({ cause: 'START_GAME' });
             }
             break;
