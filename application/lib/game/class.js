@@ -139,16 +139,28 @@
       return this.getPlayerList().find((player) => player.userId === id);
     }
     async playerJoin({ userId, userName }) {
-      const player = this.getFreePlayerSlot();
-      if (!player) throw new Error('Свободных мест не осталось');
+      try {
+        if (this.status === 'FINISHED') throw new Error('Игра уже завершена.');
 
-      player.set({ ready: true, userId, userName });
-      this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
+        const player = this.getFreePlayerSlot();
+        if (!player) throw new Error('Свободных мест не осталось');
 
-      this.checkStatus({ cause: 'PLAYER_JOIN' });
-      await this.saveChanges();
+        player.set({ ready: true, userId, userName });
+        this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 
-      lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', { gameId: this.id(), playerId: player.id() });
+        this.checkStatus({ cause: 'PLAYER_JOIN' });
+        await this.saveChanges();
+
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', {
+          gameId: this.id(),
+          playerId: player.id(),
+          isSinglePlayer: this.isSinglePlayer(),
+        });
+      } catch (exception) {
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
+          data: { msg: exception.message },
+        });
+      }
     }
     async playerLeave({ userId }) {
       if (this.status !== 'FINISHED') {

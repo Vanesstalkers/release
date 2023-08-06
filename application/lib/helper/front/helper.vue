@@ -1,7 +1,7 @@
 <template>
   <div :class="['helper', inGame ? 'in-game' : '', ...helperClass]">
     <div
-      v-for="link in helperLinks"
+      v-for="link in filledHelperLinks"
       :key="link.code"
       :class="['helper-link', 'helper-avatar', link.customClass]"
       :style="{
@@ -25,7 +25,7 @@
         </div>
 
         <ul v-if="menu.showTutorials && inGame" class="tutorials">
-          <li v-on:click.stop="action({ tutorial: 'tutorialGameStart' })">Стартовое приветствие игры</li>
+          <li v-on:click.stop="action({ tutorial: 'game-tutorial-start' })">Стартовое приветствие игры</li>
           <li v-on:click.stop="action({ tutorial: 'tutorialGameLinks', step: 'planeControls' })">
             Контроллеры игрового поля
           </li>
@@ -81,10 +81,19 @@ export default {
     inGame: Boolean,
   },
   data() {
-    return { alert: null, menu: null, dialogActive: false, helperClassMap: {}, dialogStyle: {}, dialogClassMap: {} };
+    return {
+      alert: null,
+      mutationObserver: null,
+      helperLinksBounds: {},
+      menu: null,
+      dialogActive: false,
+      helperClassMap: {},
+      dialogStyle: {},
+      dialogClassMap: {},
+    };
   },
   watch: {
-    helperData: function () {
+    'helperData.text': function () {
       this.update();
     },
   },
@@ -93,9 +102,25 @@ export default {
       return this.$root.state || {};
     },
     helperData() {
-      const data = this.state.store.user?.[this.state.currentUser]?.helper || {};
-      // console.log('helperData=', data);
-      return data;
+      return this.state.store.user?.[this.state.currentUser]?.helper || {};
+    },
+    helperLinks() {
+      return this.state.store.user?.[this.state.currentUser]?.helperLinks || {};
+    },
+    helperLinksEntries() {
+      return Object.entries(this.helperLinks).filter(
+        ([code, link]) => link.used !== true && link.type === (this.inGame ? 'game' : 'lobby')
+      );
+    },
+    filledHelperLinks() {
+      return Object.entries(this.helperLinks)
+        .map(([code, link]) => ({
+          code,
+          pos: {},
+          ...link,
+          clientRect: this.helperLinksBounds[code],
+        }))
+        .filter(({ clientRect }) => clientRect);
     },
     helperClass() {
       return Object.entries(this.helperClassMap)
@@ -246,10 +271,46 @@ export default {
 
     const self = this;
     window.prettyAlert = (data) => {
-      if(data === 'Forbidden') data += ` (попробуйте обновить страницу)`;
+      if (data === 'Forbidden') data += ` (попробуйте обновить страницу)`;
       const message = data.message || data;
       self.alert = message;
     };
+
+    this.mutationObserver = new MutationObserver(function (mutationsList, observer) {
+      console.log('mutationsList=', mutationsList);
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+        } else if (mutation.type === 'attributes') {
+          // лежит тут как пример
+          // if (mutation.attributeName === 'markup-onload') {
+          //   const funcName = mutation.target.getAttribute('markup-onload');
+          //   if (window[funcName]) window[funcName](mutation.target);
+          // }
+        }
+      }
+
+      self.$set(
+        self,
+        'helperLinksBounds',
+        Object.fromEntries(
+          self.helperLinksEntries.map(([code, link]) => [
+            code,
+            self.$root.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
+          ])
+        )
+      );
+    });
+
+    this.mutationObserver.observe(document.querySelector('body'), {
+      attributes: true,
+      // attributeFilter: [/* 'markup-code',  */ 'markup-onload'],
+      childList: true,
+      subtree: true,
+      attributeOldValue: true,
+    });
+  },
+  async beforeDestroy() {
+    this.mutationObserver.disconnect();
   },
 };
 </script>

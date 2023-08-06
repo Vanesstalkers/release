@@ -8,6 +8,8 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
 import { Metacom } from '../lib/metacom.js';
+import { mergeDeep } from '../lib/utils.js';
+
 
 library.add(fas, far, fab);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
@@ -16,7 +18,11 @@ Vue.config.productionTip = false;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
-  window.prettyAlert = alert;
+  window.prettyAlert = (msg) => {
+    if (msg === 'Forbidden') {
+      // стандартный ответ impress при доступе к запрещенному ресурсу (скорее всего нужна авторизация)
+    } else alert(msg);
+  };
 
   // лежит как пример
   // router.beforeEach((to, from, next) => {
@@ -33,9 +39,45 @@ const init = async () => {
       user: {},
     },
   };
+  const mixin = {
+    methods: {
+      async initSession(config, handlers) {
+        if (arguments.length < 2) {
+          handlers = config;
+          config = {};
+        }
+        const { login, password, demo } = config || {};
+        const { success: onSuccess, error: onError } = handlers;
+
+        const token = localStorage.getItem('metarhia.session.token');
+        const session = await api.auth
+          .initSession({ token, windowTabId: window.name, login, password, demo })
+          .catch((err) => {
+            console.log(err);
+            if(typeof onError === 'function') onError();
+            return {};
+          });
+
+        const { token: sessionToken, userId, reconnect } = session;
+        if (reconnect) {
+          const { workerId, ports } = reconnect;
+          const port = ports[workerId.substring(1) * 1 - 1];
+          location.href = `${location.origin}?port=${port}`;
+          return;
+        }
+
+        if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
+        if (userId) {
+          this.$root.state.currentUser = userId;
+          if(typeof onSuccess === 'function') onSuccess();
+        }
+      },
+    },
+  };
   window.state = state;
   window.app = new Vue({
     router,
+    mixins: [mixin],
     data: { state },
     render: function (h) {
       return h(App);
@@ -103,67 +145,6 @@ const init = async () => {
   document.addEventListener('contextmenu', function (event) {
     event.preventDefault();
   });
-
-  new MutationObserver(function (mutationsList, observer) {
-    for (const mutation of mutationsList) {
-      if (mutation.type === 'childList') {
-      } else if (mutation.type === 'attributes') {
-        if (mutation.attributeName === 'markup-code') {
-          // console.log('mutation', { code: mutation.target.getAttribute('markup-code'), mutation });
-        }
-        if (mutation.attributeName === 'markup-onload') {
-          const funcName = mutation.target.getAttribute('markup-onload');
-          if (window[funcName]) window[funcName](mutation.target);
-        }
-      }
-    }
-
-    // store.dispatch('setSimple', {
-    //   helperLinksBounds: Object.fromEntries(
-    //     Object.entries(store.getters.getHelperLinks).map(([code, link]) => [
-    //       code,
-    //       window.app.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
-    //     ])
-    //   ),
-    // });
-  }).observe(document.querySelector('body'), {
-    attributes: true,
-    // attributeFilter: [/* 'markup-code',  */ 'markup-onload'],
-    childList: true,
-    subtree: true,
-    attributeOldValue: true,
-  });
 };
 
 init();
-
-function mergeDeep({ target, source }) {
-  for (const key of Object.keys(source)) {
-    if (!target[key]) {
-      if (source[key] !== null) {
-        if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
-          Vue.set(target, key, {});
-          mergeDeep({ target: target[key], source: source[key] });
-        } else Vue.set(target, key, source[key]);
-      }
-    } else if (typeof target[key] !== typeof source[key] || target[key] === null || source[key] === null) {
-      if (source[key] === null) Vue.delete(target, key);
-      else Vue.set(target, key, source[key]);
-    } else if (Array.isArray(target[key])) {
-      // массивы обновляются только целиком (проблемы с реализацией удаления)
-      if (source[key] === null) Vue.delete(target, key);
-      else Vue.set(target, key, source[key]);
-    } else if (typeof target[key] === 'object') {
-      if (source[key] === null) Vue.delete(target, key);
-      else {
-        if (!target[key]) Vue.set(target, key, {});
-        mergeDeep({ target: target[key], source: source[key] });
-      }
-    } else if (target[key] !== source[key]) {
-      if (source[key] === null) Vue.delete(target, key);
-      else Vue.set(target, key, source[key]);
-    } else {
-      // тут значения, которые не изменились
-    }
-  }
-}

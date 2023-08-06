@@ -20,6 +20,16 @@ async (context) => {
       session.send('session/joinGame', { gameId, playerId });
     } else {
       if (!gameLoaded) {
+        user.set({ gameId: null, playerId: null });
+        await user.saveChanges();
+        for (const session of user.sessions()) {
+          session.set({ gameId: null, playerId: null });
+          await session.saveChanges();
+        }
+        return { status: 'ok' };
+
+        // данная реализация восстанавливает игру с ошибкой
+        // + не продуман сценарий восстановления игры для нескольких игроков
         await new domain.game.class()
           .load({ fromDB: { id: gameId } })
           .then((game) => {
@@ -31,7 +41,6 @@ async (context) => {
             if (err === 'not_found') {
               user.set({ gameId: null, playerId: null });
               await user.saveChanges();
-              gameId = null;
             } else throw err;
           });
       }

@@ -302,13 +302,6 @@ export default {
   watch: {
     'game.round': function () {
       this.$root.state.selectedDiceSideId = '';
-      // this.$store.commit('setAvailablePorts', []);
-    },
-    helper: function (val, oldVal) {
-      if (val.selector) {
-        document.getElementById('app').setAttribute('tutorial-active', true);
-        document.querySelector(val.selector).classList.add('tutorial-active');
-      }
     },
     'state.isLandscape': function () {
       this.updatePlaneScale();
@@ -423,29 +416,37 @@ export default {
           prettyAlert(err.message);
         });
     },
+    async callGameEnter() {
+      // без этого не смогу записать gameId и playerId в context сессии
+      await api.action
+        .call({
+          path: 'lib.game.api.enter',
+          args: [{ gameId: this.$route.params.id }],
+        })
+        .then((data) => {
+          this.gameState.gameId = data.gameId;
+          this.gameState.sessionPlayerId = data.playerId;
+        })
+        .catch((err) => {
+          prettyAlert(err.message);
+          this.$router.push({ path: `/` }).catch((err) => {
+            console.log(err);
+          });
+        });
+
+      addEvents(this);
+      addMouseEvents(this);
+    },
   },
   async created() {},
   async mounted() {
-    // без этого не смогу записать gameId и playerId в context сессии
-    await api.action
-      .call({
-        path: 'lib.game.api.enter',
-        args: [{ gameId: this.$route.params.id }],
-      })
-      .then((data) => {
-        console.log('api.game.enter', data);
-        this.gameState.gameId = data.gameId;
-        this.gameState.sessionPlayerId = data.playerId;
-      })
-      .catch((err) => {
-        prettyAlert(err.message);
-        this.$router.push({ path: `/` }).catch((err) => {
-          console.log(err);
-        });
+    if (this.state.currentUser) {
+      this.callGameEnter();
+    } else {
+      this.$root.initSession({
+        success: this.callGameEnter,
       });
-
-    addEvents(this);
-    addMouseEvents(this);
+    }
   },
   async beforeDestroy() {
     removeEvents();

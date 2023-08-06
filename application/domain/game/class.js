@@ -460,6 +460,11 @@
               this.getObjectByCode('Deck[domino]').getObjects({ className: 'Dice' }).length +
               activePlayer.getObjects({ className: 'Dice' }).length;
 
+            // !!! был баг с недостаточным количеством костяшек для закрытия всех зон - отлавливаю
+            console.log('availableZoneCount > dominoCount =', availableZoneCount > dominoCount, {
+              availableZoneCount,
+              dominoCount,
+            });
             if (availableZoneCount > dominoCount) this.endGame();
             break;
           default:

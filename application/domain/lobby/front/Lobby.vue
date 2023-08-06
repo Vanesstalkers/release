@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="lobbyDataLoaded"
     id="lobby"
     :class="[
       state.isMobile ? 'mobile-view' : '',
@@ -300,6 +301,7 @@ export default {
   },
   data() {
     return {
+      lobbyDataLoaded: false,
       auth: { login: '', password: '' },
       userName: '',
       chatMsgText: '',
@@ -378,6 +380,7 @@ export default {
         .initSession({ token, windowTabId: window.name, login, password, demo })
         .catch((err) => {
           console.log(err);
+          this.lobbyDataLoaded = true;
           return {};
         });
 
@@ -406,9 +409,23 @@ export default {
         .call({
           path: 'domain.lobby.api.enter',
         })
+        .then(() => {
+          this.lobbyDataLoaded = true;
+        })
         .catch((err) => {
           prettyAlert(err.message);
         });
+
+      const self = this; // без self потеряется ссылка внутри EventListener
+      function resize() {
+        const bgHeight = 1024;
+        const bgWidth = 2048;
+        self.bg.top = window.innerHeight / 2 - bgHeight / 2;
+        self.bg.left = window.innerWidth / 2 - bgWidth / 2;
+        self.bg.scale = Math.max(window.innerHeight / bgHeight, window.innerWidth / bgWidth);
+      }
+      resize();
+      window.addEventListener('resize', resize);
     },
 
     show(mask) {
@@ -474,16 +491,6 @@ export default {
         .catch((err) => {
           this.restoreMsgBtn();
         });
-
-      // api.lobby
-      //   .updateChat({ text: this.chatMsgText })
-      //   .then((data) => {
-      //     this.chatMsgText = '';
-      //     this.restoreMsgBtn();
-      //   })
-      //   .catch((err) => {
-      //     this.restoreMsgBtn();
-      //   });
     },
     restoreMsgBtn() {
       if (this.disableSendMsgBtn > 0) {
@@ -569,23 +576,15 @@ export default {
   },
   async created() {},
   async mounted() {
-    // console.log('mounted');
-
-    const self = this;
-    function resize() {
-      const bgHeight = 1024;
-      const bgWidth = 2048;
-      self.bg.top = window.innerHeight / 2 - bgHeight / 2;
-      self.bg.left = window.innerWidth / 2 - bgWidth / 2;
-      self.bg.scale = Math.max(window.innerHeight / bgHeight, window.innerWidth / bgWidth);
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
     if (this.state.currentUser) {
       this.callLobbyEnter();
     } else {
-      this.initSession();
+      this.$root.initSession({
+        success: this.callLobbyEnter,
+        error: () => {
+          this.lobbyDataLoaded = true;
+        },
+      });
     }
   },
   async beforeDestroy() {
