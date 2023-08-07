@@ -15,24 +15,126 @@
     const msgList = await db.mongo.find('chat', { parent: this.storeId() }, { limit: 3, sort: [['_id', -1]] });
     for (const msg of msgList) this.chat[msg._id] = msg;
 
-    // this.rankings = {
-    //   topPlayers: {
-    //     title: 'topPlayers',
-    //     active: true,
-    //     list: [
-    //       { games: 100, win: 55 },
-    //       { games: 20, win: 19 },
-    //     ],
-    //   },
-    //   topFreelancers: {
-    //     title: 'topFreelancers',
-    //     list: [],
-    //   },
-    //   richestPlayers: {
-    //     title: 'richestPlayers',
-    //     list: [],
-    //   },
-    // };
+    this.rankings = [
+      {
+        title: 'Релиз',
+        list: [
+          {
+            code: 'richestPlayers',
+            title: 'Самые богатые',
+            active: true,
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'money', title: 'Заработано денег' },
+            ],
+            list: [
+              { games: 100, money: 100000 },
+              { games: 20, money: 50000 },
+              { games: 50, money: 15000 },
+            ],
+          },
+          {
+            code: 'topPlayers',
+            title: 'Трудоголики',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'win', title: 'Закончено проектов' },
+            ],
+            list: [
+              { games: 100, win: 55 },
+              { games: 20, win: 19 },
+            ],
+          },
+          { code: 'topFreelancers', title: 'Фрилансеры', headers: [], list: [] },
+          {
+            code: 'bestQuality',
+            title: 'Лучшее качество',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'crutch', title: 'Костылей' },
+              { code: 'penalty', title: 'Штрафов' },
+            ],
+            list: [
+              { games: 100, crutch: 0, penalty: 0 },
+              { games: 50, crutch: 10, penalty: 1000 },
+            ],
+          },
+          {
+            code: 'bestT2M',
+            title: 'Лучший time2market',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'total', title: 'Потрачено времени' },
+              { code: 'avr', title: 'В среднем' },
+            ],
+            list: [
+              { games: 100, total: 3000, avr: 30 },
+              { games: 50, total: 2000, avr: 40 },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Автопродажи',
+        list: [
+          {
+            code: 'richestPlayers',
+            title: 'Самые богатые',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'money', title: 'Заработано денег' },
+            ],
+            list: [
+              { games: 100, money: 100000 },
+              { games: 20, money: 50000 },
+              { games: 50, money: 15000 },
+            ],
+          },
+          {
+            code: 'topPlayers',
+            title: 'Трудоголики',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'win', title: 'Закончено проектов' },
+            ],
+            list: [
+              { games: 100, win: 55 },
+              { games: 20, win: 19 },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Банк-продаж',
+        list: [
+          {
+            code: 'richestPlayers',
+            title: 'Самые богатые',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'money', title: 'Заработано денег' },
+            ],
+            list: [
+              { games: 100, money: 100000 },
+              { games: 20, money: 50000 },
+              { games: 50, money: 15000 },
+            ],
+          },
+          {
+            code: 'topPlayers',
+            title: 'Трудоголики',
+            headers: [
+              { code: 'games', title: 'Написано проектов' },
+              { code: 'win', title: 'Закончено проектов' },
+            ],
+            list: [
+              { games: 100, win: 55 },
+              { games: 20, win: 19 },
+            ],
+          },
+        ],
+      },
+    ];
 
     // this.fixState();
     console.log(`Lobby "${this.storeId()}" loaded.`);

@@ -277,7 +277,6 @@ export default {
     };
 
     this.mutationObserver = new MutationObserver(function (mutationsList, observer) {
-      console.log('mutationsList=', mutationsList);
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
         } else if (mutation.type === 'attributes') {

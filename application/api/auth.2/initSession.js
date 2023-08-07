@@ -44,7 +44,6 @@
             const userId = user.id();
             await session.create({ userId, userLogin: user.login, token: user.token, windowTabId });
           } else throw new Error('Требуется авторизация');
-          // else return { status: 'ok', need_login: true };
         }
       }
 

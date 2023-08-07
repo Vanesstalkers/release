@@ -22,8 +22,6 @@
     </div>
     <helper />
 
-    <!-- <div :style="{ zIndex: 100, position: 'absolute', background: 'red' }">{{ $root.state }}</div> -->
-
     <div :class="['menu-item', 'info', !state.isMobile ? 'preview' : '']">
       <label v-on:click="pinMenuItem">
         УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
@@ -263,14 +261,7 @@
       <label v-on:click="pinMenuItem">
         ЗАЛ СЛАВЫ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
-      <div :style="{ display: 'flex' }">
-        <div :style="{ width: '200px' }">
-          {{ rankingsList }}
-        </div>
-        <div :style="{ width: 'calc(100% - 200px)' }">
-          {{ currentRanking }}
-        </div>
-      </div>
+      <rankings :games="lobby.rankings" />
     </div>
 
     <img
@@ -294,10 +285,12 @@ import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
 import helper from '~/lib/helper/front/helper.vue';
+import rankings from './rankings.vue';
 
 export default {
   components: {
     helper,
+    rankings,
   },
   data() {
     return {
@@ -338,16 +331,6 @@ export default {
     lobby() {
       return this.store.lobby?.main || {};
     },
-    rankings() {
-      return this.lobby.rankings || {};
-    },
-    rankingsList() {
-      return Object.values(this.rankings).map((r) => ({ title: r.title, active: r.active }));
-    },
-    currentRanking() {
-      return Object.values(this.rankings).find((r) => r.active)?.list || [];
-    },
-
     lobbyGameMap() {
       return this.lobby?.games || {};
     },
