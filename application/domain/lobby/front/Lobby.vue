@@ -49,15 +49,15 @@
       </label>
       <div>
         <div class="new-game-btn-list">
-          <div v-on:click="addGame('single-blitz')">
+          <div v-on:click="addGame({ type: 'release', subtype: 'single-blitz' })">
             <font-awesome-icon :icon="['fas', 'user']" size="2xl" />
             Фриланс
           </div>
-          <div v-on:click="addGame('duel-blitz')">
+          <div v-on:click="addGame({ type: 'release', subtype: 'duel-blitz' })">
             <font-awesome-icon :icon="['fas', 'user-group']" size="2xl" />
             Дуэль
           </div>
-          <div v-on:click="addGame('ffa-blitz')">
+          <div v-on:click="addGame({ type: 'release', subtype: 'ffa-blitz' })">
             <font-awesome-icon :icon="['fas', 'users']" size="2xl" />
             Каждый за себя
           </div>
@@ -418,11 +418,12 @@ export default {
     pinMenuItem(e) {
       e.target.closest('.menu-item').classList.toggle('pinned');
     },
-    async addGame(type) {
+    async addGame({ type, subtype } = {}) {
+      if (!type || !subtype) throw new Error('game type not set');
       await api.action
         .call({
           path: 'domain.game.api.new',
-          args: [{ type }],
+          args: [{ type, subtype }],
         })
         .then(({ gameId }) => {
           if (gameId) this.joinGame({ gameId });

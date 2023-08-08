@@ -6,18 +6,29 @@
       name: this.name,
     });
 
-    let { helper = null, helperLinks = {}, finishedTutorials = {} } = this;
+    let { currentTutorial = {}, helper = null, helperLinks = {}, finishedTutorials = {} } = this;
+
+    if (currentTutorial.active?.includes('game-')) {
+      this.set({ currentTutorial: null, helper: null });
+      helper = null;
+    }
+
     const lobbyStartTutorialName = 'lobby-tutorial-start';
     if (!helper && !finishedTutorials[lobbyStartTutorialName]) {
       const tutorial = lib.helper.getTutorial(lobbyStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
-      // helperLinks = {
-      //   'menu-top': { selector: '.menu-item.top', tutorial: lobbyStartTutorialName, type: 'lobby' },
-      //   'menu-chat': { selector: '.menu-item.chat', tutorial: 'lobby-tutorial-menu', type: 'lobby' },
-      // };
-      this.set({ currentTutorial: { active: lobbyStartTutorialName } });
-      this.set({ helper });
-      this.set({ helperLinks });
+      helperLinks = {
+        ...{
+          menuTop: { selector: '.menu-item.top', tutorial: 'lobby-tutorial-links', type: 'lobby' },
+          menuChat: { selector: '.menu-item.chat', tutorial: 'lobby-tutorial-links', type: 'lobby' },
+        },
+        ...helperLinks,
+      };
+      this.set({
+        currentTutorial: { active: lobbyStartTutorialName },
+        helper,
+        helperLinks,
+      });
     }
 
     await this.saveChanges();
@@ -30,52 +41,64 @@
     });
   }
 
-  async joinGame({ gameId, playerId, isSinglePlayer }) {
+  async joinGame({ gameId, playerId, gameType, isSinglePlayer }) {
     for (const session of this.sessions()) {
       session.set({ gameId, playerId });
       await session.saveChanges();
       session.send('session/joinGame', { gameId, playerId });
     }
 
-    this.set({ gameId, playerId });
+    this.set({
+      gameId,
+      playerId,
+      rankings: !this.rankings?.[gameType] ? { [gameType]: {} } : undefined,
+    });
 
-    let { helper = null, helperLinks = {}, finishedTutorials = {} } = this;
+    let { currentTutorial = {}, helper = null, helperLinks = {}, finishedTutorials = {} } = this;
+
+    if (currentTutorial.active?.includes('lobby-')) {
+      this.set({ currentTutorial: null, helper: null });
+      helper = null;
+    }
+
     const gameStartTutorialName = isSinglePlayer ? 'game-tutorial-start' : 'game-tutorial-startSingle';
-
     if (!helper && !finishedTutorials[gameStartTutorialName]) {
       const tutorial = lib.helper.getTutorial(gameStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
-      this.set({ currentTutorial: { active: gameStartTutorialName } });
-      this.set({ helper });
-    }
-    if (Object.keys(helperLinks).length === 0) {
       helperLinks = {
-        planeControls: {
-          selector: '.gameplane-controls',
-          tutorial: 'game-tutorial-links',
-          type: 'game',
-          pos: { top: false, left: false },
+        ...{
+          planeControls: {
+            selector: '.gameplane-controls',
+            tutorial: 'game-tutorial-links',
+            type: 'game',
+            pos: { top: false, left: false },
+          },
+          handPlanes: {
+            selector: '.hand-planes',
+            tutorial: 'game-tutorial-links',
+            type: 'game',
+            pos: { top: true, left: true },
+          },
+          cardActive: {
+            selector: '[code="Deck[card_active]"] .card-event',
+            tutorial: 'game-tutorial-links',
+            type: 'game',
+            pos: { top: false, left: true },
+          },
+          leaveGame: {
+            selector: '.leave-game-btn',
+            tutorial: 'game-tutorial-links',
+            type: 'game',
+            pos: { top: true, left: true },
+          },
         },
-        handPlanes: {
-          selector: '.hand-planes',
-          tutorial: 'game-tutorial-links',
-          type: 'game',
-          pos: { top: true, left: true },
-        },
-        cardActive: {
-          selector: '[code="Deck[card_active]"] .card-event',
-          tutorial: 'game-tutorial-links',
-          type: 'game',
-          pos: { top: false, left: true },
-        },
-        leaveGame: {
-          selector: '.leave-game-btn',
-          tutorial: 'game-tutorial-links',
-          type: 'game',
-          pos: { top: true, left: true },
-        },
+        ...helperLinks,
       };
-      this.set({ helperLinks });
+      this.set({
+        currentTutorial: { active: gameStartTutorialName },
+        helper,
+        helperLinks,
+      });
     }
 
     await this.saveChanges();

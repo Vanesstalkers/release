@@ -36,10 +36,12 @@
       return result;
     }
 
-    async create({ type } = {}) {
-      const gameJSON = domain.game.exampleJSON[type];
-      if (!gameJSON) throw new Error(`Not found initial game data (type='${type}').`);
+    async create({ type, subtype } = {}) {
+      const gameJSON = domain.game.exampleJSON[subtype];
+      if (!gameJSON) throw new Error(`Not found initial game data (type='${type}', subtype='${subtype}').`);
       const gameData = lib.utils.structuredClone(gameJSON);
+      gameData.type = type;
+      gameData.subtype = subtype;
       this.fromJSON(gameData, { newGame: true });
       delete this._id; // удаляем _id от gameObject, чтобы он не попал в БД
 
@@ -154,6 +156,7 @@
         lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', {
           gameId: this.id(),
           playerId: player.id(),
+          gameType: this.type,
           isSinglePlayer: this.isSinglePlayer(),
         });
       } catch (exception) {
@@ -196,7 +199,7 @@
         player.set({ endGameStatus });
         playerEndGameStatus[userId] = endGameStatus;
       }
-      this.broadcastAction('gameFinished', { gameId: this.id(), playerEndGameStatus });
+      this.broadcastAction('gameFinished', { gameId: this.id(), gameType: this.type, playerEndGameStatus });
 
       throw new lib.game.endGameException();
     }

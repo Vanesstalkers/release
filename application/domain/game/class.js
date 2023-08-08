@@ -18,6 +18,8 @@
 
     if (data.store) this.store = data.store;
     this.logs(data.logs);
+    this.type = data.type;
+    this.subtype = data.subtype;
     this.addTime = data.addTime;
     this.settings = data.settings;
     this.status = data.status || 'WAIT_FOR_PLAYERS';

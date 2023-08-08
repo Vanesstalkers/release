@@ -3,7 +3,7 @@
   // без этого правила на клиент попадут все данные юзера (в том числе логин и хэш пароля)
   #userSubscribeConfig = {
     rule: 'fields',
-    fields: ['name', 'currentTutorial', 'helper', 'helperLinks', 'finishedTutorials'],
+    fields: ['name', 'currentTutorial', 'helper', 'helperLinks', 'finishedTutorials', 'rankings'],
   };
 
   constructor({ id, client } = {}) {
@@ -94,12 +94,12 @@
       // for (const callback of client.events.close) callback();
     }
   }
-  async gameFinished({ gameId, playerEndGameStatus }) {
+  async gameFinished({ gameId, gameType, playerEndGameStatus }) {
     const user = this.user();
     const endGameStatus = playerEndGameStatus[user.id()];
 
     const tutorial = lib.helper.getTutorial('game-tutorial-finished');
-    user.set({ helper: tutorial[endGameStatus] });
+    user.set({ helper: tutorial[endGameStatus], rankings });
     await user.saveChanges();
   }
 });

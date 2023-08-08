@@ -15,128 +15,127 @@
     const msgList = await db.mongo.find('chat', { parent: this.storeId() }, { limit: 3, sort: [['_id', -1]] });
     for (const msg of msgList) this.chat[msg._id] = msg;
 
-    this.rankings = [
-      {
+    Object.assign(this.users, {
+      1: {
+        rankings: {
+          release: { games: 100, money: 100000, win: 55, crutch: 1, penalty: 1000, totalTime: 3000, avrTime: 30 },
+          car: { games: 100, money: 100000, win: 55 },
+          bank: { games: 100, money: 100000, win: 55 },
+        },
+      },
+      2: {
+        rankings: {
+          release: { games: 20, money: 50000, win: 19, crutch: 10, penalty: 10000, totalTime: 1000, avrTime: 29 },
+          car: { games: 99, money: 10000, win: 45 },
+          bank: { games: 99, money: 10000, win: 45 },
+        },
+      },
+      3: {
+        rankings: {
+          release: { games: 50, money: 15000, win: 22, crutch: 2, penalty: 3000, totalTime: 5000, avrTime: 35 },
+          car: { games: 98, money: 1000, win: 35 },
+          bank: { games: 98, money: 1000, win: 35 },
+        },
+      },
+      4: {
+        rankings: {
+          release: { games: 1, money: 500, win: 0, crutch: 0, penalty: 0, totalTime: 0, avrTime: 0 },
+          car: { games: 97, money: 100, win: 25 },
+          bank: { games: 97, money: 100, win: 25 },
+        },
+      },
+    });
+
+    this.rankings = {
+      release: {
         title: 'Релиз',
-        list: [
-          {
-            code: 'richestPlayers',
+        rankingMap: {
+          richestPlayers: {
             title: 'Самые богатые',
             active: true,
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            list: [
-              { games: 100, money: 100000 },
-              { games: 20, money: 50000 },
-              { games: 50, money: 15000 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-          {
-            code: 'topPlayers',
+          topPlayers: {
             title: 'Трудоголики',
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            list: [
-              { games: 100, win: 55 },
-              { games: 20, win: 19 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-          { code: 'topFreelancers', title: 'Фрилансеры', headers: [], list: [] },
-          {
-            code: 'bestQuality',
+          topFreelancers: { title: 'Фрилансеры', headers: [], usersTop: ['1', '2', '3', '4'] },
+          bestQuality: {
             title: 'Лучшее качество',
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'crutch', title: 'Костылей' },
               { code: 'penalty', title: 'Штрафов' },
             ],
-            list: [
-              { games: 100, crutch: 0, penalty: 0 },
-              { games: 50, crutch: 10, penalty: 1000 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-          {
-            code: 'bestT2M',
+          bestT2M: {
             title: 'Лучший time2market',
             headers: [
               { code: 'games', title: 'Написано проектов' },
-              { code: 'total', title: 'Потрачено времени' },
-              { code: 'avr', title: 'В среднем' },
+              { code: 'totalTime', title: 'Потрачено времени' },
+              { code: 'avrTime', title: 'В среднем' },
             ],
+            usersTop: ['1', '2', '3', '4'] /* 
             list: [
               { games: 100, total: 3000, avr: 30 },
               { games: 50, total: 2000, avr: 40 },
-            ],
+            ], */,
           },
-        ],
+        },
       },
-      {
+      car: {
         title: 'Автопродажи',
-        list: [
-          {
-            code: 'richestPlayers',
+        rankingMap: {
+          richestPlayers: {
             title: 'Самые богатые',
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            list: [
-              { games: 100, money: 100000 },
-              { games: 20, money: 50000 },
-              { games: 50, money: 15000 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-          {
-            code: 'topPlayers',
+          topPlayers: {
             title: 'Трудоголики',
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            list: [
-              { games: 100, win: 55 },
-              { games: 20, win: 19 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-        ],
+        },
       },
-      {
+      bank: {
         title: 'Банк-продаж',
-        list: [
-          {
-            code: 'richestPlayers',
+        rankingMap: {
+          richestPlayers: {
             title: 'Самые богатые',
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            list: [
-              { games: 100, money: 100000 },
-              { games: 20, money: 50000 },
-              { games: 50, money: 15000 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-          {
-            code: 'topPlayers',
+          topPlayers: {
             title: 'Трудоголики',
             headers: [
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            list: [
-              { games: 100, win: 55 },
-              { games: 20, win: 19 },
-            ],
+            usersTop: ['1', '2', '3', '4'],
           },
-        ],
+        },
       },
-    ];
+    };
 
-    // this.fixState();
     console.log(`Lobby "${this.storeId()}" loaded.`);
     return this;
   }
@@ -150,6 +149,9 @@
       switch (key) {
         case 'user':
           this.set({ users: map });
+          for (const [userId, value] of Object.entries(map)) {
+            if (value.rankings) this.checkRatings({ initiatorUserId: userId });
+          }
           break;
         case 'game':
           this.set({ games: map });
@@ -193,11 +195,15 @@
   async userEnter({ sessionId, userId, name }) {
     if (!this.users[userId]) {
       this.set({ users: { [userId]: { sessions: [], events: {} } } });
-      this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name'] });
     } else {
       const { enter: lastEnterEventId } = this.users[userId].events;
       this.set({ chat: { [lastEnterEventId]: null } });
     }
+    if (this.users[userId].sessions.length === 0) {
+      // ловит как новых юзеров, так и тех, кто пришел после deleteUserFromLobby (в userLeave)
+      this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name', 'rankings'] });
+    }
+
     const { chatEventId } = await this.updateChat({ user: { id: userId }, event: 'enter' });
 
     this.set({
@@ -234,11 +240,11 @@
     }
   }
   async addGame(gameData) {
-    const gameId = gameData.id;
+    const { id: gameId, type, subtype } = gameData;
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
   }
-  async gameFinished({ gameId }) {
+  async gameFinished({ gameId, gameType }) {
     this.unsubscribe(`game-${gameId}`);
     this.set({ games: { [gameId]: null } });
   }
@@ -247,6 +253,25 @@
       if (game.status === 'FINISHED') {
         this.unsubscribe(`game-${gameId}`);
         this.set({ games: { [gameId]: null } });
+      }
+    }
+    await this.saveChanges();
+  }
+  async checkRatings({ initiatorUserId, gameType = 'release' }) {
+    const game = this.rankings[gameType];
+    const rankingList = Object.entries(game.rankingMap).map(([code, ranking]) => ({ ...ranking, code }));
+    for (const ranking of rankingList) {
+      const users = Object.values(ranking.usersTop); // клонирование массива usersTop
+      if (!users.includes(initiatorUserId)) users.push(initiatorUserId);
+      const usersTop = users.map((userId) => ({ ...(this.users[userId].rankings?.[gameType] || {}), userId }));
+      
+      if (ranking.code === 'richestPlayers') {
+        usersTop.sort((a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1));
+        this.set({
+          rankings: {
+            [gameType]: { rankingMap: { [ranking.code]: { usersTop: usersTop.map(({ userId }) => userId) } } },
+          },
+        });
       }
     }
     await this.saveChanges();

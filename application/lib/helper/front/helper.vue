@@ -26,7 +26,7 @@
 
         <ul v-if="menu.showTutorials && inGame" class="tutorials">
           <li v-on:click.stop="action({ tutorial: 'game-tutorial-start' })">Стартовое приветствие игры</li>
-          <li v-on:click.stop="action({ tutorial: 'tutorialGameLinks', step: 'planeControls' })">
+          <li v-on:click.stop="action({ tutorial: 'game-tutorial-links', step: 'planeControls' })">
             Контроллеры игрового поля
           </li>
         </ul>
