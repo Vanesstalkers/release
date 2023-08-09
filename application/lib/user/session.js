@@ -30,7 +30,7 @@
     const userOnline = await db.redis.hget('users', this.userLogin, { json: true });
     if (!userOnline) {
       user = await new lib.user.mainClass().load({ fromDB: { id: this.userId } }).catch((err) => {
-        if (err === 'not_found') throw new Error('Session user not found');
+        if (err === 'not_found') throw 'user_not_found'; // должно отличаться от not_found самой сессии
         else throw err;
       });
       // вызов в initChannel при создании сессии не отработал, так как канала `user-${this.userId}` еще не было

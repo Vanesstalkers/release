@@ -10,7 +10,6 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 import { Metacom } from '../lib/metacom.js';
 import { mergeDeep } from '../lib/utils.js';
 
-
 library.add(fas, far, fab);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 Vue.config.productionTip = false;
@@ -53,12 +52,10 @@ const init = async () => {
         const session = await api.auth
           .initSession({ token, windowTabId: window.name, login, password, demo })
           .catch((err) => {
-            console.log(err);
-            if(typeof onError === 'function') onError();
-            return {};
+            if (typeof onError === 'function') onError(err);
           });
 
-        const { token: sessionToken, userId, reconnect } = session;
+        const { token: sessionToken, userId, reconnect, lobbyList: [lobbyId] = [] } = session || {};
         if (reconnect) {
           const { workerId, ports } = reconnect;
           const port = ports[workerId.substring(1) * 1 - 1];
@@ -69,7 +66,8 @@ const init = async () => {
         if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
         if (userId) {
           this.$root.state.currentUser = userId;
-          if(typeof onSuccess === 'function') onSuccess();
+          this.$root.state.currentLobby = lobbyId;
+          if (typeof onSuccess === 'function') onSuccess({ lobbyId });
         }
       },
     },

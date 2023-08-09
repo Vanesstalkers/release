@@ -17,6 +17,7 @@
           <input v-model="auth.password" name="password" placeholder="password" />
         </div>
         <button v-on:click="login">Войти с паролем</button>
+        <div v-if="auth.err" class="err">{{ auth.err }}</div>
         <button class="new" v-on:click="createDemoUser">Создать нового пользователя</button>
       </div>
     </div>
@@ -295,7 +296,7 @@ export default {
   data() {
     return {
       lobbyDataLoaded: false,
-      auth: { login: '', password: '' },
+      auth: { login: '', password: '', err: null },
       userName: '',
       chatMsgText: '',
       disableSendMsgBtn: 0,
@@ -329,7 +330,7 @@ export default {
       return Object.values(this.lobby?.users || {}).filter((user) => user && !user.name && user.online).length;
     },
     lobby() {
-      return this.store.lobby?.main || {};
+      return this.store.lobby?.[this.state.currentLobby] || {};
     },
     lobbyGameMap() {
       return this.lobby?.games || {};
@@ -357,29 +358,15 @@ export default {
     },
   },
   methods: {
-    async initSession({ login, password, demo } = {}) {
-      const token = localStorage.getItem('metarhia.session.token');
-      const session = await api.auth
-        .initSession({ token, windowTabId: window.name, login, password, demo })
-        .catch((err) => {
-          console.log(err);
+    async initSession(config) {
+      this.$root.initSession(config, {
+        success: this.callLobbyEnter,
+        error: (err) => {
+          if (err.message) this.auth.err = err.message;
+          // чтобы пользователь увидел форму авторизации
           this.lobbyDataLoaded = true;
-          return {};
-        });
-
-      const { token: sessionToken, userId, reconnect } = session;
-      if (reconnect) {
-        const { workerId, ports } = reconnect;
-        const port = ports[workerId.substring(1) * 1 - 1];
-        location.href = `${location.origin}?port=${port}`;
-        return;
-      }
-
-      if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
-      if (userId) {
-        this.$root.state.currentUser = userId;
-        await this.callLobbyEnter();
-      }
+        },
+      });
     },
     async createDemoUser() {
       await this.initSession({ demo: true });
@@ -387,10 +374,11 @@ export default {
     async login() {
       await this.initSession({ login: this.auth.login, password: this.auth.password });
     },
-    async callLobbyEnter() {
+    async callLobbyEnter({ lobbyId }) {
       await api.action
         .call({
           path: 'domain.lobby.api.enter',
+          args: [{ lobbyId }],
         })
         .then(() => {
           this.lobbyDataLoaded = true;
@@ -560,15 +548,10 @@ export default {
   },
   async created() {},
   async mounted() {
-    if (this.state.currentUser) {
-      this.callLobbyEnter();
+    if (this.state.currentUser && this.state.currentLobby) {
+      this.callLobbyEnter({ lobbyId: this.state.currentLobby });
     } else {
-      this.$root.initSession({
-        success: this.callLobbyEnter,
-        error: () => {
-          this.lobbyDataLoaded = true;
-        },
-      });
+      this.initSession();
     }
   },
   async beforeDestroy() {
@@ -1103,5 +1086,8 @@ export default {
 #lobby > .auth > .form > button.new {
   background: transparent;
   color: #f4e205;
+}
+#lobby > .auth > .form > .err {
+  color: orangered;
 }
 </style>

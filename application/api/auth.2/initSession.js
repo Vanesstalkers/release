@@ -8,7 +8,9 @@
       if (token) {
         let sessionLoadResult;
         sessionLoadResult = await session.load({ fromDB: { query: { token, windowTabId } } }).catch(async (err) => {
-          if (err !== 'not_found') throw err; // любая ошибка, кроме ожидаемой "not_found"
+          // любая ошибка, кроме ожидаемых
+          if (err !== 'not_found' && err !== 'user_not_found') throw err;
+          if (err === 'user_not_found') token = null; // удалили из БД - нужно пересоздавать сессию
 
           sessionLoadResult = await session
             .load({ fromDB: { query: { token } } }, { initStore: false, linkSessionToUser: false })
@@ -20,7 +22,8 @@
               }
             })
             .catch((err) => {
-              if (err !== 'not_found') throw err; // любая ошибка, кроме ожидаемой "not_found"
+              // любая ошибка, кроме ожидаемых
+              if (err !== 'not_found' && err !== 'user_not_found') throw err;
               token = null;
             });
 
@@ -41,8 +44,13 @@
               if (err === 'not_created') throw new Error('Ошибка создания демо-пользователя');
               else throw err;
             });
-            const userId = user.id();
-            await session.create({ userId, userLogin: user.login, token: user.token, windowTabId });
+            session.removeChannel(); // если отработала "user_not_found", то сама сессия могла была быть корректно инициализирована (нужно удалить канал, чтобы повторно произошла подписка на юзера)
+            await session.create({
+              userId: user.id(),
+              userLogin: user.login,
+              token: user.token,
+              windowTabId,
+            });
           } else throw new Error('Требуется авторизация');
         }
       }
@@ -58,7 +66,8 @@
         userId: session.userId,
       }); // данные попадут в context (в следующих вызовах)
 
-      return { token: session.token, userId: session.userId };
+      const lobbyList = Array.from(lib.store.lobby.keys());
+      return { token: session.token, userId: session.userId, lobbyList };
     } catch (err) {
       console.log(err);
       return { status: 'err', message: err.message };

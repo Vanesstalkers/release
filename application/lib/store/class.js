@@ -23,7 +23,11 @@
             // !!! тут нужно восстановить информацию о себе у старых подписчиков
           }
           removeChannel() {
-            // !!! надо настроить удаление канала
+            if(this.#channel){
+              lib.store.broadcaster.removeChannel({ name: this.#channelName });
+              this.#channelName = null;
+              this.#channel = null;
+            }
           }
           client() {
             return this.#client;

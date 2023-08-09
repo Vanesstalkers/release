@@ -11,11 +11,8 @@
     //   this[name] = method;
     // }
   }
-  async load() {
-    const msgList = await db.mongo.find('chat', { parent: this.storeId() }, { limit: 3, sort: [['_id', -1]] });
-    for (const msg of msgList) this.chat[msg._id] = msg;
-
-    Object.assign(this.users, {
+  async create({ code }) {
+    const users = {
       1: {
         rankings: {
           release: { games: 100, money: 100000, win: 55, crutch: 1, penalty: 1000, totalTime: 3000, avrTime: 30 },
@@ -44,9 +41,9 @@
           bank: { games: 97, money: 100, win: 25 },
         },
       },
-    });
+    };
 
-    this.rankings = {
+    const rankings = {
       release: {
         title: 'Релиз',
         rankingMap: {
@@ -57,6 +54,7 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
+            sortFunc: (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
@@ -65,6 +63,7 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
+            sortFunc: (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topFreelancers: { title: 'Фрилансеры', headers: [], usersTop: ['1', '2', '3', '4'] },
@@ -75,6 +74,7 @@
               { code: 'crutch', title: 'Костылей' },
               { code: 'penalty', title: 'Штрафов' },
             ],
+            sortFunc: (a, b) => ((a.crutch || -1) / (a.games || -1) < (b.crutch || -1) / (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           bestT2M: {
@@ -84,11 +84,8 @@
               { code: 'totalTime', title: 'Потрачено времени' },
               { code: 'avrTime', title: 'В среднем' },
             ],
-            usersTop: ['1', '2', '3', '4'] /* 
-            list: [
-              { games: 100, total: 3000, avr: 30 },
-              { games: 50, total: 2000, avr: 40 },
-            ], */,
+            sortFunc: (a, b) => ((a.avrTime || -1) < (b.avrTime || -1) ? -1 : 1),
+            usersTop: ['1', '2', '3', '4'],
           },
         },
       },
@@ -101,6 +98,7 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
+            sortFunc: (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
@@ -109,6 +107,7 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
+            sortFunc: (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
         },
@@ -122,6 +121,7 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
+            sortFunc: (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
@@ -130,11 +130,23 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
+            sortFunc: (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
         },
       },
     };
+
+    await this.getProtoParent().create.call(this, { code, users, rankings });
+
+    return this;
+  }
+  async load(from, config) {
+    await this.getProtoParent().load.call(this, from, config);
+    for (const user of Object.values(this.users)) {
+      user.sessions = [];
+    }
+    await this.saveChanges();
 
     console.log(`Lobby "${this.storeId()}" loaded.`);
     return this;
@@ -264,15 +276,13 @@
       const users = Object.values(ranking.usersTop); // клонирование массива usersTop
       if (!users.includes(initiatorUserId)) users.push(initiatorUserId);
       const usersTop = users.map((userId) => ({ ...(this.users[userId].rankings?.[gameType] || {}), userId }));
-      
-      if (ranking.code === 'richestPlayers') {
-        usersTop.sort((a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1));
-        this.set({
-          rankings: {
-            [gameType]: { rankingMap: { [ranking.code]: { usersTop: usersTop.map(({ userId }) => userId) } } },
-          },
-        });
-      }
+
+      usersTop.sort(ranking.sortFunc);
+      this.set({
+        rankings: {
+          [gameType]: { rankingMap: { [ranking.code]: { usersTop: usersTop.map(({ userId }) => userId) } } },
+        },
+      });
     }
     await this.saveChanges();
   }

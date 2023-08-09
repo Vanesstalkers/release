@@ -1,6 +1,6 @@
 (class LobbyUser extends lib.user.class() {
-  async enterLobby({ sessionId }) {
-    lib.store.broadcaster.publishAction(`lobby-main`, 'userEnter', {
+  async enterLobby({ sessionId, lobbyId }) {
+    lib.store.broadcaster.publishAction(`lobby-${lobbyId}`, 'userEnter', {
       sessionId,
       userId: this.id(),
       name: this.name,
@@ -33,8 +33,8 @@
 
     await this.saveChanges();
   }
-  leaveLobby({ sessionId }) {
-    const lobbyName = `lobby-main`;
+  leaveLobby({ sessionId, lobbyId }) {
+    const lobbyName = `lobby-${lobbyId}`;
     lib.store.broadcaster.publishAction(lobbyName, 'userLeave', {
       sessionId,
       userId: this.id(),
@@ -51,7 +51,7 @@
     this.set({
       gameId,
       playerId,
-      rankings: !this.rankings?.[gameType] ? { [gameType]: {} } : undefined,
+      ...(!this.rankings?.[gameType] ? { rankings: { [gameType]: {} } } : {}),
     });
 
     let { currentTutorial = {}, helper = null, helperLinks = {}, finishedTutorials = {} } = this;

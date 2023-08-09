@@ -1,22 +1,22 @@
-async (context) => {
+async (context, { lobbyId }) => {
   const { sessionId, userId } = context;
   const session = lib.store('session').get(sessionId);
   const user = lib.store('user').get(userId);
 
-  const lobbyName = `lobby-main`;
+  const lobbyName = `lobby-${lobbyId}`;
   session.subscribe(lobbyName, { rule: 'vue-store', userId: user.id() });
   context.client.events.close.unshift(() => {
     session.unsubscribe(lobbyName);
-    user.leaveLobby({ sessionId });
+    user.leaveLobby({ sessionId, lobbyId });
   });
-  await user.enterLobby({ sessionId });
+  await user.enterLobby({ sessionId, lobbyId });
 
   const { gameId, playerId } = user;
   if (gameId) {
     const gameLoaded = await db.redis.hget('games', gameId);
     if (gameLoaded) {
       session.set({ gameId, playerId });
-      await user.saveChanges();
+      await session.saveChanges();
       session.send('session/joinGame', { gameId, playerId });
     } else {
       if (!gameLoaded) {
@@ -33,7 +33,7 @@ async (context) => {
         await new domain.game.class()
           .load({ fromDB: { id: gameId } })
           .then((game) => {
-            lib.store.broadcaster.publishAction(`lobby-main`, 'addGame', { id: gameId });
+            lib.store.broadcaster.publishAction(lobbyName, 'addGame', { id: gameId });
             user.joinGame({ gameId, playerId });
             lib.timers.timerRestart(game);
           })
@@ -45,6 +45,9 @@ async (context) => {
           });
       }
     }
+  } else {
+    session.set({ lobbyId });
+    await session.saveChanges();
   }
 
   return { status: 'ok' };
