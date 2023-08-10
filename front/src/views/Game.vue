@@ -451,7 +451,9 @@ export default {
   async beforeDestroy() {
     removeEvents();
     removeMouseEvents();
-    delete this.$root.state.store.game[this.gameState.gameId];
+    if (this.$root.state.store.game?.[this.gameState.gameId]) {
+      delete this.$root.state.store.game[this.gameState.gameId];
+    }
   },
 };
 </script>

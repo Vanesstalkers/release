@@ -118,6 +118,10 @@
               config,
               keyPath: [...keyPath, key],
             });
+            if (config.removeEmptyObject && Object.keys(source[key]).length && Object.keys(target[key]).length === 0) {
+              // изменений во вложенном объекте нет (удаляем, чтобы он не перетерся в БД)
+              delete target[key];
+            }
           } else target[key] = source[key];
         } else if (!deleteNull) target[key] = source[key];
       } else if (typeof masterObj[key] !== typeof source[key] || masterObj[key] === null || source[key] === null) {
@@ -140,6 +144,10 @@
               config,
               keyPath: [...keyPath, key],
             });
+            if (config.removeEmptyObject && Object.keys(source[key]).length && Object.keys(target[key]).length === 0) {
+              // изменений во вложенном объекте нет (удаляем, чтобы он не перетерся в БД)
+              delete target[key];
+            }
           }
         }
       } else if (masterObj[key] !== source[key]) {

@@ -1017,12 +1017,10 @@ export default {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  font-size: 12px;
 }
 .chat .msg-list .msg > .header > b {
   color: #f4e205;
-}
-.chat .msg-list .msg > .header > i {
-  font-size: 12px;
 }
 
 .chat .msg-list .event {

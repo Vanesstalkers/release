@@ -23,7 +23,7 @@
             // !!! тут нужно восстановить информацию о себе у старых подписчиков
           }
           removeChannel() {
-            if(this.#channel){
+            if (this.#channel) {
               lib.store.broadcaster.removeChannel({ name: this.#channelName });
               this.#channelName = null;
               this.#channel = null;
@@ -142,6 +142,7 @@
     #col;
     #changes = {};
     #disableChanges = false;
+    #preventSaveFields = [];
 
     constructor(data = {}) {
       const { col, id } = data;
@@ -154,6 +155,10 @@
     }
     col() {
       return this.#col;
+    }
+    preventSaveFields(data) {
+      if (!data) return this.#preventSaveFields;
+      this.#preventSaveFields = data;
     }
     /**
      * При вызове любыми наследниками всегда возвращает protoClass
@@ -252,6 +257,8 @@
         const flattenChanges = lib.utils.flatten(changes);
         const changeKeys = Object.keys(flattenChanges);
         changeKeys.forEach((key, idx) => {
+          if (this.#preventSaveFields.find((field) => key.indexOf(field) === 0)) return;
+          
           // защита от ошибки MongoServerError: Updating the path 'XXX.YYY' would create a conflict at 'XXX'
           if (changeKeys[idx + 1]?.indexOf(`${key}.`) !== 0) {
             if (flattenChanges[key] === null) $update.$unset[key] = '';
@@ -260,7 +267,9 @@
         });
         if (Object.keys($update.$set).length === 0) delete $update.$set;
         if (Object.keys($update.$unset).length === 0) delete $update.$unset;
-        await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, $update);
+        if (Object.keys($update).length) {
+          await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, $update);
+        }
       }
       if (typeof this.broadcastData === 'function') this.broadcastData(changes);
 

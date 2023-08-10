@@ -3,8 +3,22 @@
   games = {};
   chat = {};
   rankings = {};
+
+  rankingSortFunc = {
+    'release.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
+    'release.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
+    'release.topFreelancers': null,
+    'release.bestQuality': (a, b) => ((a.crutch || -1) / (a.games || -1) < (b.crutch || -1) / (b.games || -1) ? -1 : 1),
+    'release.bestT2M': (a, b) => ((a.avrTime || -1) < (b.avrTime || -1) ? -1 : 1),
+    'car.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
+    'car.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
+    'bank.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
+    'bank.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
+  };
+
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
+    this.preventSaveFields(['chat']);
 
     // for (const [name, method] of Object.entries(domain.game.methods)) {
     //   if (name === 'parent') continue;
@@ -54,7 +68,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            sortFunc: (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
@@ -63,7 +76,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            sortFunc: (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topFreelancers: { title: 'Фрилансеры', headers: [], usersTop: ['1', '2', '3', '4'] },
@@ -74,7 +86,6 @@
               { code: 'crutch', title: 'Костылей' },
               { code: 'penalty', title: 'Штрафов' },
             ],
-            sortFunc: (a, b) => ((a.crutch || -1) / (a.games || -1) < (b.crutch || -1) / (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           bestT2M: {
@@ -84,7 +95,6 @@
               { code: 'totalTime', title: 'Потрачено времени' },
               { code: 'avrTime', title: 'В среднем' },
             ],
-            sortFunc: (a, b) => ((a.avrTime || -1) < (b.avrTime || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
         },
@@ -98,7 +108,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            sortFunc: (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
@@ -107,7 +116,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            sortFunc: (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
         },
@@ -121,7 +129,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            sortFunc: (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
@@ -130,7 +137,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            sortFunc: (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
             usersTop: ['1', '2', '3', '4'],
           },
         },
@@ -143,6 +149,15 @@
   }
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);
+
+    const msgList = await db.mongo.find(
+      'chat',
+      { parent: this.storeId(), text: { $ne: null } },
+      { limit: 3, sort: [['_id', -1]] }
+    );
+    for (const msg of msgList) this.chat[msg._id] = msg;
+
+    this.games = {}; // обнуляем (восстановление игр после рестарта сервера еще не работает)
     for (const user of Object.values(this.users)) {
       user.sessions = [];
     }
@@ -160,7 +175,8 @@
     for (const [key, map] of Object.entries(data)) {
       switch (key) {
         case 'user':
-          this.set({ users: map });
+          // без removeEmptyObject у user будет обнуляться (в БД) объект rankings (потому что в map изменения придут, но они будут идентичны значению в masterObj)
+          this.set({ users: map }, { removeEmptyObject: true });
           for (const [userId, value] of Object.entries(map)) {
             if (value.rankings) this.checkRatings({ initiatorUserId: userId });
           }
@@ -277,12 +293,15 @@
       if (!users.includes(initiatorUserId)) users.push(initiatorUserId);
       const usersTop = users.map((userId) => ({ ...(this.users[userId].rankings?.[gameType] || {}), userId }));
 
-      usersTop.sort(ranking.sortFunc);
-      this.set({
-        rankings: {
-          [gameType]: { rankingMap: { [ranking.code]: { usersTop: usersTop.map(({ userId }) => userId) } } },
-        },
-      });
+      const sortFunc = this.rankingSortFunc[`${gameType}.${ranking.code}`];
+      if (sortFunc) {
+        usersTop.sort(sortFunc);
+        this.set({
+          rankings: {
+            [gameType]: { rankingMap: { [ranking.code]: { usersTop: usersTop.map(({ userId }) => userId) } } },
+          },
+        });
+      }
     }
     await this.saveChanges();
   }
