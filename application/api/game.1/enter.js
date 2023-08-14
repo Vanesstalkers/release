@@ -61,7 +61,7 @@
       return { status: 'ok' };
     } catch (err) {
       console.log(err);
-      return { status: 'err', message: err.message };
+      return { status: 'err', message: err.message, hideMessage: err.stack };
     }
   },
 });

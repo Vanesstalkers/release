@@ -76,9 +76,10 @@
       restoreAlreadyPlacedDice = true;
     }
 
-    // была размещена костяшка на прилегающую к Bridge зону
+    // была размещена костяшка на прилегающую к Bridge зоне
     if (dice.relatedPlacement) {
-      for (const relatedDice of Object.values(dice.relatedPlacement)) {
+      for (const relatedDiceId of Object.keys(dice.relatedPlacement)) {
+        const relatedDice = game.getObjectById(relatedDiceId);
         relatedDice.moveToTarget(prevPlayerHand);
       }
     }
@@ -128,6 +129,8 @@
     if (!card.isPlayOneTime()) card.set({ played: null });
     card.moveToTarget(cardDeckDrop);
   }
+
+  game.checkCrutches();
 
   const newRoundNumber = game.round + 1;
   const newRoundLogEvents = [];

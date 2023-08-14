@@ -19,6 +19,7 @@
         if (!target) return;
         const realValue = target.eventData.fakeValue?.realValue ?? target.value;
         target.set({ eventData: { fakeValue: { realValue } }, value: fakeValue });
+        game.set({ crutchMap: { [target.id()]: true } });
       }
 
       for (const deck of player.getObjects({ className: 'Deck' })) {

@@ -113,9 +113,7 @@ export default {
           path: 'lib.game.api.leave',
           args: [],
         })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+        .catch(prettyAlert);
     },
   },
   mounted() {},

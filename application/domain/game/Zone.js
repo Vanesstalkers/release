@@ -71,9 +71,9 @@
     this.sideList.forEach((side, sideIndex) => {
       if (item) {
         const itemSide = item.sideList[sideIndex];
-        side.set({ value: itemSide.value });
+        side.set({ value: itemSide.value, diceSideCode: itemSide.code });
       } else {
-        side.set({ value: null });
+        side.set({ value: null, diceSideCode: null });
       }
       // обновляем expectedValues у всех соседей
       for (const linkCode of Object.values(side.links)) {

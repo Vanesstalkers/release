@@ -11,7 +11,7 @@
       return await method(context, ...args);
     } catch (err) {
       console.log(err);
-      return { status: 'err', message: err.message };
+      return { status: 'err', message: err.message, hideMessage: err.stack };
     }
   },
 });

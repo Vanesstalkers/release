@@ -175,6 +175,9 @@
       this.#id = id.toString();
       lib.store(this.#col).set(this.#id, this);
     }
+    removeStore() {
+      lib.store(this.#col).delete(this.#id);
+    }
     storeId() {
       return this.#col + '-' + this.#id;
     }
@@ -212,6 +215,10 @@
       }
       if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
       return this;
+    }
+    async remove(){
+      this.removeStore();
+      this.removeChannel();
     }
 
     setChanges(val, config = {}) {

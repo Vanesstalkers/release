@@ -15,6 +15,7 @@ async (context, { gameId }) => {
 
     return { status: 'ok', gameId, playerId: user.playerId };
   } catch (err) {
-    return { status: 'err', message: err.message };
+    console.log(err);
+    return { status: 'err', message: err.message, hideMessage: err.stack };
   }
 };

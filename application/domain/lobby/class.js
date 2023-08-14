@@ -4,18 +4,6 @@
   chat = {};
   rankings = {};
 
-  rankingSortFunc = {
-    'release.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
-    'release.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
-    'release.topFreelancers': null,
-    'release.bestQuality': (a, b) => ((a.crutch || -1) / (a.games || -1) < (b.crutch || -1) / (b.games || -1) ? -1 : 1),
-    'release.bestT2M': (a, b) => ((a.avrTime || -1) < (b.avrTime || -1) ? -1 : 1),
-    'car.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
-    'car.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
-    'bank.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
-    'bank.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
-  };
-
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
     this.preventSaveFields(['chat']);
@@ -285,6 +273,19 @@
     }
     await this.saveChanges();
   }
+
+  rankingSortFunc = {
+    'release.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
+    'release.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
+    'release.topFreelancers': null,
+    'release.bestQuality': (a, b) => ((a.crutch || -1) / (a.games || -1) < (b.crutch || -1) / (b.games || -1) ? -1 : 1),
+    'release.bestT2M': (a, b) => ((a.avrTime || -1) < (b.avrTime || -1) ? -1 : 1),
+    'car.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
+    'car.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
+    'bank.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
+    'bank.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
+  };
+
   async checkRatings({ initiatorUserId, gameType = 'release' }) {
     const game = this.rankings[gameType];
     const rankingList = Object.entries(game.rankingMap).map(([code, ranking]) => ({ ...ranking, code }));

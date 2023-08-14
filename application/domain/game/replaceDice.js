@@ -14,19 +14,19 @@
   if (dice.locked) throw new Error('Костяшка не может быть сыграна на этом ходу.');
 
   const deletedDices = game.getDeletedDices();
-  const replacedDice = deletedDices.find((dice) => {
+  const replacedOrRelatedDice = deletedDices.find((dice) => {
     const diceZone = dice.getParent();
     const plane = diceZone.getParent();
     const isBridgeZone = plane.matches({ className: 'Bridge' });
     const nearZones = diceZone.getNearZones();
     return diceZone == zone || (isBridgeZone && nearZones.includes(zone));
   });
-  const remainDeletedDices = deletedDices.filter((dice) => dice != replacedDice);
-  if (!replacedDice && remainDeletedDices.length)
+  const remainDeletedDices = deletedDices.filter((dice) => dice != replacedOrRelatedDice);
+  if (!replacedOrRelatedDice && remainDeletedDices.length)
     throw new Error('Добавлять новые костяшки можно только взамен временно удаленных.');
 
-  if (replacedDice && zone !== replacedDice.getParent()) {
-    replacedDice.set({ relatedPlacement: { [dice._id]: dice } });
+  if (replacedOrRelatedDice && zone !== replacedOrRelatedDice.getParent()) {
+    replacedOrRelatedDice.set({ relatedPlacement: { [dice.id()]: true } });
   }
   dice.moveToTarget(zone);
   dice.set({ placedAtRound: game.round });

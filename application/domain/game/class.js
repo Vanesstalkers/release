@@ -283,7 +283,7 @@
 
       gamePlaneDeck.removeItem(plane);
       this.addPlane(plane);
-      
+
       const { userId } = this.getActivePlayer();
       this.logs({
         msg: `По завершению месяца (закончилась колода карт событий) добавлен новый блок на игровое поле.`,
@@ -336,6 +336,26 @@
     for (const event of Object.keys(this.cardEvents)) {
       this.set({ cardEvents: { [event]: [] } });
     }
+  }
+  checkCrutches() {
+    let updatedMap = {};
+    for (const diceSideId of Object.keys(this.crutchMap || {})) {
+      const diceSide = this.getObjectById(diceSideId);
+      const dice = diceSide.parent();
+      const parentZone = dice.findParent({ className: 'Zone' });
+      if (!parentZone) {
+        updatedMap[diceSideId] = null;
+        continue;
+      }
+      const parentZoneSide = parentZone.sideList.find(({ diceSideCode }) => diceSideCode === diceSide.code);
+
+      let hasCrutch = false;
+      for (const expectedValue of Object.keys(parentZoneSide.expectedValues)) {
+        if (expectedValue.toString() !== diceSide.value.toString()) hasCrutch = true;
+      }
+      if (hasCrutch === false) updatedMap[diceSideId] = null;
+    }
+    this.set({ crutchMap: updatedMap });
   }
   /**
    * Проверяет и обновляет статус игры, если это необходимо
@@ -492,10 +512,19 @@
       player.set({ timerEndTime: Date.now() + time * 1000 });
     }
     player.set({ timerUpdateTime: Date.now() });
+    if (!player.timerEndTime) throw 'player.timerEndTime === NaN';
   }
   async onTimerTick({ timerId, data: { time = null } = {} }) {
     try {
       const player = this.getActivePlayer();
+      if (!player.timerEndTime) {
+        if (this.status === 'FINISHED') {
+          // тут некорректное завершение таймера игры
+          // остановка таймера должна была отработать в endGame
+          // бросать endGameException нельзя, потому что в removeGame будет вызов saveChanges, который попытается сделать broadcastData, но channel к этому моменту будет уже удален
+          lib.timers.timerDelete(this);
+        } else throw 'player.timerEndTime === NaN';
+      }
       console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
       if (player.timerEndTime < Date.now()) {
         this.checkStatus({ cause: 'PLAYER_TIMER_END' });
@@ -503,7 +532,7 @@
       }
     } catch (exception) {
       if (exception instanceof lib.game.endGameException) {
-        await this.saveChanges();
+        await this.removeGame();
       } else throw exception;
     }
   }

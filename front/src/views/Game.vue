@@ -175,10 +175,7 @@ export default {
     });
 
     async function handleGameApi(data, { onSuccess, onError } = {}) {
-      if (!onError)
-        onError = (err) => {
-          prettyAlert(err.message);
-        };
+      if (!onError) onError = prettyAlert;
       await api.action
         .call({ path: 'lib.game.api.action', args: [data] })
         .then(onSuccess)
@@ -412,9 +409,7 @@ export default {
         .then(() => {
           this.showLog = true;
         })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+        .catch(prettyAlert);
     },
     async callGameEnter() {
       // без этого не смогу записать gameId и playerId в context сессии

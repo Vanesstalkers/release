@@ -17,10 +17,10 @@ Vue.config.productionTip = false;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
-  window.prettyAlert = (msg) => {
-    if (msg === 'Forbidden') {
+  window.prettyAlert = ({ message, hideMessage } = {}) => {
+    if (message === 'Forbidden') {
       // стандартный ответ impress при доступе к запрещенному ресурсу (скорее всего нужна авторизация)
-    } else alert(msg);
+    } else alert(message);
   };
 
   // лежит как пример

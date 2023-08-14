@@ -31,9 +31,8 @@ export default {
       return this.store.port?.[this.portId];
     },
   },
-  methods: {},
-  mounted() {
-    this.$nextTick(() => {
+  methods: {
+    paintLinks() {
       const portEl = document.getElementById(this.port.code);
       for (const link of Object.keys(this.port.links)) {
         const linkEl = document.getElementById(link);
@@ -46,6 +45,11 @@ export default {
           this.$set(this.linkLines, key, { x1, y1, x2, y2 });
         }
       }
+    },
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.paintLinks();
     });
   },
 };

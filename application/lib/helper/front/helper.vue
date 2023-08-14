@@ -14,6 +14,10 @@
     <div v-if="!menu" :class="['helper-guru', 'helper-avatar', `scale-${state.guiScale}`]" v-on:click.stop="initMenu">
       <div v-if="alert" class="alert" v-on:click.stop="">
         {{ alert }}
+        <div v-if="showHideAlert">
+          <small>{{ hideAlert }}</small>
+        </div>
+        <div v-if="hideAlert" class="show-hide" v-on:click.stop="showHideAlert = true" />
         <div class="close" v-on:click.stop="alert = null" />
       </div>
     </div>
@@ -83,6 +87,8 @@ export default {
   data() {
     return {
       alert: null,
+      hideAlert: null,
+      showHideAlert: false,
       mutationObserver: null,
       helperLinksBounds: {},
       menu: null,
@@ -198,9 +204,7 @@ export default {
             path: 'lib.helper.api.action',
             args: [{ action, step, tutorial }],
           })
-          .catch((err) => {
-            prettyAlert(err.message);
-          });
+          .catch(prettyAlert);
         if (tutorial) this.menu = null;
       }
     },
@@ -250,9 +254,7 @@ export default {
               path: 'lib.game.api.leave',
               args: [],
             })
-            .catch((err) => {
-              prettyAlert(err.message);
-            });
+            .catch(prettyAlert);
           break;
       }
     },
@@ -270,10 +272,11 @@ export default {
     this.$nextTick(this.update);
 
     const self = this;
-    window.prettyAlert = (data) => {
-      if (data === 'Forbidden') data += ` (попробуйте обновить страницу)`;
-      const message = data.message || data;
+    window.prettyAlert = ({ message, hideMessage } = {}) => {
+      if (message === 'Forbidden') message += ` (попробуйте обновить страницу)`;
       self.alert = message;
+      self.hideAlert = hideMessage;
+      if (self.hideAlert) this.showHideAlert = false;
     };
 
     this.mutationObserver = new MutationObserver(function (mutationsList, observer) {
@@ -367,6 +370,18 @@ export default {
 }
 .helper-guru > .alert > .close:hover {
   opacity: 0.7;
+}
+.helper-guru > .alert > .show-hide {
+  position: absolute;
+  right: 15px;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  background-image: url(@/assets/info.png);
+  background-size: 20px;
+  background-color: black;
+  border-radius: 50%;
+  cursor: pointer;
 }
 .helper-guru.scale-1 {
   scale: 0.8;

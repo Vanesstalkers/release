@@ -8,10 +8,6 @@ function mergeDeep({ target, source }) {
         if (typeof source[key] === 'object' && !Array.isArray(source[key])) {
           Vue.set(target, key, {});
           mergeDeep({ target: target[key], source: source[key] });
-          if (config.removeEmptyObject && Object.keys(source[key]).length && Object.keys(target[key]).length === 0) {
-            // изменений во вложенном объекте нет
-            Vue.delete(target[key]);
-          }
         } else Vue.set(target, key, source[key]);
       }
     } else if (typeof target[key] !== typeof source[key] || target[key] === null || source[key] === null) {
@@ -26,10 +22,6 @@ function mergeDeep({ target, source }) {
       else {
         if (!target[key]) Vue.set(target, key, {});
         mergeDeep({ target: target[key], source: source[key] });
-        if (config.removeEmptyObject && Object.keys(source[key]).length && Object.keys(target[key]).length === 0) {
-          // изменений во вложенном объекте нет
-          Vue.delete(target[key]);
-        }
       }
     } else if (target[key] !== source[key]) {
       if (source[key] === null) Vue.delete(target, key);

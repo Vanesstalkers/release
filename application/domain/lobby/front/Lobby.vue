@@ -383,9 +383,7 @@ export default {
         .then(() => {
           this.lobbyDataLoaded = true;
         })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+        .catch(prettyAlert);
 
       const self = this; // без self потеряется ссылка внутри EventListener
       function resize() {
@@ -416,9 +414,7 @@ export default {
         .then(({ gameId }) => {
           if (gameId) this.joinGame({ gameId });
         })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+        .catch(prettyAlert);
     },
     async joinGame({ gameId }) {
       await api.action
@@ -426,9 +422,7 @@ export default {
           path: 'lib.game.api.join',
           args: [{ gameId }],
         })
-        .catch((err) => {
-          prettyAlert(err.message);
-        });
+        .catch(prettyAlert);
     },
     showInfo(name) {
       api.action.call({
@@ -559,9 +553,7 @@ export default {
     //   .call({
     //     path: 'domain.lobby.api.exit',
     //   })
-    //   .catch((err) => {
-    //     prettyAlert(err.message);
-    //   });
+    //   .catch(prettyAlert);
   },
 };
 </script>

@@ -36,22 +36,24 @@
         </div>
       </div>
       <div v-if="!menuOpened" class="content">
-        <table v-if="activeRating">
-          <tr>
-            <th v-for="header in activeRatingHeaders" :key="header.code" :code="header.code">
-              {{ header.title }}
-            </th>
-          </tr>
-          <tr
-            v-for="(item, idx) in activeRating.list"
-            :key="idx"
-            :class="[item.iam ? 'iam' : '', item.noGames ? 'no-games' : '']"
-          >
-            <td v-for="header in activeRatingHeaders" :key="header.code + idx" :code="header.code">
-              {{ item[header.code] }}
-            </td>
-          </tr>
-        </table>
+        <perfect-scrollbar>
+          <table v-if="activeRating">
+            <tr>
+              <th v-for="header in activeRatingHeaders" :key="header.code" :code="header.code">
+                {{ header.title }}
+              </th>
+            </tr>
+            <tr
+              v-for="(item, idx) in activeRating.list"
+              :key="idx"
+              :class="[item.iam ? 'iam' : '', item.noGames ? 'no-games' : '']"
+            >
+              <td v-for="header in activeRatingHeaders" :key="header.code + idx" :code="header.code">
+                {{ item[header.code] }}
+              </td>
+            </tr>
+          </table>
+        </perfect-scrollbar>
       </div>
     </div>
   </perfect-scrollbar>

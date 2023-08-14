@@ -4,7 +4,7 @@
     try {
       console.log('application.worker.id=', application.worker.id);
 
-      const session = new lib.user.session({ client: context.client });
+      const session = new lib.user.sessionClass({ client: context.client });
       if (token) {
         let sessionLoadResult;
         sessionLoadResult = await session.load({ fromDB: { query: { token, windowTabId } } }).catch(async (err) => {
@@ -70,7 +70,7 @@
       return { token: session.token, userId: session.userId, lobbyList };
     } catch (err) {
       console.log(err);
-      return { status: 'err', message: err.message };
+      return { status: 'err', message: err.message, hideMessage: err.stack };
     }
   },
 });

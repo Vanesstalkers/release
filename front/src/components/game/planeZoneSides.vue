@@ -1,7 +1,7 @@
 <template>
   <div class="sideList">
     <div
-      v-for="(side, index) in sideList"
+      v-for="(side, index) in filledSideList"
       :key="side._id"
       :index="index"
       :id="side._id"
@@ -14,6 +14,8 @@
 </template>
 
 <script>
+import { inject } from 'vue';
+
 export default {
   props: {
     sideList: Array,
@@ -23,11 +25,23 @@ export default {
     },
     linkLines: Object,
   },
-  methods: {},
-  mounted() {
-    // console.log('planeZoneSide mounted', this.sideList, this.position);
-    this.$nextTick(() => {
-      for (const side of this.sideList) {
+  setup() {
+    return inject('gameGlobals');
+  },
+  computed: {
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.getStore();
+    },
+    filledSideList() {
+      return this.sideList.map(({ _id }) => this.store.zoneside?.[_id] || {});
+    },
+  },
+  methods: {
+    paintLinks() {
+      for (const side of this.filledSideList) {
         const sideEl = document.getElementById(side._id);
         for (const link of Object.keys(side.links)) {
           const linkEl = document.getElementById(link);
@@ -38,16 +52,14 @@ export default {
             const y2 = linkEl.getAttribute('y');
             const key = [[x1, y1].join('.'), [x2, y2].join('.')].sort().join('.');
             this.$set(this.linkLines, key, { x1, y1, x2, y2 });
-            // if (this.position.vertical) {
-            //   this.$set(this.linkLines, key + '-', { x1: x1 - 10, y1, x2: x2 - 10, y2 });
-            //   this.$set(this.linkLines, key + '+', { x1: +x1 + 10, y1, x2: +x2 + 10, y2 });
-            // } else {
-            //   this.$set(this.linkLines, key + '-', { x1, y1: y1 - 10, x2, y2: y2 - 10 });
-            //   this.$set(this.linkLines, key + '+', { x1, y1: +y1 + 10, x2, y2: +y2 + 10 });
-            // }
           }
         }
       }
+    },
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.paintLinks();
     });
   },
 };

@@ -1,6 +1,7 @@
 async () => {
 
   lib.user.mainClass = domain.lobby.user;
+  lib.user.sessionClass = domain.lobby.session;
 
   if (application.worker.id === 'W1') {
     db.mongo.handlers.afterStart.push(async () => {

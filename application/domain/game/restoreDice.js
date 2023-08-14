@@ -6,7 +6,8 @@
 
   const isAvailable = zone.checkIsAvailable(dice);
   if (!isAvailable && dice.relatedPlacement) {
-    for (const relatedDice of Object.values(dice.relatedPlacement)) {
+    for (const relatedDiceId of Object.keys(dice.relatedPlacement)) {
+      const relatedDice = game.getObjectById(relatedDiceId);
       relatedDice.moveToTarget(playerHand);
     }
   }

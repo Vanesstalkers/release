@@ -172,7 +172,7 @@
           this.endGame({ canceledByUser: userId });
         } catch (exception) {
           if (exception instanceof lib.game.endGameException) {
-            await this.saveChanges();
+            await this.removeGame();
           } else throw exception;
         }
       }
@@ -182,6 +182,7 @@
       lib.timers.timerDelete(this);
       this.set({ status: 'FINISHED' });
       if (winningPlayer) this.setWinner({ player: winningPlayer });
+      this.checkCrutches();
 
       const playerList = this.getObjects({ className: 'Player' });
       const playerEndGameStatus = {};
@@ -294,10 +295,10 @@
         }
       } catch (exception) {
         if (exception instanceof lib.game.endGameException) {
-          await this.saveChanges();
+          await this.removeGame();
         } else {
           lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
-            data: { msg: exception.message },
+            data: { msg: exception.message, hideMsg: exception.stack },
           });
         }
       }
