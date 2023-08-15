@@ -7,28 +7,38 @@
       const session = new lib.user.sessionClass({ client: context.client });
       if (token) {
         let sessionLoadResult;
-        sessionLoadResult = await session.load({ fromDB: { query: { token, windowTabId } } }).catch(async (err) => {
-          // любая ошибка, кроме ожидаемых
-          if (err !== 'not_found' && err !== 'user_not_found') throw err;
-          if (err === 'user_not_found') token = null; // удалили из БД - нужно пересоздавать сессию
+        sessionLoadResult = await session
+          .load({
+            fromDB: { query: { token, windowTabId } },
+          })
+          .catch(async (err) => {
+            // любая ошибка, кроме ожидаемых
+            if (err !== 'not_found' && err !== 'user_not_found') throw err;
+            if (err === 'user_not_found') token = null; // удалили из БД - нужно пересоздавать сессию (не учитывает подгруженные в store.user и redis данные - нужна перезагрузка процесса, либо удаление соответствующих данных)
 
-          sessionLoadResult = await session
-            .load({ fromDB: { query: { token } } }, { initStore: false, linkSessionToUser: false })
-            .then(async (res) => {
-              if (res.reconnect) {
-                return { ...res };
-              } else {
-                await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
-              }
-            })
-            .catch((err) => {
-              // любая ошибка, кроме ожидаемых
-              if (err !== 'not_found' && err !== 'user_not_found') throw err;
-              token = null;
-            });
+            sessionLoadResult = await session
+              .load(
+                { fromDB: { query: { token } } },
+                {
+                  initStore: false,
+                  linkSessionToUser: false,
+                }
+              )
+              .then(async (res) => {
+                if (res.reconnect) {
+                  return { ...res };
+                } else {
+                  await session.create({ userId: session.userId, userLogin: session.userLogin, token, windowTabId });
+                }
+              })
+              .catch((err) => {
+                // любая ошибка, кроме ожидаемых
+                if (err !== 'not_found' && err !== 'user_not_found') throw err;
+                token = null;
+              });
 
-          return sessionLoadResult;
-        });
+            return sessionLoadResult;
+          });
         if (sessionLoadResult?.reconnect) {
           sessionLoadResult.reconnect.ports = [config.server.balancer].concat(config.server.ports);
           return { reconnect: sessionLoadResult.reconnect };

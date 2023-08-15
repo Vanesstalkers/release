@@ -1,4 +1,9 @@
 (class LobbySession extends lib.user.session() {
+  constructor(data = {}) {
+    super(data);
+    this.preventSaveFields(['lobbyId']); // если сохранять lobbyId в БД, то поломается логика со связанными сессиями в initSession
+  }
+
   async gameFinished({ gameId, gameType, playerEndGameStatus }) {
     const user = this.user();
     const endGameStatus = playerEndGameStatus[user.id()];

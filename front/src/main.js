@@ -116,8 +116,8 @@ const init = async () => {
       console.log(err);
     });
   });
-  api.session.on('msg', ({ msg }) => {
-    prettyAlert(msg);
+  api.session.on('msg', (data) => {
+    prettyAlert(data);
   });
 
   window.app.$mount('#app');
