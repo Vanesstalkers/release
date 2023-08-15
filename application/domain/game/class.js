@@ -217,33 +217,6 @@
 
     return bridge.code;
   }
-  getZonesAvailability(dice) {
-    const result = new Map();
-    this.disableChanges();
-    {
-      dice.getParent().removeItem(dice); // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
-
-      const zoneList = [];
-      zoneList.push(
-        ...this.getObjects({ className: 'Plane', directParent: this }).reduce((arr, plane) => {
-          return arr.concat(plane.getObjects({ className: 'Zone' }));
-        }, [])
-      );
-      zoneList.push(
-        ...this.getObjects({ className: 'Bridge', directParent: this }).reduce((arr, bridge) => {
-          return arr.concat(bridge.getObjects({ className: 'Zone' }));
-        }, [])
-      );
-
-      for (const zone of zoneList) {
-        const isAvailableStatus = zone.checkIsAvailable(dice);
-        result.set(zone, isAvailableStatus);
-      }
-      dice.getParent().addItem(dice); // * восстанавливаем состояние
-    }
-    this.enableChanges();
-    return result;
-  }
 
   getDeletedDices() {
     const result = [];
@@ -356,6 +329,9 @@
       if (hasCrutch === false) updatedMap[diceSideId] = null;
     }
     this.set({ crutchMap: updatedMap });
+  }
+  crutchCount() {
+    return Object.keys(this.crutchMap || {}).length;
   }
   /**
    * Проверяет и обновляет статус игры, если это необходимо

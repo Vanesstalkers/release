@@ -6,7 +6,11 @@ async (context, { gameId }) => {
     const user = session.user();
 
     const gameLoaded = await db.redis.hget('games', gameId);
-    if (!gameLoaded) throw new Error('Игра была отменена');
+    if (!gameLoaded){
+      user.set({gameId: null, playerId: null});
+      await user.saveChanges();
+      throw new Error('Игра была отменена');
+    }
     
     session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
     context.client.events.close.unshift(() => {

@@ -44,8 +44,14 @@ export default {
     store() {
       return this.getStore();
     },
+    game() {
+      return this.getGame();
+    },
     zone() {
-      return this.store.zone?.[this.zoneId] || {};
+      return {
+        ...(this.store.zone?.[this.zoneId] || {}),
+        available: this.zoneAvailable(this.zoneId),
+      };
     },
   },
   methods: {

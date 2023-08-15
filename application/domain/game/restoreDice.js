@@ -27,7 +27,7 @@
       }
     }
   } else {
-    const alreadyPlacedDices = deletedDices.map((dice) => dice.getParent().getNotDeletedItem());
+    const alreadyPlacedDices = deletedDices.map((dice) => dice.getParent().getNotDeletedItem()).filter((dice) => dice);
     for (const dice of alreadyPlacedDices) {
       dice.moveToTarget(playerHand);
     }

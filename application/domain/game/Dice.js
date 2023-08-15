@@ -83,4 +83,36 @@
 
     return moveResult;
   }
+  findAvailableZones() {
+    const game = this.game();
+    const result = [];
+    
+    game.disableChanges();
+    {
+      // чтобы не мешать расчету для соседних зон при перемещении из одной зоны в другую (ниже вернем состояние)
+      this.getParent().removeItem(this);
+
+      const zoneList = [];
+      zoneList.push(
+        ...game.getObjects({ className: 'Plane', directParent: game }).reduce((arr, plane) => {
+          return arr.concat(plane.getObjects({ className: 'Zone' }));
+        }, [])
+      );
+      zoneList.push(
+        ...game.getObjects({ className: 'Bridge', directParent: game }).reduce((arr, bridge) => {
+          return arr.concat(bridge.getObjects({ className: 'Zone' }));
+        }, [])
+      );
+
+      for (const zone of zoneList) {
+        const status = zone.checkIsAvailable(this);
+        result.push({ zone, status });
+      }
+
+      // восстанавливаем состояние для ранее удаленного dice
+      this.getParent().addItem(this);
+    }
+    game.enableChanges();
+    return result;
+  }
 });

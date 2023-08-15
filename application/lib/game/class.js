@@ -21,7 +21,7 @@
           if (changes === null) {
             // тут удаление через markDelete
             result[col][id] = null;
-          } else if (col === 'game' || col === 'player' || changes.fake) {
+          } else if (col === 'game' || changes.fake) {
             result[col][id] = changes;
           } else {
             const obj = this.getObjectById(id);
@@ -200,7 +200,13 @@
         player.set({ endGameStatus });
         playerEndGameStatus[userId] = endGameStatus;
       }
-      this.broadcastAction('gameFinished', { gameId: this.id(), gameType: this.type, playerEndGameStatus });
+
+      this.broadcastAction('gameFinished', {
+        gameId: this.id(),
+        gameType: this.type,
+        playerEndGameStatus,
+        crutchCount: this.crutchCount(),
+      });
 
       throw new lib.game.endGameException();
     }

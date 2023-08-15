@@ -4,9 +4,10 @@
       game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
     );
 
+  const player = game.getActivePlayer();
   const dice = game.getObjectById(diceId);
   const currentZone = dice.getParent();
-  const availableZones = {};
+  const availableZones = [];
 
   game.disableChanges();
   {
@@ -18,28 +19,26 @@
       return result;
     }, []);
 
-    // чтобы не мешать расчету для соседних зон (* ниже вернем состояние)
+    // чтобы не мешать расчету для соседних зон при перемещении из одной зоны в другую (ниже вернем состояние)
     for (const dice of deletedDices) dice.getParent().removeItem(dice);
 
-    game.getZonesAvailability(dice).forEach((status, zone) => {
+    for (const { zone, status } of dice.findAvailableZones()) {
       if (zone != currentZone) {
         if (deletedDicesZones.length) {
           if (deletedDicesZones.includes(zone)) {
-            availableZones[zone._id] = { available: status };
+            if (status) availableZones.push(zone._id);
           }
         } else {
-          availableZones[zone._id] = { available: status };
+          if (status) availableZones.push(zone._id);
         }
       }
-    });
+    }
 
-    // * восстанавливаем состояние
+    // восстанавливаем состояние для ранее удаленного dice
     for (const dice of deletedDices) dice.getParent().addItem(dice);
   }
   game.enableChanges();
 
-  return {
-    status: 'ok',
-    clientCustomUpdates: game.wrapPublishData({ store: { zone: availableZones } }),
-  };
+  player.set({ availableZones });
+  return { status: 'ok' };
 };

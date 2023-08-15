@@ -5,6 +5,9 @@
     );
 
   const player = game.getActivePlayer();
+
+  if (!player.availableZones.includes(zoneId)) throw new Error('Данная зона запрещена для размещения');
+
   const dice = game.getObjectById(diceId);
   const zone = game.getObjectById(zoneId);
 

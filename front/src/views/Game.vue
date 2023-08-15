@@ -205,11 +205,11 @@ export default {
       actionsDisabled() {
         return this.store.player?.[gameState.sessionPlayerId]?.eventData?.actionsDisabled;
       },
+      zoneAvailable(zoneId) {
+        return (this.getStore().player?.[gameState.sessionPlayerId]?.availableZones || []).includes(zoneId);
+      },
       hideZonesAvailability() {
-        const store = this.$root.state.store.game?.[gameState.gameId].store;
-        for (const id of Object.keys(store.zone)) {
-          if (store.zone[id].available) store.zone[id].available = false;
-        }
+        this.getStore().player[gameState.sessionPlayerId].availableZones = [];
       },
     });
 
