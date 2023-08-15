@@ -6,7 +6,7 @@
 
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
-    this.preventSaveFields(['chat']);
+    this.preventSaveFields(['chat', 'users.sessions', 'users.events']);
 
     // for (const [name, method] of Object.entries(domain.game.methods)) {
     //   if (name === 'parent') continue;

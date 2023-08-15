@@ -2,6 +2,7 @@
   <div
     v-if="dice"
     :code="dice.code"
+    :_id="dice._id"
     :class="[
       'domino-dice',
       dice.deleted ? 'deleted' : '',

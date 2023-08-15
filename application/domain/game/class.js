@@ -523,6 +523,7 @@
           // остановка таймера должна была отработать в endGame
           // бросать endGameException нельзя, потому что в removeGame будет вызов saveChanges, который попытается сделать broadcastData, но channel к этому моменту будет уже удален
           lib.timers.timerDelete(this);
+          return;
         } else throw 'player.timerEndTime === NaN';
       }
       console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)

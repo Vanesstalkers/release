@@ -66,8 +66,13 @@
         userId: session.userId,
       }); // данные попадут в context (в следующих вызовах)
 
-      const lobbyList = Array.from(lib.store.lobby.keys());
-      return { token: session.token, userId: session.userId, lobbyList };
+      const availableLobbies = Array.from(lib.store.lobby.keys());
+      return {
+        token: session.token,
+        userId: session.userId,
+        lobbyId: session.lobbyId,
+        availableLobbies,
+      };
     } catch (err) {
       console.log(err);
       return { status: 'err', message: err.message, hideMessage: err.stack };

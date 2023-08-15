@@ -359,8 +359,15 @@ export default {
   },
   methods: {
     async initSession(config) {
-      this.$root.initSession(config, {
-        success: this.callLobbyEnter,
+      await this.$root.initSession(config, {
+        success: async ({ lobbyId, availableLobbies }) => {
+          if (lobbyId) {
+            this.$root.state.currentLobby = lobbyId;
+            this.lobbyDataLoaded = true;
+          } else {
+            if (availableLobbies.length) await this.callLobbyEnter({ lobbyId: availableLobbies[0] });
+          }
+        },
         error: (err) => {
           if (err.message) this.auth.err = err.message;
           // чтобы пользователь увидел форму авторизации
@@ -381,6 +388,7 @@ export default {
           args: [{ lobbyId }],
         })
         .then(() => {
+          this.$root.state.currentLobby = lobbyId;
           this.lobbyDataLoaded = true;
         })
         .catch(prettyAlert);
@@ -543,17 +551,22 @@ export default {
   async created() {},
   async mounted() {
     if (this.state.currentUser && this.state.currentLobby) {
-      this.callLobbyEnter({ lobbyId: this.state.currentLobby });
+      this.lobbyDataLoaded = true;
     } else {
       this.initSession();
     }
   },
   async beforeDestroy() {
-    // await api.action
-    //   .call({
-    //     path: 'domain.lobby.api.exit',
-    //   })
-    //   .catch(prettyAlert);
+    return; // при входе в игру не выходим из лобби
+
+    await api.action
+      .call({
+        path: 'domain.lobby.api.exit',
+      })
+      .then((data) => {
+        this.$root.state.currentLobby = '';
+      })
+      .catch(prettyAlert);
   },
 };
 </script>
@@ -561,7 +574,6 @@ export default {
 #lobby {
   height: 100%;
   width: 100%;
-  /*  */
 }
 
 :root {

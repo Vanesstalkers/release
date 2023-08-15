@@ -4,7 +4,13 @@ async (context, {} = {}) => {
   const { userId, gameId: currentGameId } = session;
   if (!currentGameId) throw new Error('Не участвует в игре');
 
-  lib.store.broadcaster.publishAction(`game-${currentGameId}`, 'playerLeave', { userId });
+  const gameLoaded = await db.redis.hget('games', currentGameId);
+  if (gameLoaded) {
+    lib.store.broadcaster.publishAction(`game-${currentGameId}`, 'playerLeave', { userId });
+  } else {
+    // игра была удалена вместе с каналом,`
+    session.user().leaveGame();
+  }
 
   return { status: 'ok' };
 };

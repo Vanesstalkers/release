@@ -5,6 +5,9 @@ async (context) => {
   const { lobbyId } = session;
 
   session.unsubscribe(`lobby-${lobbyId}`);
+  session.set({ lobbyId: null });
+  await session.saveChanges();
+
   user.leaveLobby({ sessionId, lobbyId });
 
   return { status: 'ok' };

@@ -17,7 +17,8 @@ Vue.config.productionTip = false;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
-  window.prettyAlert = ({ message, hideMessage } = {}) => {
+  window.prettyAlert = (data = {}) => {
+    const { message, hideMessage } = data;
     if (message === 'Forbidden') {
       // стандартный ответ impress при доступе к запрещенному ресурсу (скорее всего нужна авторизация)
     } else alert(message);
@@ -30,6 +31,7 @@ const init = async () => {
 
   const state = {
     currentUser: '',
+    currentLobby: '',
     isMobile: false,
     isLandscape: true,
     isPortrait: false,
@@ -49,13 +51,20 @@ const init = async () => {
         const { success: onSuccess, error: onError } = handlers;
 
         const token = localStorage.getItem('metarhia.session.token');
-        const session = await api.auth
-          .initSession({ token, windowTabId: window.name, login, password, demo })
-          .catch((err) => {
-            if (typeof onError === 'function') onError(err);
-          });
+        const session =
+          (await api.auth
+            .initSession({
+              token,
+              windowTabId: window.name,
+              login,
+              password,
+              demo,
+            })
+            .catch((err) => {
+              if (typeof onError === 'function') onError(err);
+            })) || {};
 
-        const { token: sessionToken, userId, reconnect, lobbyList: [lobbyId] = [] } = session || {};
+        const { token: sessionToken, userId, reconnect } = session;
         if (reconnect) {
           const { workerId, ports } = reconnect;
           const port = ports[workerId.substring(1) * 1 - 1];
@@ -66,8 +75,7 @@ const init = async () => {
         if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
         if (userId) {
           this.$root.state.currentUser = userId;
-          this.$root.state.currentLobby = lobbyId;
-          if (typeof onSuccess === 'function') onSuccess({ lobbyId });
+          if (typeof onSuccess === 'function') onSuccess(session);
         }
       },
     },

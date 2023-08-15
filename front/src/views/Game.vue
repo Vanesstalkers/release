@@ -423,7 +423,7 @@ export default {
           this.gameState.sessionPlayerId = data.playerId;
         })
         .catch((err) => {
-          prettyAlert(err.message);
+          prettyAlert(err);
           this.$router.push({ path: `/` }).catch((err) => {
             console.log(err);
           });
@@ -748,7 +748,7 @@ export default {
   position: fixed;
   left: 40px;
   top: 60px;
-  z-index: 1;
+  z-index: 2;
   width: calc(100% - 100px);
   height: calc(100% - 100px);
   margin: 30px;
