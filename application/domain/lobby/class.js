@@ -1,11 +1,13 @@
 (class Lobby extends lib.store.class(class {}, { broadcastEnabled: true }) {
   users = {};
   games = {};
-  chat = {};
   rankings = {};
 
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
+    Object.assign(this, {
+      ...lib.chat['@class'].decorate(),
+    });
     this.preventSaveFields(['chat', 'users.sessions', 'users.events']);
 
     // for (const [name, method] of Object.entries(domain.game.methods)) {
@@ -138,12 +140,7 @@
   async load(from, config) {
     await this.getProtoParent().load.call(this, from, config);
 
-    const msgList = await db.mongo.find(
-      'chat',
-      { parent: this.storeId(), text: { $ne: null } },
-      { limit: 3, sort: [['_id', -1]] }
-    );
-    for (const msg of msgList) this.chat[msg._id] = msg;
+    await this.restoreChat();
 
     this.games = {}; // обнуляем (восстановление игр после рестарта сервера еще не работает)
     for (const user of Object.values(this.users)) {
@@ -197,16 +194,6 @@
           }
         : {}),
     };
-  }
-
-  async updateChat({ text, user, event }) {
-    const time = Date.now();
-    const chatEvent = { text, event, user, time, parent: this.storeId() };
-    const { _id } = await db.mongo.insertOne('chat', chatEvent);
-    chatEvent._id = _id.toString();
-    this.set({ chat: { [_id]: chatEvent } });
-    await this.saveChanges();
-    return { chatEventId: chatEvent._id };
   }
   async userEnter({ sessionId, userId, name }) {
     if (!this.users[userId]) {

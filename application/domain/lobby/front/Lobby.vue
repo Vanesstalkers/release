@@ -141,122 +141,7 @@
     </div>
     <div class="menu-item chat">
       <label v-on:click="pinMenuItem"> ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" /> </label>
-      <div :style="{ display: 'flex', flexWrap: 'wrap', overflow: 'hidden' }">
-        <div
-          class="user-list"
-          :style="{
-            width: '100%',
-            display: 'flex',
-            flexWrap: 'wrap',
-            borderBottom: '2px solid #f4e205',
-            padding: '10px',
-          }"
-        >
-          <label class="user-list-label" :style="{ width: '100%' }"
-            >Игроки онлайн ({{ lobbyUserGuestsCount + lobbyUserList.length }})</label
-          >
-          <div class="user-list">
-            <span v-if="lobbyUserGuestsCount">Гость ({{ lobbyUserGuestsCount }})</span>
-            <span v-for="user in lobbyUserList" :key="user.id">
-              {{ user.name }}
-            </span>
-          </div>
-        </div>
-        <div
-          :style="{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexWrap: 'wrap',
-            overflow: 'hidden',
-          }"
-        >
-          <div
-            class="msg-list"
-            :style="{ paddingBottom: '80px', paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px' }"
-          >
-            <div v-for="msg in getChat" :key="msg._id">
-              <div v-if="msg.text" class="msg">
-                <div class="header">
-                  <b>{{ msg.user.name }}</b>
-                  <i>{{ msg.timeStr }}</i>
-                </div>
-                {{ msg.text }}
-              </div>
-              <div v-if="msg.event" class="event" :time="msg.timeStr">
-                Игрок <span>{{ lobbyUserMap[msg.user.id]?.name || '' }}</span>
-                {{
-                  msg.event === 'enter' ? 'зашел в лобби' : msg.event === 'leave' ? 'вышел из лобби' : 'что-то сделал'
-                }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          class="chat-controls"
-          :style="{
-            position: 'absolute',
-            width: '100%',
-            display: 'flex',
-            left: '0px',
-            bottom: '0px',
-            boxShadow: 'inset 0px -20px 20px 20px black',
-          }"
-        >
-          <div
-            v-if="!userData.name"
-            :style="{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              left: '0px',
-              top: '0px',
-              background: 'black',
-              paddingTop: '10px',
-              zIndex: '2',
-            }"
-          >
-            <div :style="{ padding: '8px' }">Укажите свое имя, чтобы начать писать в чат</div>
-            <div :style="{ display: 'flex', justifyContent: 'space-evenly' }">
-              <input
-                v-model="userName"
-                :style="{ border: '1px solid #f4e205', background: 'black', color: 'white', padding: '4px 10px' }"
-              /><button v-on:click="saveName" class="lobby-btn">Сохранить</button>
-            </div>
-          </div>
-          <textarea
-            v-model="chatMsgText"
-            rows="3"
-            :style="{
-              width: '100%',
-              background: 'black',
-              border: '1px solid #f4e205',
-              resize: 'none',
-              color: 'white',
-              padding: '10px',
-              margin: '10px',
-              zIndex: '1',
-            }"
-          />
-          <button
-            :disabled="disableSendMsgBtn > 0"
-            v-on:click="sendChatMsg"
-            class="lobby-btn"
-            :style="{
-              color: '#ffffff',
-              width: '40px',
-              height: '40px',
-              marginTop: '10px',
-              marginRight: '10px',
-              boxShadow: 'black -10px 10px 20px 20px',
-              zIndex: '0',
-            }"
-          >
-            <span v-if="disableSendMsgBtn > 0"> {{ disableSendMsgBtn }} </span>
-            <font-awesome-icon v-if="disableSendMsgBtn === 0" :icon="['fas', 'share']" />
-          </button>
-        </div>
-      </div>
+      <chat :users="lobby.users" :items="lobby.chat" :userData="userData" />
     </div>
     <div class="menu-item top">
       <label v-on:click="pinMenuItem">
@@ -287,19 +172,18 @@ import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
 import helper from '~/lib/helper/front/helper.vue';
 import rankings from './rankings.vue';
+import chat from '~/lib/chat/front/chat.vue';
 
 export default {
   components: {
     helper,
     rankings,
+    chat,
   },
   data() {
     return {
       lobbyDataLoaded: false,
       auth: { login: '', password: '', err: null },
-      userName: '',
-      chatMsgText: '',
-      disableSendMsgBtn: 0,
       bg: {
         top: 0,
         left: 0,
@@ -318,17 +202,6 @@ export default {
     userData() {
       return this.store.user?.[this.state.currentUser] || {};
     },
-    lobbyUserMap() {
-      return this.lobby?.users || {};
-    },
-    lobbyUserList() {
-      return Object.entries(this.lobbyUserMap)
-        .filter(([id, user]) => user && user.name && user.online)
-        .map(([id, user]) => Object.assign(user, { id }));
-    },
-    lobbyUserGuestsCount() {
-      return Object.values(this.lobby?.users || {}).filter((user) => user && !user.name && user.online).length;
-    },
     lobby() {
       return this.store.lobby?.[this.state.currentLobby] || {};
     },
@@ -344,17 +217,6 @@ export default {
         }
         return game;
       });
-    },
-    getChat() {
-      const items = Object.entries(this.lobby?.chat || {})
-        .map(([id, msg]) =>
-          Object.assign({}, msg, {
-            id,
-            timeStr: new Date(msg.time).toLocaleString(),
-          })
-        )
-        .reverse();
-      return items;
     },
   },
   methods: {
@@ -444,33 +306,6 @@ export default {
         args: [{ tutorial: 'lobby-tutorial-gameRules', step: name }],
       });
       return;
-    },
-    saveName() {
-      api.action.call({
-        path: 'lib.user.api.update',
-        args: [{ name: this.userName }],
-      });
-    },
-    sendChatMsg() {
-      this.disableSendMsgBtn = 5;
-      api.action
-        .call({
-          path: 'domain.lobby.api.updateChat',
-          args: [{ text: this.chatMsgText }],
-        })
-        .then((data) => {
-          this.chatMsgText = '';
-          this.restoreMsgBtn();
-        })
-        .catch((err) => {
-          this.restoreMsgBtn();
-        });
-    },
-    restoreMsgBtn() {
-      if (this.disableSendMsgBtn > 0) {
-        this.disableSendMsgBtn--;
-        setTimeout(this.restoreMsgBtn, 1000);
-      }
     },
     showGallery(deck, type) {
       let images = [];
@@ -992,47 +827,6 @@ export default {
 .lobby-btn[disabled='disabled'] {
   background: black !important;
   color: #f4e205;
-}
-.chat .user-list-label {
-  display: inherit;
-  color: #f4e205;
-  text-align: left;
-  margin-bottom: 8px;
-}
-.chat .user-list {
-  display: flex;
-  flex-wrap: wrap;
-}
-.chat .user-list > span {
-  border: 1px solid #f4e205;
-  border-radius: 2px;
-  padding: 2px 4px;
-  margin: 2px;
-}
-.chat .msg-list {
-  font-size: 16px;
-  width: 100%;
-}
-.chat .msg-list .msg {
-  padding: 8px;
-  text-align: left;
-}
-.chat .msg-list .msg > .header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  font-size: 12px;
-}
-.chat .msg-list .msg > .header > b {
-  color: #f4e205;
-}
-
-.chat .msg-list .event {
-  padding: 8px;
-  color: #f4e205;
-}
-.chat .msg-list .event > span {
-  color: white;
 }
 
 .menu-item.pinned .chat-controls,

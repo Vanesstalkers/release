@@ -7,13 +7,6 @@
   >
     <tutorial :inGame="true" />
 
-    <!-- <div :style="{ color: 'red', background: 'white', fontSize: '24px', zIndex: '100', position: 'absolute' }">
-      {{ gameState }}
-    </div> -->
-    <!-- <div :style="{ color: 'red', background: 'white', fontSize: '24px', zIndex: '100', position: 'absolute' }">
-      {{ store }}
-    </div> -->
-
     <GUIWrapper
       :pos="['top', 'left']"
       :offset="{ left: state.isMobile ? 60 : [60, 80, 110, 130, 160, 190][state.guiScale] }"
@@ -21,8 +14,8 @@
       :wrapperStyle="{ zIndex: 1 }"
     >
       <div style="display: flex">
-        <div class="chat gui-btn" />
-        <div class="log gui-btn" v-on:click="showLogs" />
+        <div class="chat gui-btn" v-on:click="showChat = !showChat" />
+        <div class="log gui-btn" v-on:click="toggleLog" />
         <div class="move gui-btn" v-on:click="showMoveControls = !showMoveControls" />
       </div>
       <div v-if="showMoveControls" class="gameplane-controls">
@@ -45,6 +38,10 @@
         <div class="rotate-left" v-on:click="gamePlaneRotation -= 15" />
       </div>
     </GUIWrapper>
+
+    <div v-if="showChat" class="chat-content">
+      <chat :users="{}" :items="{}" :userData="userData" />
+    </div>
 
     <div v-if="showLog" class="log-content">
       <div v-for="[id, logItem] in Object.entries(logs).reverse()" :key="id" class="log-item">
@@ -136,6 +133,7 @@ import {} from '../components/game/utils';
 
 import GUIWrapper from '../components/gui-wrapper.vue';
 import tutorial from '~/lib/helper/front/helper.vue';
+import chat from '~/lib/chat/front/chat.vue';
 import player from '../components/game/player.vue';
 import plane from '../components/game/plane.vue';
 import bridge from '../components/game/bridge.vue';
@@ -145,6 +143,7 @@ export default {
   components: {
     GUIWrapper,
     tutorial,
+    chat,
     player,
     plane,
     bridge,
@@ -152,6 +151,7 @@ export default {
   },
   data() {
     return {
+      showChat: false,
       showLog: false,
       showMoveControls: false,
 
@@ -230,6 +230,9 @@ export default {
     },
     game() {
       return this.getGame();
+    },
+    userData() {
+      return this.state.store?.user?.[this.state.currentUser] || {};
     },
     logs() {
       return this.game.logs || {};
@@ -402,7 +405,7 @@ export default {
     closeCardInfo() {
       this.$set(this.$root.state, 'shownCard', '');
     },
-    async showLogs() {
+    async toggleLog() {
       if (this.showLog) return (this.showLog = false);
       await api.action
         .call({ path: 'lib.game.api.showLogs', args: [{ lastItemTime: Object.values(this.logs).pop()?.time }] })
@@ -742,6 +745,19 @@ export default {
 }
 .gui-btn.move {
   background-image: url(../assets/move.png);
+}
+
+.chat-content {
+  z-index: 3;
+  position: absolute;
+  left: 40px;
+  top: 60px;
+  width: 300px;
+  height: calc(100% - 100px);
+  margin: 30px;
+  background-image: url(../assets/clear-black-back.png);
+  border: 2px solid #f4e205;
+  color: #f4e205;
 }
 
 .log-content {
