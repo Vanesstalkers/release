@@ -4,36 +4,12 @@
     store = {};
     playerMap = {};
     #broadcastObject = {};
+    #broadcastDataAfterHandlers = {};
 
     constructor() {
       const storeData = { col: 'game' };
       const gameObjectData = { col: 'game' };
       super(storeData, gameObjectData);
-    }
-
-    prepareBroadcastData({ data = {}, userId }) {
-      const result = {};
-      const player = this.getPlayerByUserId(userId);
-
-      for (const [col, ids] of Object.entries(data)) {
-        result[col] = {};
-        for (const [id, changes] of Object.entries(ids)) {
-          if (changes === null) {
-            // тут удаление через markDelete
-            result[col][id] = null;
-          } else if (col === 'game' || changes.fake) {
-            result[col][id] = changes;
-          } else {
-            const obj = this.getObjectById(id);
-            // объект может быть удален (!!! костыль)
-            if (obj && typeof obj.prepareBroadcastData === 'function') {
-              const { visibleId, preparedData } = obj.prepareBroadcastData({ data: changes, player });
-              result[col][visibleId] = preparedData;
-            } else result[col][id] = changes;
-          }
-        }
-      }
-      return result;
     }
 
     async create({ type, subtype } = {}) {
@@ -180,9 +156,10 @@
     }
     endGame({ winningPlayer, canceledByUser } = {}) {
       lib.timers.timerDelete(this);
+      this.emitCardEvents('endRound'); // костыли должны восстановить свои значения
+      this.checkCrutches();
       this.set({ status: 'FINISHED' });
       if (winningPlayer) this.setWinner({ player: winningPlayer });
-      this.checkCrutches();
 
       const playerList = this.getObjects({ className: 'Player' });
       const playerEndGameStatus = {};
@@ -310,6 +287,33 @@
       }
     }
 
+    prepareBroadcastData({ data = {}, userId }) {
+      const result = {};
+      const player = this.getPlayerByUserId(userId);
+
+      for (const [col, ids] of Object.entries(data)) {
+        result[col] = {};
+        for (const [id, changes] of Object.entries(ids)) {
+          if (changes === null) {
+            // тут удаление через markDelete
+            result[col][id] = null;
+          } else if (col === 'game' || changes.fake) {
+            result[col][id] = changes;
+          } else {
+            const obj = this.getObjectById(id);
+            if (obj && typeof obj.prepareBroadcastData === 'function') {
+              const { visibleId, preparedData } = obj.prepareBroadcastData({ data: changes, player });
+              result[col][visibleId] = preparedData;
+              if (typeof obj.broadcastDataAfterHandler === 'function') {
+                this.#broadcastDataAfterHandlers[id] = obj.broadcastDataAfterHandler.bind(obj);
+              }
+            } else result[col][id] = changes;
+          }
+        }
+      }
+      return result;
+    }
+
     /**
      * Дополнительные обработчики для store.broadcastData
      */
@@ -333,6 +337,11 @@
     broadcastDataAfterHandler(data, config = {}) {
       const { customChannel } = config;
 
+      for (const handler of Object.values(this.#broadcastDataAfterHandlers)) {
+        if (typeof handler === 'function') handler();
+      }
+      this.#broadcastDataAfterHandlers = {};
+
       const broadcastObject = !customChannel && this.#broadcastObject;
       if (broadcastObject) this.#broadcastObject = {};
     }
@@ -342,5 +351,11 @@
         ...data,
         ...(data.store ? { store: this.prepareBroadcastData({ userId, data: data.store }) } : {}),
       };
+    }
+    async removeGame() {
+      await db.redis.hdel('games', this.id());
+      await this.saveChanges();
+      this.broadcastData({ logs: this.logs() });
+      this.remove();
     }
   };

@@ -1,15 +1,4 @@
 (game, { timerOverdue, forceActivePlayer } = {}) => {
-  if (game.status === 'prepareStart') {
-    const player = game.getActivePlayer();
-
-    const plane = player.getObjectByCode('Deck[plane]').getObjects({ className: 'Plane' })[0];
-    domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
-    const availablePort = game.availablePorts[0];
-    domain.game.addPlane(game, { ...availablePort });
-
-    return { status: 'ok' };
-  }
-
   if (game.status !== 'IN_PROCESS') {
     console.log('game', { status: game.status, id: game.id() });
     throw new Error('Действие запрещено.');

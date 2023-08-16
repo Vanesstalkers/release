@@ -8,6 +8,7 @@
       ...domain.game['@hasDeck'].decorate(),
       ...domain.game['@hasPlane'].decorate(),
     });
+    this.preventSaveFields(['availableZones']);
 
     this.game(this);
     delete this.code; // мешается в ZoneSide.links + в принципе не нужен
@@ -328,7 +329,7 @@
       }
       if (hasCrutch === false) updatedMap[diceSideId] = null;
     }
-    this.set({ crutchMap: updatedMap });
+    if (Object.keys(updatedMap).length) this.set({ crutchMap: updatedMap });
   }
   crutchCount() {
     return Object.keys(this.crutchMap || {}).length;

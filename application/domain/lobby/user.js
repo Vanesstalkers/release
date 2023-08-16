@@ -74,7 +74,7 @@
             pos: { top: false, left: false },
           },
           handPlanes: {
-            selector: '.hand-planes',
+            selector: '.session-player .hand-planes',
             tutorial: 'game-tutorial-links',
             type: 'game',
             pos: { top: true, left: true },

@@ -29,6 +29,7 @@
             const updatedItemsEntries = Object.entries(this.#updatedItems[id] || {});
             if (updatedItemsEntries.length) {
               for (const [fakeId, action] of updatedItemsEntries) {
+                // ! если будут ошибки, то можно повторить логику из блока for-of updatedItemsEntries ниже (className: 'Player')
                 ids[fakeId] = action === 'remove' ? null : val;
               }
             } else {
@@ -56,8 +57,11 @@
               const updatedItemsEntries = Object.entries(this.#updatedItems[id] || {});
               if (updatedItemsEntries.length) {
                 for (const [fakeId, action] of updatedItemsEntries) {
-                  if (action === 'remove') ids[fakeId] = null;
-                  else if (item.visible) {
+                  if (action === 'remove') {
+                    ids[fakeId] = null;
+                  } else if (action === 'removeVisible') {
+                    ids[id] = null;
+                  } else if (item.visible) {
                     ids[id] = val;
                     ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
                   } else {
@@ -88,8 +92,11 @@
       }
     }
 
-    this.#updatedItems = {};
     return { visibleId: this._id, preparedData };
+  }
+  broadcastDataAfterHandler() {
+    // очищаем объект, чтобы в каждую рассылку не отправлять старые изменения
+    this.#updatedItems = {};
   }
 
   customObjectCode({ codeTemplate, replacementFragment }, data) {
@@ -124,7 +131,10 @@
   }
   removeItem(itemToRemove, { deleteFromStorage = false } = {}) {
     this.set({ itemMap: { [itemToRemove._id]: null } });
-    this.markItemUpdated({ item: itemToRemove, action: 'remove' });
+    this.markItemUpdated({
+      item: itemToRemove,
+      action: itemToRemove.visible ? 'removeVisible' : 'remove',
+    });
     if (deleteFromStorage) this.deleteFromObjectStorage(itemToRemove);
   }
   /**
