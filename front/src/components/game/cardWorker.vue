@@ -13,7 +13,9 @@
     <div v-if="showControls && iam && sessionPlayerIsActive()" v-on:click="endRound" class="end-round-btn">
       Закончить раунд
     </div>
-    <div v-if="player.active && player.timerEndTime" class="end-round-timer">{{ this.localTimer }}</div>
+    <div v-if="player.active && player.timerEndTime && game.status != 'WAIT_FOR_PLAYERS'" class="end-round-timer">
+      {{ this.localTimer }}
+    </div>
     <div v-if="!iam" class="domino-dice">
       {{ dominoDeckCount }}
     </div>

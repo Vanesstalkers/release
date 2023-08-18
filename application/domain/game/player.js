@@ -11,11 +11,13 @@
       'active',
       'ready',
       'timerEndTime',
+      'timerUpdateTime',
       'eventData',
       'activeEvent',
       'availableZones',
       'planeMap',
       'deckMap',
+      'userId',
     ]);
 
     this.set({

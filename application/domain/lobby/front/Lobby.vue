@@ -141,7 +141,17 @@
     </div>
     <div class="menu-item chat">
       <label v-on:click="pinMenuItem"> ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" /> </label>
-      <chat :users="lobby.users" :items="lobby.chat" :userData="userData" />
+      <chat
+        :channels="{
+          [`lobby-${this.state.currentLobby}`]: {
+            title: 'Общий чат',
+            users: this.lobby.users || {},
+            items: this.lobby.chat || {},
+          },
+        }"
+        :active="`lobby-${state.currentLobby}`"
+        :userData="userData"
+      />
     </div>
     <div class="menu-item top">
       <label v-on:click="pinMenuItem">

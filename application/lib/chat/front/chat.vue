@@ -1,15 +1,20 @@
 <template>
   <div class="chat-form">
     <div class="chat-header">
+      <select class="chat-channels" @change="setActiveChat($event)">
+        <option v-for="channel of chatChannels" :key="channel.id" :value="channel.id">
+          {{ channel.title }}
+        </option>
+      </select>
       <label class="user-list-label"> Игроки онлайн ({{ guestsCount + userList.length }})</label>
       <div class="user-list">
         <span v-if="guestsCount">Гость ({{ guestsCount }})</span>
-        <span v-for="user in userList" :key="user.id">
+        <span v-for="user in userList" :key="user.id" @click="openPersonalChat(user)">
           {{ user.name }}
         </span>
       </div>
     </div>
-    <div class="chat-msg-list">
+    <perfect-scrollbar class="chat-msg-list">
       <div class="msg-list">
         <div v-for="msg in getChat" :key="msg._id">
           <div v-if="msg.text" class="msg">
@@ -25,16 +30,16 @@
           </div>
         </div>
       </div>
-    </div>
+    </perfect-scrollbar>
     <div class="chat-controls">
       <div v-if="!userData.name" class="chat-controls-alert">
         <div class="info">Укажите свое имя, чтобы начать писать в чат</div>
         <div class="input-group">
-          <input v-model="userName" /><button v-on:click="saveName" class="chat-btn">Сохранить</button>
+          <input v-model="userName" /><button @click="saveName" class="chat-btn">Сохранить</button>
         </div>
       </div>
       <textarea v-model="chatMsgText" rows="3" />
-      <button :disabled="disableSendMsgBtn > 0" v-on:click="sendChatMsg" class="chat-btn">
+      <button :disabled="disableSendMsgBtn > 0" @click="sendChatMsg" class="chat-btn">
         <span v-if="disableSendMsgBtn > 0"> {{ disableSendMsgBtn }} </span>
         <font-awesome-icon v-if="disableSendMsgBtn === 0" :icon="['fas', 'share']" />
       </button>
@@ -50,18 +55,13 @@ export default {
     PerfectScrollbar,
   },
   props: {
-    users: {
+    channels: {
       type: Object,
       default() {
         return {};
       },
     },
-    items: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
+    active: String,
     userData: {
       type: Object,
       default() {
@@ -71,6 +71,8 @@ export default {
   },
   data() {
     return {
+      activeChannel: this.active,
+      personalChatMap: {},
       userName: '',
       chatMsgText: '',
       disableSendMsgBtn: 0,
@@ -80,6 +82,19 @@ export default {
   computed: {
     state() {
       return this.$root.state || {};
+    },
+    chatChannels() {
+      return (
+        Object.entries(this.channels)
+          .concat(Object.entries(this.personalChatMap))
+          .map(([id, channel]) => ({ id, ...channel })) || []
+      );
+    },
+    users() {
+      return this.chatChannels.find(({ id }) => id === this.activeChannel).users || {};
+    },
+    items() {
+      return this.chatChannels.find(({ id }) => id === this.activeChannel).items || {};
     },
     userList() {
       return Object.entries(this.users)
@@ -102,6 +117,15 @@ export default {
     },
   },
   methods: {
+    setActiveChat(event) {
+      this.activeChannel = event.target.value;
+    },
+    openPersonalChat(user) {
+      if (user.id === this.state.currentUser) return;
+      if (this.personalChatMap[user.id]) return;
+
+      this.$set(this.personalChatMap, user.id, { title: `${user.name} (лс)` });
+    },
     saveName() {
       api.action.call({
         path: 'lib.user.api.update',
@@ -109,11 +133,11 @@ export default {
       });
     },
     sendChatMsg() {
-      this.disableSendMsgBtn = 50;
+      this.disableSendMsgBtn = 5;
       api.action
         .call({
-          path: 'domain.lobby.api.updateChat',
-          args: [{ text: this.chatMsgText }],
+          path: 'lib.chat.api.update',
+          args: [{ text: this.chatMsgText, channel: this.activeChannel }],
         })
         .then((data) => {
           this.chatMsgText = '';
@@ -156,7 +180,6 @@ export default {
   flex-wrap: wrap;
   overflow: hidden;
 }
-
 .chat-header {
   width: 100%;
   display: flex;
@@ -164,17 +187,25 @@ export default {
   border-bottom: 2px solid #f4e205;
   padding: 10px;
 }
-
-.user-list-label {
-  width: 100%;
-  display: inherit;
+.chat-channels {
+  width: 50%;
+  max-width: 200px;
+  margin-right: max(0px, calc(50% - 200px));
   color: #f4e205;
-  text-align: left;
+  background: black;
+  border: 1px solid #f4e205;
+}
+.user-list-label {
+  width: 50%;
+  color: #f4e205;
+  text-align: right;
   margin-bottom: 8px;
 }
 .user-list {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
+  flex-direction: row-reverse;
 }
 .user-list > span {
   border: 1px solid #f4e205;
@@ -189,6 +220,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   overflow: hidden;
+  color: white;
 }
 
 .msg-list {

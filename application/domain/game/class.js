@@ -5,6 +5,7 @@
   constructor(data = {}) {
     super();
     Object.assign(this, {
+      ...lib.chat['@class'].decorate(),
       ...domain.game['@hasDeck'].decorate(),
       ...domain.game['@hasPlane'].decorate(),
     });

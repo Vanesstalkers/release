@@ -40,7 +40,22 @@
     </GUIWrapper>
 
     <div v-if="showChat" class="chat-content">
-      <chat :users="{}" :items="{}" :userData="userData" />
+      <chat
+        :channels="{
+          [`game-${gameState.gameId}`]: {
+            title: 'Игровой чат',
+            users: chatUsers,
+            items: game.chat,
+          },
+          [`lobby-${this.state.currentLobby}`]: {
+            title: 'Общий чат',
+            users: this.lobby.users || {},
+            items: this.lobby.chat || {},
+          },
+        }"
+        :active="`game-${gameState.gameId}`"
+        :userData="userData"
+      />
     </div>
 
     <div v-if="showLog" class="log-content">
@@ -233,6 +248,15 @@ export default {
     },
     userData() {
       return this.state.store?.user?.[this.state.currentUser] || {};
+    },
+    lobby() {
+      return this.state.store.lobby?.[this.state.currentLobby] || {};
+    },
+    chatUsers() {
+      return Object.values(this.store.player).reduce((obj, player) => {
+        const user = this.lobby.users?.[player.userId];
+        return Object.assign(obj, { [player.userId]: user });
+      }, {});
     },
     logs() {
       return this.game.logs || {};
@@ -438,7 +462,11 @@ export default {
   },
   async created() {},
   async mounted() {
-    if (this.state.currentUser) {
+    if (!this.state.currentLobby) {
+      this.$router.push({ path: `/` }).catch((err) => {
+        console.log(err);
+      });
+    } else if (this.state.currentUser) {
       this.callGameEnter();
     } else {
       this.$root.initSession({

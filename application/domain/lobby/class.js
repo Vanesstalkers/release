@@ -177,12 +177,14 @@
     await this.saveChanges();
   }
   broadcastDataVueStoreRuleHandler(data, { accessConfig }) {
+    // const { userId } = accessConfig;
     return {
       ...data,
       ...(data.users
         ? {
             users: Object.fromEntries(
               Object.entries(lib.utils.clone(data.users)).map(([id, user]) => {
+                // if (id === userId) user.iam = true;
                 if (user.events) delete user.events;
                 if (user.sessions) {
                   user.online = user.sessions.length > 0 ? true : false;
