@@ -4,7 +4,7 @@
     // без этого правила на клиент попадут все данные юзера (в том числе логин и хэш пароля)
     #userSubscribeConfig = {
       rule: 'fields',
-      fields: ['name', 'currentTutorial', 'helper', 'helperLinks', 'finishedTutorials', 'rankings'],
+      fields: ['name', 'currentTutorial', 'helper', 'helperLinks', 'finishedTutorials', 'rankings', 'personalChatMap'],
     };
 
     constructor({ id, client } = {}) {
@@ -28,7 +28,7 @@
       await this.getProtoParent().load.call(this, from, config);
 
       let user;
-      const userOnline = await db.redis.hget('users', this.userLogin, { json: true });
+      const userOnline = await db.redis.hget('users', this.userId, { json: true });
       if (!userOnline) {
         user = await new lib.user.mainClass().load({ fromDB: { id: this.userId } }).catch((err) => {
           if (err === 'not_found') throw 'user_not_found';
@@ -50,7 +50,11 @@
     }
     async login({ login, password, windowTabId }) {
       if (!login || password === undefined) throw new Error('Неправильный логин или пароль.');
-      let userOnline = await db.redis.hget('users', login, { json: true });
+
+      const user = await db.mongo.findOne('user', { login });
+      if (!user) throw new Error('Неправильный логин или пароль.');
+
+      let userOnline = await db.redis.hget('users', user._id.toString(), { json: true });
       if (!userOnline) {
         const user = await new lib.user.mainClass()
           .load({
@@ -67,8 +71,8 @@
         const valid = await metarhia.metautil.validatePassword(password, userOnline.password);
         if (!valid) throw new Error('Неправильный логин или пароль.');
       }
-      if (!this.id())
-        await this.create({ userId: userOnline.id, userLogin: login, token: userOnline.token, windowTabId });
+      // если тут добавлять условия, то проследить, что во всех случаях отрабатывает user.linkSession
+      await this.create({ userId: userOnline.id, userLogin: login, token: userOnline.token, windowTabId });
     }
     initChannel(data) {
       this.getProtoParent().initChannel.call(this, data);

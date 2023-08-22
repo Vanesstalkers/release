@@ -2,13 +2,14 @@
   users = {};
   games = {};
   rankings = {};
+  rankingsUsersTop = [];
 
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
     Object.assign(this, {
       ...lib.chat['@class'].decorate(),
     });
-    this.preventSaveFields(['chat', 'users.sessions', 'users.events']);
+    this.preventSaveFields(['chat']);
 
     // for (const [name, method] of Object.entries(domain.game.methods)) {
     //   if (name === 'parent') continue;
@@ -135,6 +136,9 @@
 
     await this.getProtoParent().create.call(this, { code, users, rankings });
 
+    this.checkRatings();
+    await this.saveChanges();
+
     return this;
   }
   async load(from, config) {
@@ -145,7 +149,10 @@
     this.games = {}; // обнуляем (восстановление игр после рестарта сервера еще не работает)
     for (const user of Object.values(this.users)) {
       user.sessions = [];
+      user.events = {};
+      if (user.online) delete user.online;
     }
+    this.checkRatings();
     await this.saveChanges();
 
     console.log(`Lobby "${this.storeId()}" loaded.`);
@@ -183,66 +190,105 @@
       ...(data.users
         ? {
             users: Object.fromEntries(
-              Object.entries(lib.utils.clone(data.users)).map(([id, user]) => {
-                // if (id === userId) user.iam = true;
-                if (user.events) delete user.events;
-                if (user.sessions) {
-                  user.online = user.sessions.length > 0 ? true : false;
-                  delete user.sessions;
-                }
-                return [id, user];
-              })
+              Object.entries(lib.utils.clone(data.users))
+                .filter(
+                  ([id, user]) =>
+                    user.online === null || // юзер только что вышел из лобби
+                    // ниже проверки для рассылок по событию addSubscriber
+                    this.users[id].online || // не делаем рассылку тех, кто оффлайн
+                    this.rankingsUsersTop.includes(id) // оставляем в рассылке тех, что входит в топ рейтингов (чтобы отобразить их в таблицах рейтингов)
+                )
+                .map(([id, user]) => {
+                  // if (id === userId) user.iam = true;
+                  if (user.online) user = { ...this.users[id] }; // установка online произошла позже, чем отработал addSubscriber (без этого пользователь появится на фронте, но без данных)
+
+                  // если бы не строчка выше, то делал бы это в prepareInitialDataForSubscribers()
+                  if (user.events) delete user.events;
+                  if (user.sessions) delete user.sessions;
+                  return [id, user];
+                })
             ),
           }
         : {}),
     };
   }
   async userEnter({ sessionId, userId, name }) {
-    if (!this.users[userId]) {
-      this.set({ users: { [userId]: { sessions: [], events: {} } } });
+    let user = this.users[userId];
+    if (!user) {
+      this.set({ users: { [userId]: {} } });
+      user = this.users[userId];
+      user.sessions = [];
+      user.events = {};
     } else {
-      const { enter: lastEnterEventId } = this.users[userId].events;
+      const { enter: lastEnterEventId } = user.events;
       this.set({ chat: { [lastEnterEventId]: null } });
+
+      if (user.personalChatMap) {
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
+          type: 'db/smartUpdated',
+          data: { user: { [userId]: { personalChatMap: user.personalChatMap } } },
+        });
+        this.set({ users: { [userId]: { personalChatMap: null } } });
+      }
     }
-    if (this.users[userId].sessions.length === 0) {
+    if (user.sessions.length === 0) {
       // ловит как новых юзеров, так и тех, кто пришел после deleteUserFromLobby (в userLeave)
       this.subscribe(`user-${userId}`, { rule: 'fields', fields: ['name', 'rankings'] });
     }
 
-    const { chatEventId } = await this.updateChat({ user: { id: userId }, event: 'enter' });
+    const { chatEventId } = await this.updateChat(
+      { user: { id: userId }, event: 'enter' },
+      { preventSaveChanges: true }
+    );
 
+    const sessions = [...user.sessions, sessionId];
+    user.sessions = sessions;
+    user.events.enter = chatEventId;
+    this.set({ users: { [userId]: { online: true } } });
+    await this.saveChanges();
+  }
+  async userLeave({ sessionId, userId }) {
+    const user = this.users[userId];
+    if (user) {
+      // может не быть user, если отработало несколько user.leaveLobby (из context.client.events.close)
+
+      const { leave: lastLeaveEventId } = user.events;
+      const sessions = user.sessions.filter((id) => id !== sessionId);
+      user.sessions = sessions;
+      this.set({ chat: { [lastLeaveEventId]: null } });
+
+      if (sessions.length === 0) {
+        // вышел из лобби
+
+        this.unsubscribe(`user-${userId}`);
+        const { chatEventId } = await this.updateChat(
+          { user: { id: userId }, event: 'leave' },
+          { preventSaveChanges: true }
+        );
+        user.events.leave = chatEventId;
+        this.set({ users: { [userId]: { online: null } } }); // удаляем именно через null, чтобы отловить событие в broadcastDataVueStoreRuleHandler
+      }
+      await this.saveChanges();
+    }
+  }
+
+  // !!! нужно решить, как организовать связку chat+lobby (в частности, решить где должна быть эта функция)
+  async delayedChatEvent({ userId, targetId, chatEvent }) {
+    let user = this.users[targetId];
+    if (!user) {
+      this.set({ users: { [targetId]: {} } });
+      user = this.users[targetId];
+      user.sessions = [];
+      user.events = {};
+    }
     this.set({
       users: {
-        [userId]: {
-          sessions: [...this.users[userId].sessions, sessionId],
-          events: { enter: chatEventId },
+        [targetId]: {
+          personalChatMap: { [userId]: { items: { [chatEvent._id]: chatEvent } } },
         },
       },
     });
     await this.saveChanges();
-  }
-  async userLeave({ sessionId, userId }) {
-    // может не быть user, если отработало несколько user.leaveLobby (из context.client.events.close)
-    const user = this.users[userId];
-    if (user) {
-      const { leave: lastLeaveEventId } = this.users[userId].events;
-      this.set({
-        users: {
-          [userId]: {
-            sessions: user.sessions.filter((id) => id !== sessionId),
-          },
-        },
-        chat: { [lastLeaveEventId]: null },
-      });
-
-      const deleteUserFromLobby = user.sessions.length === 0;
-      if (deleteUserFromLobby) {
-        this.unsubscribe(`user-${userId}`);
-        const { chatEventId } = await this.updateChat({ user: { id: userId }, event: 'leave' });
-        this.set({ users: { [userId]: { events: { leave: chatEventId } } } });
-      }
-      await this.saveChanges();
-    }
   }
   async addGame(gameData) {
     const { id: gameId, type, subtype } = gameData;
@@ -275,24 +321,33 @@
     'bank.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
   };
 
-  async checkRatings({ initiatorUserId, gameType = 'release' }) {
+  checkRatings({ initiatorUserId = null, gameType = 'release' } = {}) {
     const game = this.rankings[gameType];
     const rankingList = Object.entries(game.rankingMap).map(([code, ranking]) => ({ ...ranking, code }));
+    const rankingsUsersTop = [];
     for (const ranking of rankingList) {
       const users = Object.values(ranking.usersTop); // клонирование массива usersTop
-      if (!users.includes(initiatorUserId)) users.push(initiatorUserId);
-      const usersTop = users.map((userId) => ({ ...(this.users[userId].rankings?.[gameType] || {}), userId }));
+      if (initiatorUserId && !users.includes(initiatorUserId)) users.push(initiatorUserId);
+      const draftUsersTop = users.map((userId) => ({ ...(this.users[userId].rankings?.[gameType] || {}), userId }));
 
       const sortFunc = this.rankingSortFunc[`${gameType}.${ranking.code}`];
-      if (sortFunc) {
-        usersTop.sort(sortFunc);
-        this.set({
-          rankings: {
-            [gameType]: { rankingMap: { [ranking.code]: { usersTop: usersTop.map(({ userId }) => userId) } } },
-          },
-        });
-      }
+      const usersTop = !sortFunc
+        ? []
+        : draftUsersTop
+            .sort(sortFunc)
+            .map(({ userId }) => userId)
+            .splice(0, 3);
+
+      this.set({
+        rankings: {
+          [gameType]: { rankingMap: { [ranking.code]: { usersTop } } },
+        },
+      });
+
+      rankingsUsersTop.push(...usersTop);
     }
-    await this.saveChanges();
+    this.set({
+      rankingsUsersTop: rankingsUsersTop.filter((val, idx, arr) => arr.indexOf(val) === idx),
+    });
   }
 });

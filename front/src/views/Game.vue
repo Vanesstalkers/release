@@ -46,14 +46,15 @@
             title: 'Игровой чат',
             users: chatUsers,
             items: game.chat,
+            inGame: true,
           },
-          [`lobby-${this.state.currentLobby}`]: {
+          [`lobby-${state.currentLobby}`]: {
             title: 'Общий чат',
             users: this.lobby.users || {},
             items: this.lobby.chat || {},
           },
         }"
-        :active="`game-${gameState.gameId}`"
+        :defActiveChannel="`game-${gameState.gameId}`"
         :userData="userData"
       />
     </div>
@@ -325,7 +326,7 @@ export default {
   },
   watch: {
     'game.round': function () {
-      this.$root.state.selectedDiceSideId = '';
+      this.$set(this.$root.state, 'selectedDiceSideId', '');
     },
     'state.isLandscape': function () {
       this.updatePlaneScale();

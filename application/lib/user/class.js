@@ -14,7 +14,7 @@
 
       await this.getProtoParent().create.call(this, { login, password, token });
 
-      const initiatedUser = await db.redis.hget('users', this.login);
+      const initiatedUser = await db.redis.hget('users', this.id());
       if (!initiatedUser) await this.addUserToCache();
 
       return this;
@@ -22,7 +22,7 @@
 
     async load(from, config) {
       await this.getProtoParent().load.call(this, from, config);
-      const initiatedUser = await db.redis.hget('users', this.login);
+      const initiatedUser = await db.redis.hget('users', this.id());
       if (!initiatedUser) await this.addUserToCache();
       return this;
     }
@@ -30,9 +30,10 @@
     async addUserToCache() {
       await db.redis.hset(
         'users',
-        this.login,
+        this.id(),
         {
           id: this.id(),
+          login: this.login,
           password: this.password,
           token: this.token,
           workerId: application.worker.id,
@@ -42,12 +43,23 @@
       );
     }
 
+    /**
+     * Сохраняет данные при получении обновлений
+     * @param {*} data
+     */
+    async processData(data) {
+      this.set(data);
+      await this.saveChanges();
+    }
+
     linkSession(session) {
       this.#sessions.set(session.id(), session);
       session.user(this);
+      session.linkTime = Date.now(); // время последнего create или load
     }
-    unlinkSession(session) {
+    async unlinkSession(session) {
       this.#sessions.delete(session.id());
+      if (this.#sessions.size === 0) await db.redis.hdel('users', this.id());
       session.user(null);
     }
     sessions() {

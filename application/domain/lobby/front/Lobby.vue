@@ -143,13 +143,13 @@
       <label v-on:click="pinMenuItem"> ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" /> </label>
       <chat
         :channels="{
-          [`lobby-${this.state.currentLobby}`]: {
+          [`lobby-${state.currentLobby}`]: {
             title: 'Общий чат',
             users: this.lobby.users || {},
             items: this.lobby.chat || {},
           },
         }"
-        :active="`lobby-${state.currentLobby}`"
+        :defActiveChannel="`lobby-${state.currentLobby}`"
         :userData="userData"
       />
     </div>
@@ -210,7 +210,7 @@ export default {
       return this.state.store || {};
     },
     userData() {
-      return this.store.user?.[this.state.currentUser] || {};
+      return { id: this.state.currentUser, ...(this.store.user?.[this.state.currentUser] || {}) };
     },
     lobby() {
       return this.store.lobby?.[this.state.currentLobby] || {};
@@ -234,7 +234,7 @@ export default {
       await this.$root.initSession(config, {
         success: async ({ lobbyId, availableLobbies }) => {
           if (lobbyId) {
-            this.$root.state.currentLobby = lobbyId;
+            this.$set(this.$root.state, 'currentLobby', lobbyId);
             this.lobbyDataLoaded = true;
           } else {
             if (availableLobbies.length) await this.callLobbyEnter({ lobbyId: availableLobbies[0] });
@@ -260,7 +260,7 @@ export default {
           args: [{ lobbyId }],
         })
         .then(() => {
-          this.$root.state.currentLobby = lobbyId;
+          this.$set(this.$root.state, 'currentLobby', lobbyId);
           this.lobbyDataLoaded = true;
         })
         .catch(prettyAlert);
@@ -409,7 +409,7 @@ export default {
         path: 'domain.lobby.api.exit',
       })
       .then((data) => {
-        this.$root.state.currentLobby = '';
+        this.$set(this.$root.state, 'currentLobby', '');
       })
       .catch(prettyAlert);
   },

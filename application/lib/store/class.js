@@ -63,10 +63,13 @@
           }
           addSubscriber({ subscriber: subscriberChannel, accessConfig = {} }) {
             this.#channel.subscribers.set(subscriberChannel, { accessConfig });
-            this.broadcastData(this, { customChannel: subscriberChannel });
+            this.broadcastData(this.prepareInitialDataForSubscribers(), { customChannel: subscriberChannel });
           }
           deleteSubscriber({ subscriber: subscriberChannel }) {
             this.#channel.subscribers.delete(subscriberChannel);
+          }
+          prepareInitialDataForSubscribers() {
+            return this;
           }
           wrapPublishData(data) {
             return { [this.col()]: { [this.id()]: data } };
@@ -216,7 +219,7 @@
       if (this._id) delete this._id; // не должно мешаться при сохранении в mongoDB
       return this;
     }
-    async remove(){
+    async remove() {
       this.removeStore();
       this.removeChannel();
     }
@@ -265,7 +268,7 @@
         const changeKeys = Object.keys(flattenChanges);
         changeKeys.forEach((key, idx) => {
           if (this.#preventSaveFields.find((field) => key.indexOf(field) === 0)) return;
-          
+
           // защита от ошибки MongoServerError: Updating the path 'XXX.YYY' would create a conflict at 'XXX'
           if (changeKeys[idx + 1]?.indexOf(`${key}.`) !== 0) {
             if (flattenChanges[key] === null) $update.$unset[key] = '';

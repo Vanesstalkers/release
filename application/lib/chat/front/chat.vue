@@ -1,9 +1,18 @@
 <template>
   <div class="chat-form">
     <div class="chat-header">
-      <select class="chat-channels" @change="setActiveChat($event)">
+      <select class="chat-channels" ref="selectChannel" @change="setActiveChat($event)">
         <option v-for="channel of chatChannels" :key="channel.id" :value="channel.id">
+          <span v-if="channel.unreadItems">
+            <span v-if="channel.unreadItems <= 9">
+              {{ ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'][channel.unreadItems - 1] }}
+            </span>
+            <span v-if="channel.unreadItems > 9"> 🔟 </span>
+          </span>
           {{ channel.title }}
+          <span v-if="channel.personal">
+            {{ channel.online ? '🟢' : '🔴' }}
+          </span>
         </option>
       </select>
       <label class="user-list-label"> Игроки онлайн ({{ guestsCount + userList.length }})</label>
@@ -61,7 +70,7 @@ export default {
         return {};
       },
     },
-    active: String,
+    defActiveChannel: String,
     userData: {
       type: Object,
       default() {
@@ -71,8 +80,8 @@ export default {
   },
   data() {
     return {
-      activeChannel: this.active,
-      personalChatMap: {},
+      selectedChannel: '',
+      newPersonalChatMap: {},
       userName: '',
       chatMsgText: '',
       disableSendMsgBtn: 0,
@@ -83,18 +92,69 @@ export default {
     state() {
       return this.$root.state || {};
     },
+    store() {
+      return this.state.store || {};
+    },
+    lobby() {
+      return this.store.lobby?.[this.state.currentLobby] || {};
+    },
+    personalChatList() {
+      const personalChatMap = {
+        ...this.newPersonalChatMap,
+        ...(this.userData.personalChatMap || {}),
+      };
+
+      return Object.entries(personalChatMap).map(([id, channel]) => [
+        id,
+        {
+          personal: true,
+          online: this.lobby.users?.[id]?.online,
+          title: channel.name,
+          users: {
+            [this.userData.id]: { name: this.userData.name, online: true },
+            [id]: this.lobby.users?.[id] || {},
+          },
+          items: channel.items || {},
+          unreadItems: Object.values(channel.items || {}).filter(({ time }) =>
+            // для активного канала все новые сообщения не считаются unreadItems, а чтобы обновить значение lastView на сервере, при переключении канала вызовем api.loadPersonal
+            this.activeChannel === id ? 0 : time > (this.userData.personalChatMap?.[id]?.lastView || 0)
+          ).length,
+        },
+      ]);
+    },
     chatChannels() {
       return (
         Object.entries(this.channels)
-          .concat(Object.entries(this.personalChatMap))
-          .map(([id, channel]) => ({ id, ...channel })) || []
+          .concat(this.personalChatList)
+          .map(([id, channel]) => ({
+            id,
+            online: true, // все каналы по дефолту online, но персональные могут быть offline
+            ...channel,
+          })) || []
+      ).sort((a, b) =>
+        !a.personal && b.personal
+          ? -1 // глобальные каналы вверху списка
+          : a.inGame && !b.inGame
+          ? -1 // игровые каналы вверху списка
+          : a.online && !b.online
+          ? -1 // онлайн каналы вверху списка
+          : 1
       );
     },
+    activeChannel() {
+      return this.selectedChannel || this.defActiveChannel;
+    },
+    activeChannelData() {
+      return this.chatChannels.find(({ id }) => id === this.activeChannel) || {};
+    },
     users() {
-      return this.chatChannels.find(({ id }) => id === this.activeChannel).users || {};
+      return this.activeChannelData.users || {};
     },
     items() {
-      return this.chatChannels.find(({ id }) => id === this.activeChannel).items || {};
+      return this.activeChannelData.items || {};
+    },
+    isPersonalChannel() {
+      return this.activeChannelData.personal;
     },
     userList() {
       return Object.entries(this.users)
@@ -118,13 +178,56 @@ export default {
   },
   methods: {
     setActiveChat(event) {
-      this.activeChannel = event.target.value;
+      // это пока еще старый канал - обновляем lastView на сервере, чтобы все прочитанное, пока чат был открыт, не попало в unreadItems при закрытии чата
+      if (this.isPersonalChannel) {
+        api.action
+          .call({
+            path: 'lib.chat.api.loadPersonal',
+            args: [{ channelUserId: this.activeChannel }],
+          })
+          .catch(prettyAlert);
+      }
+
+      // переключаем канал
+      this.selectedChannel = event.target.value;
+
+      this.$nextTick(() => {
+        // тут уже новый канал
+        if (this.isPersonalChannel) {
+          api.action
+            .call({
+              path: 'lib.chat.api.loadPersonal',
+              args: [{ channelUserId: this.activeChannel }],
+            })
+            .catch(prettyAlert);
+        }
+      });
     },
     openPersonalChat(user) {
       if (user.id === this.state.currentUser) return;
-      if (this.personalChatMap[user.id]) return;
-
-      this.$set(this.personalChatMap, user.id, { title: `${user.name} (лс)` });
+      if (this.userData.personalChatMap?.[user.id]) {
+        const $select = this.$refs.selectChannel;
+        $select.value = user.id;
+        $select.dispatchEvent(new Event('change'));
+      } else {
+        this.$set(this.newPersonalChatMap, user.id, { name: user.name });
+        api.action
+          .call({
+            path: 'lib.chat.api.openPersonal',
+            args: [{ id: user.id, name: user.name }],
+          })
+          .then((data) => {
+            this.$nextTick(() => {
+              const $select = this.$refs.selectChannel;
+              $select.value = user.id;
+              $select.dispatchEvent(new Event('change'));
+            });
+          })
+          .catch((err) => {
+            this.$delete(this.newPersonalChatMap, user.id);
+            prettyAlert(err);
+          });
+      }
     },
     saveName() {
       api.action.call({
@@ -136,7 +239,7 @@ export default {
       this.disableSendMsgBtn = 5;
       api.action
         .call({
-          path: 'lib.chat.api.update',
+          path: this.isPersonalChannel ? 'lib.chat.api.updatePersonal' : 'lib.chat.api.update',
           args: [{ text: this.chatMsgText, channel: this.activeChannel }],
         })
         .then((data) => {

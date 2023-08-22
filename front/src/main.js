@@ -74,7 +74,7 @@ const init = async () => {
 
         if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
         if (userId) {
-          this.$root.state.currentUser = userId;
+          this.$set(this.$root.state, 'currentUser', userId);
           if (typeof onSuccess === 'function') onSuccess(session);
         }
       },
