@@ -4,6 +4,13 @@
       pos: 'bottom-left',
       text: 'Вы можете управлять положением и размером игрового поля с помощью кнопок в верхнем левом углу экрана.',
       active: '.gameplane-controls',
+      frontActions: {
+        before: (self) => {
+          const $rootEl = self.$root.$el;
+          const $controls = $rootEl.querySelector('.gameplane-controls');
+          if (!$controls) $rootEl.querySelector('.move.gui-btn')?.click();
+        },
+      },
       buttons: [{ text: 'Продолжай', step: 'planeControlsMouseLeft' }],
     },
     planeControlsMouseLeft: {

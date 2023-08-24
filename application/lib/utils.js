@@ -301,9 +301,15 @@
     }
   },
 
-  structuredClone(data) {
-    // !!! заменить на натив в node17
-    return JSON.parse(JSON.stringify(data));
+  structuredClone(data, { convertFuncToString = false } = {}) {
+    // structuredClone не умеет копировать функции и переводить их в строки (+ он в метархии все равно не работает)
+    const replacer = convertFuncToString
+      ? (key, value) => {
+          if (typeof value === 'function') return value.toString();
+          return value;
+        }
+      : null;
+    return JSON.parse(JSON.stringify(data, replacer));
   },
   keysToNull(obj) {
     return Object.fromEntries(Object.keys(obj).map((key) => [key, null]));

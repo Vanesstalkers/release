@@ -9,7 +9,7 @@
     :class="['zone', zone.vertical ? 'vertical' : '', zone.available ? 'available' : '']"
     v-on:click="putDice"
   >
-    <div class="scroll-off wraper">
+    <div class="wraper">
       <plane-zone-sides
         :linkLines="linkLines"
         :sideList="zone.sideList"

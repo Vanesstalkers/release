@@ -29,7 +29,7 @@ function addMouseEvents(self) {
       }
     },
     mouseDown(event) {
-      if (event.target.classList.contains('scroll-off') || event.target.classList.contains('gui')) return;
+      if (event.target.closest('.scroll-off')) return;
       if (event.button === 2) {
         config.initialRotateAngle = event.clientX;
         config.isRotating = true;

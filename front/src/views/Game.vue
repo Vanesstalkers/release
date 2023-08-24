@@ -5,7 +5,7 @@
     :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
     @wheel.prevent="zoomGamePlane"
   >
-    <tutorial :inGame="true" />
+    <tutorial :inGame="true" class="scroll-off"/>
 
     <GUIWrapper
       :pos="['top', 'left']"
@@ -66,11 +66,11 @@
       </div>
     </div>
 
-    <div v-if="state.shownCard" class="shown-card" v-on:click.stop="closeCardInfo">
+    <div v-if="state.shownCard" class="shown-card scroll-off" v-on:click.stop="closeCardInfo">
       <div class="close" v-on:click.stop="closeCardInfo" />
       <div class="img" :style="{ backgroundImage: `url(/img/cards/release/${state.shownCard}.jpg)` }" />
     </div>
-    <!-- <h1 :style="{ position: 'absolute', left: '0px', top: '0px',zIndex: '1000' }">{{ game.bridgeMap }}</h1> -->
+
     <div
       id="gamePlane"
       :style="{ ...gamePlaneCustomStyleData, opacity: 1, transformOrigin: 'left top', ...gamePlaneControlStyle }"
@@ -749,6 +749,10 @@ export default {
   background-color: grey;
   box-shadow: 5px 5px 5px 0px darkgrey;
   background-image: url(../assets/reset.png);
+}
+.gameplane-controls.tutorial-active {
+  box-shadow: 0 0 40px 40px #fff;
+  border-radius: 50%;
 }
 
 .gui-btn {

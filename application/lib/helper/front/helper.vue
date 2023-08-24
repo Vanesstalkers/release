@@ -144,7 +144,7 @@ export default {
   },
   methods: {
     update() {
-      let { text, img, active, pos, fullscreen = false } = this.helperData;
+      let { text, img, active, pos, fullscreen = false, frontActions } = this.helperData;
       if (!pos) pos = 'bottom-right'; // тут может быть null
 
       this.$set(this.helperClassMap, 'dialog-active', text || img ? true : false);
@@ -165,6 +165,10 @@ export default {
       }
       this.dialogStyle = dialogStyle;
 
+      if (frontActions) {
+        if (frontActions.before) new Function('return ' + frontActions.before)()(this);
+      }
+
       document.querySelectorAll('.tutorial-active').forEach((el) => {
         el.classList.remove('tutorial-active');
       });
@@ -172,17 +176,19 @@ export default {
         if (typeof active === 'string') active = { selector: active };
         let { selector, update, customClass } = active;
 
-        // document.getElementById('app').setAttribute('tutorial-active', true);
-        document.querySelectorAll(selector).forEach((el) => {
-          if (el) {
-            el.classList.add('tutorial-active');
-            if (customClass) el.classList.add(customClass);
-            if (update) {
-              el.addEventListener('click', () => {
-                this.action(update);
-              });
+        this.$nextTick(() => {
+          // если в beforeAction проводились манипуляции с dom, то селектор отработает только в nextTick
+          document.querySelectorAll(selector).forEach((el) => {
+            if (el) {
+              el.classList.add('tutorial-active');
+              if (customClass) el.classList.add(customClass);
+              if (update) {
+                el.addEventListener('click', () => {
+                  this.action(update);
+                });
+              }
             }
-          }
+          });
         });
       }
     },

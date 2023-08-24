@@ -1,5 +1,5 @@
 <template>
-  <div class="gui-wrapper" :class="wrapperClass" :style="wrapperCustomStyle">
+  <div class="gui-wrapper scroll-off" :class="wrapperClass" :style="wrapperCustomStyle">
     <div :class="['gui-resizeable', `scale-${state.guiScale}`, ...contentClass]" :style="contentCustomStyle">
       <slot></slot>
     </div>

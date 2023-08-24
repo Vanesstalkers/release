@@ -1,7 +1,11 @@
-(tutorialPath) => {
-  tutorialPath = tutorialPath.split('-');
-  let tutorialObj = lib.utils.getDeep(this, ['lib', ...tutorialPath]);
-  if (!tutorialObj) tutorialObj = lib.utils.getDeep(this, ['domain', ...tutorialPath]);
-  if (!tutorialObj?.steps) throw new Error('Tutorial not found');
-  return lib.utils.structuredClone(tutorialObj.steps);
+(formattedPath) => {
+  const path = formattedPath.split('-');
+  let realPath = ['lib', ...path];
+  let obj = lib.utils.getDeep(this, realPath);
+  if (!obj) {
+    realPath = ['domain', ...path];
+    obj = lib.utils.getDeep(this, realPath);
+  }
+  if (!obj?.steps) throw new Error('Tutorial not found');
+  return lib.utils.structuredClone(obj.steps, { convertFuncToString: true });
 };

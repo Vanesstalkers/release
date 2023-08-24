@@ -1,5 +1,4 @@
 (class Game extends lib.game.class() {
-  // #logs = {};
   bridgeMap = {};
 
   constructor(data = {}) {
@@ -11,8 +10,6 @@
     });
     this.preventSaveFields(['availableZones']);
 
-    this.game(this);
-    delete this.code; // мешается в ZoneSide.links + в принципе не нужен
   }
 
   fromJSON(data, { newGame } = {}) {

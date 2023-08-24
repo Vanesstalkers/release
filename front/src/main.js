@@ -1,7 +1,6 @@
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
-// import store from './store';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +12,6 @@ import { mergeDeep } from '../lib/utils.js';
 library.add(fas, far, fab);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 Vue.config.productionTip = false;
-// window.vuex = store;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
@@ -91,13 +89,14 @@ const init = async () => {
   });
 
   const protocol = location.protocol === 'http:' ? 'ws' : 'wss';
+  // направление на конкретный port нужно для reconnect (см. initSession) + для отладки
   const port = new URLSearchParams(location.search).get('port') || 8800;
-  const url =
-    location.hostname === 'localhost' || location.hostname.startsWith('192.168.')
-      ? `${location.hostname}:${port}`
-      : `${location.hostname}/api`;
+
+  // process.env.NODE_ENV = 'development' === (location.hostname === 'localhost' || location.hostname.startsWith('192.168.'))
+  const url = process.env.NODE_ENV === 'development' ? `${location.hostname}:${port}` : `${location.hostname}/api`;
   const metacom = Metacom.create(`${protocol}://${url}`);
   const { api } = metacom;
+  window.metacom = metacom;
   window.api = api;
 
   await metacom.load('auth', 'lobby', 'game', 'helper', 'db', 'session', 'user', 'action');

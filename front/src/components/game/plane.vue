@@ -2,7 +2,13 @@
   <div
     v-if="plane._id"
     :id="plane._id"
-    :class="['plane', activeEvent ? 'active-event' : '', ...plane.customClass, ...Object.values(customClass)]"
+    :class="[
+      'plane',
+      'scroll-off',
+      activeEvent ? 'active-event' : '',
+      ...plane.customClass,
+      ...Object.values(customClass),
+    ]"
     :style="customStyle"
     v-on:click.stop="(e) => (activeEvent ? choosePlane() : selectPlane(e))"
     :code="plane.code"

@@ -13,23 +13,23 @@
     v-on:click="(e) => (activeEvent ? chooseDice() : pickDice())"
   >
     <div v-if="!locked" class="controls">
-      <div :class="['scroll-off', 'control rotate', dice.deleted ? 'hidden' : '']" v-on:click.stop="rotateDice">
+      <div :class="['control rotate', dice.deleted ? 'hidden' : '']" v-on:click.stop="rotateDice">
         <font-awesome-icon :icon="['fas', 'rotate']" size="2xl" style="color: #f4e205" />
       </div>
-      <div :class="['scroll-off', 'control', 'fake-rotate', 'disabled', dice.deleted ? 'hidden' : '']" v-on:click.stop>
+      <div :class="['control', 'fake-rotate', 'disabled', dice.deleted ? 'hidden' : '']" v-on:click.stop>
         <font-awesome-icon :icon="['fas', 'rotate']" size="2xl" style="color: #ccc" />
       </div>
-      <div :class="['scroll-off', 'control', 'disabled', replaceAllowed || dice.deleted ? 'hidden' : '']">
+      <div :class="['control', 'disabled', replaceAllowed || dice.deleted ? 'hidden' : '']">
         <font-awesome-icon :icon="['fass', 'trash']" size="2xl" style="color: #ccc" />
       </div>
       <div
-        :class="['scroll-off', 'control', replaceAllowed && !dice.deleted ? '' : 'hidden']"
+        :class="['control', replaceAllowed && !dice.deleted ? '' : 'hidden']"
         v-on:click.stop="deleteDice"
       >
         <font-awesome-icon :icon="['fass', 'trash']" size="2xl" style="color: #f4e205" />
       </div>
       <div
-        :class="['scroll-off', 'control', replaceAllowed && dice.deleted ? '' : 'hidden']"
+        :class="['control', replaceAllowed && dice.deleted ? '' : 'hidden']"
         v-on:click.stop="restoreDice"
       >
         <font-awesome-icon :icon="['fas', 'trash-arrow-up']" size="2xl" style="color: #f4e205" />
