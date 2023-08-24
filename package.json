@@ -1,6 +1,6 @@
 {
   "name": "metarhia",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "author": "Timur Shemsedinov <timur.shemsedinov@gmail.com>",
   "description": "Metarhia Application Example",
   "license": "MIT",
@@ -50,23 +50,27 @@
     "db": "metasql c"
   },
   "engines": {
-    "node": "^12.9 || 14 || 16"
+    "node": "16 || 18 || 19 || 20"
   },
   "devDependencies": {
-    "@types/node": "^16.10.4",
-    "@types/pg": "^8.6.0",
-    "@types/ws": "^8.2.0",
-    "eslint": "^7.31.0",
-    "metatests": "^0.7.2",
-    "prettier": "^2.4.0",
-    "typescript": "^4.4.4"
+    "@types/node": "^20.5.0",
+    "@types/pg": "^8.6.6",
+    "@types/ws": "^8.5.5",
+    "eslint": "^8.47.0",
+    "eslint-config-metarhia": "^8.2.1",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "metatests": "^0.8.2",
+    "prettier": "^3.0.2",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
-    "impress": "^2.6.10",
+    "impress": "^3.0.3",
     "ioredis": "^5.3.1",
-    "metasql": "^2.0.1",
-    "mongodb": "^4.1.3",
-    "pg": "^8.7.1",
-    "redis": "^3.1.2"
+    "metasql": "^3.0.0-alpha.2",
+    "mongodb": "^5.8.0",
+    "pg": "^8.11.3",
+    "redis": "^4.6.7"
   }
 }

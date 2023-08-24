@@ -1,5 +1,5 @@
 async (context, { gameId }) => {
-  const { sessionId } = context;
+  const { sessionId } = context.session.state;
   const session = lib.store('session').get(sessionId);
   const { userId } = session;
   const user = session.user();

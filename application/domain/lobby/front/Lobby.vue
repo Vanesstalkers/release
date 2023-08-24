@@ -144,7 +144,7 @@
       <chat
         :channels="{
           [`lobby-${state.currentLobby}`]: {
-            title: 'Общий чат',
+            name: 'Общий чат',
             users: this.lobby.users || {},
             items: this.lobby.chat || {},
           },

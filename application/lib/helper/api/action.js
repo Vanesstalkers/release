@@ -1,5 +1,6 @@
 async (context, { action, step, tutorial: tutorialName, usedLink }) => {
-  const user = lib.store('user').get(context.userId);
+  const { userId } = context.session.state;
+  const user = lib.store('user').get(userId);
   let { currentTutorial } = user;
   if (!currentTutorial) currentTutorial = {};
 

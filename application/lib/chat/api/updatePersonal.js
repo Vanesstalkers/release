@@ -1,5 +1,5 @@
 async (context, { text, channel }) => {
-  const { sessionId } = context;
+  const { sessionId } = context.session.state;
   const session = lib.store('session').get(sessionId);
   const user = session.user();
   const userId = user.id();

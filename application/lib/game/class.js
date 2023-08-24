@@ -21,7 +21,7 @@
       this.fromJSON(gameData, { newGame: true });
       delete this._id; // удаляем _id от gameObject, чтобы он не попал в БД
 
-      await this.getProtoParent().create.call(this, { ...this });
+      await super.create({ ...this });
 
       const initiatedGame = await db.redis.hget('games', this.id());
       if (!initiatedGame) await this.addGameToCache();

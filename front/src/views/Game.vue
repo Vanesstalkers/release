@@ -43,13 +43,13 @@
       <chat
         :channels="{
           [`game-${gameState.gameId}`]: {
-            title: 'Игровой чат',
+            name: 'Игровой чат',
             users: chatUsers,
             items: game.chat,
             inGame: true,
           },
           [`lobby-${state.currentLobby}`]: {
-            title: 'Общий чат',
+            name: 'Общий чат',
             users: this.lobby.users || {},
             items: this.lobby.chat || {},
           },

@@ -134,7 +134,7 @@
       },
     };
 
-    await this.getProtoParent().create.call(this, { code, users, rankings });
+    await super.create({ code, users, rankings });
 
     this.checkRatings();
     await this.saveChanges();
@@ -142,7 +142,7 @@
     return this;
   }
   async load(from, config) {
-    await this.getProtoParent().load.call(this, from, config);
+    await super.load(from, config);
 
     await this.restoreChat();
 
@@ -250,7 +250,7 @@
   async userLeave({ sessionId, userId }) {
     const user = this.users[userId];
     if (user) {
-      // может не быть user, если отработало несколько user.leaveLobby (из context.client.events.close)
+      // может не быть user, если отработало несколько user.leaveLobby (из session.onClose)
 
       const { leave: lastLeaveEventId } = user.events;
       const sessions = user.sessions.filter((id) => id !== sessionId);

@@ -1,6 +1,6 @@
 async (context, { id: channelUserId, name }) => {
   try {
-    const { sessionId } = context;
+    const { sessionId } = context.session.state;
     const session = lib.store('session').get(sessionId);
     const user = session.user();
     const userId = user.id();

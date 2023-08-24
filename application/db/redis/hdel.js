@@ -1,7 +1,1 @@
-(hash, key) =>
-  new Promise((resolve, reject) => {
-    db.redis.client.hdel(hash, key, (err, result) => {
-      if (err) reject(err);
-      else resolve(result);
-    });
-  });
+async (hash, key) => await db.redis.client.hDel(hash, key);

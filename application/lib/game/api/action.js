@@ -1,5 +1,5 @@
 async (context, actionData) => {
-  const { sessionId } = context;
+  const { sessionId } = context.session.state;
   const session = lib.store('session').get(sessionId);
 
   actionData.sessionUserId = session.userId;

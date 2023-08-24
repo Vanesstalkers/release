@@ -1,5 +1,6 @@
 async (context, { name }) => {
-  const user = lib.store('user').get(context.userId);
+  const { userId } = context.session.state;
+  const user = lib.store('user').get(userId);
 
   user.set({ name });
 

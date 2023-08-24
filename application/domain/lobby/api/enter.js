@@ -1,11 +1,12 @@
 async (context, { lobbyId }) => {
-  const { sessionId } = context;
+  const { sessionId } = context.session.state;
   const session = lib.store('session').get(sessionId);
   const user = session.user();
 
   const lobbyName = `lobby-${lobbyId}`;
   session.subscribe(lobbyName, { rule: 'vue-store', userId: user.id() });
-  context.client.events.close.unshift(async () => {
+
+  session.onClose.push(async () => {
     if (session.lobbyId !== lobbyId) return; // уже вышел из лобби
 
     session.unsubscribe(lobbyName);

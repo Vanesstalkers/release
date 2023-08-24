@@ -163,16 +163,6 @@
       if (!data) return this.#preventSaveFields;
       this.#preventSaveFields = data;
     }
-    /**
-     * При вызове любыми наследниками всегда возвращает protoClass
-     */
-    getProtoParent() {
-      let parent = this;
-      while (protoClass.prototype.isPrototypeOf(Object.getPrototypeOf(parent))) {
-        parent = Object.getPrototypeOf(parent);
-      }
-      return parent;
-    }
 
     initStore(id) {
       this.#id = id.toString();

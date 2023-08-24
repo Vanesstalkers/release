@@ -33,7 +33,10 @@
       this.code = this.getCodeTemplate(this.constructor.name + '[' + (data._code || '') + ']');
     }
 
-    if (parent) {
+    if (!parent) {
+      this.game(this);
+      delete this.code; // чтобы у дочерних объектов не было префикса "Game[]"
+    } else {
       const game = parent.game();
       this.game(game);
       if (newObject) game.markNew(this, { saveToDB: true });

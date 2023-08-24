@@ -12,7 +12,7 @@
       password = await metarhia.metautil.hashPassword(password);
       if (!token) token = api.auth.provider.generateToken();
 
-      await this.getProtoParent().create.call(this, { login, password, token });
+      await super.create({ login, password, token });
 
       const initiatedUser = await db.redis.hget('users', this.id());
       if (!initiatedUser) await this.addUserToCache();
@@ -21,7 +21,7 @@
     }
 
     async load(from, config) {
-      await this.getProtoParent().load.call(this, from, config);
+      await super.load(from, config);
       const initiatedUser = await db.redis.hget('users', this.id());
       if (!initiatedUser) await this.addUserToCache();
       return this;

@@ -4,7 +4,7 @@ async () => {
   });
   await client.connect();
   db.mongo.client = client.db('xaoc3');
-  db.mongo.ObjectID = npm.mongodb.ObjectID;
+  db.mongo.ObjectID = (id) => new npm.mongodb.ObjectId(id);
 
   if (application.worker.id === 'W1') {
     console.debug('Connect to mongo');
@@ -13,7 +13,6 @@ async () => {
     });
   }
   for (const fn of db.mongo.handlers.afterStart) {
-    if (typeof fn === 'function')
-      await fn()
+    if (typeof fn === 'function') await fn();
   }
 };

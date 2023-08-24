@@ -9,7 +9,7 @@
             </span>
             <span v-if="channel.unreadItems > 9"> 🔟 </span>
           </span>
-          {{ channel.title }}
+          {{ channel.name }}
           <span v-if="channel.personal">
             {{ channel.online ? '🟢' : '🔴' }}
           </span>
@@ -19,6 +19,12 @@
       <div class="user-list">
         <span v-if="guestsCount">Гость ({{ guestsCount }})</span>
         <span v-for="user in userList" :key="user.id" @click="openPersonalChat(user)">
+          <span v-if="user.unreadItems" class="unread-items-count">
+            <span v-if="user.unreadItems <= 9">
+              {{ ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'][user.unreadItems - 1] }}
+            </span>
+            <span v-if="user.unreadItems > 9"> 🔟 </span>
+          </span>
           {{ user.name }}
         </span>
       </div>
@@ -109,7 +115,7 @@ export default {
         {
           personal: true,
           online: this.lobby.users?.[id]?.online,
-          title: channel.name,
+          name: channel.name,
           users: {
             [this.userData.id]: { name: this.userData.name, online: true },
             [id]: this.lobby.users?.[id] || {},
@@ -157,9 +163,19 @@ export default {
       return this.activeChannelData.personal;
     },
     userList() {
-      return Object.entries(this.users)
+      const users = Object.entries(this.users)
         .filter(([id, user]) => user && user.name && user.online)
         .map(([id, user]) => Object.assign(user, { id }));
+      for (const [channelId, channel] of this.personalChatList) {
+        const user = users.find(({ id }) => id === channelId);
+        if (channel.unreadItems) {
+          if (user) user.unreadItems = channel.unreadItems;
+          else users.push({ id: channelId, ...channel });
+        } else {
+          if (user && user.unreadItems) delete user.unreadItems;
+        }
+      }
+      return users;
     },
     guestsCount() {
       return Object.values(this.users).filter((user) => user && !user.name && user.online).length;
@@ -315,6 +331,10 @@ export default {
   border-radius: 2px;
   padding: 2px 4px;
   margin: 2px;
+}
+
+.user-list .unread-items-count {
+  font-size: 11px;
 }
 
 .chat-msg-list {

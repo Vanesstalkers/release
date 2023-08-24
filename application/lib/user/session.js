@@ -19,13 +19,13 @@
       if (!userId) throw new Error('Ошибка создания сессии (empty userId).');
 
       const user = lib.store('user').get(userId);
-      await this.getProtoParent().create.call(this, { token, windowTabId, userId, userLogin });
+      await super.create({ token, windowTabId, userId, userLogin });
       user.linkSession(this);
 
       return this;
     }
     async load(from, config = { linkSessionToUser: true }) {
-      await this.getProtoParent().load.call(this, from, config);
+      await super.load(from, config);
 
       let user;
       const userOnline = await db.redis.hget('users', this.userId, { json: true });
@@ -75,7 +75,7 @@
       await this.create({ userId: userOnline.id, userLogin: login, token: userOnline.token, windowTabId });
     }
     initChannel(data) {
-      this.getProtoParent().initChannel.call(this, data);
+      super.initChannel(data);
       this.subscribe(`user-${this.userId}`, this.#userSubscribeConfig);
     }
     /**

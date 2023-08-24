@@ -1,6 +1,6 @@
 async (context, { gameId }) => {
   try {
-    const { sessionId } = context;
+    const { sessionId } = context.session.state;
     const session = lib.store('session').get(sessionId);
     if (gameId && gameId !== session.gameId) throw new Error('Пользователь не участвует в игре');
     const user = session.user();
@@ -13,7 +13,7 @@ async (context, { gameId }) => {
     }
 
     session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
-    context.client.events.close.unshift(() => {
+    session.onClose.push(async () => {
       session.unsubscribe(`game-${gameId}`);
     });
 

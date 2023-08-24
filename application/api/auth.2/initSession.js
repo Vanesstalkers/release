@@ -65,7 +65,10 @@
         }
       }
 
-      context.client.events.close.push(() => {
+      session.onClose = [];
+      context.client.addListener('close', async () => {
+        if (session.onClose.length) for (const f of session.onClose) await f();
+
         session.user().unlinkSession(session);
         session.unsubscribe(`user-${session.userId}`);
         console.log(`session disconnected (token=${session.token}, windowTabId=${windowTabId}`);
