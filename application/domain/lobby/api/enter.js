@@ -28,6 +28,8 @@ async (context, { lobbyId }) => {
       if (!gameLoaded) {
         user.set({ gameId: null, playerId: null });
         await user.saveChanges();
+
+        session.set({ lobbyId });
         for (const session of user.sessions()) {
           session.set({ gameId: null, playerId: null });
           await session.saveChanges();

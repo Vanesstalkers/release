@@ -1,11 +1,11 @@
 <template>
   <div
-    v-if="game.addTime"
+    v-if="gameDataLoaded"
     id="game"
     :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
     @wheel.prevent="zoomGamePlane"
   >
-    <tutorial :inGame="true" class="scroll-off"/>
+    <tutorial :inGame="true" class="scroll-off" />
 
     <GUIWrapper
       :pos="['top', 'left']"
@@ -247,6 +247,9 @@ export default {
     game() {
       return this.getGame();
     },
+    gameDataLoaded() {
+      return this.game.addTime;
+    },
     userData() {
       return this.state.store?.user?.[this.state.currentUser] || {};
     },
@@ -325,6 +328,9 @@ export default {
     },
   },
   watch: {
+    gameDataLoaded: function () {
+      this.$set(this.$root.state, 'viewLoaded', true);
+    },
     'game.round': function () {
       this.$set(this.$root.state, 'selectedDiceSideId', '');
     },
@@ -476,6 +482,8 @@ export default {
     }
   },
   async beforeDestroy() {
+    this.$set(this.$root.state, 'viewLoaded', false);
+
     removeEvents();
     removeMouseEvents();
     if (this.$root.state.store.game?.[this.gameState.gameId]) {

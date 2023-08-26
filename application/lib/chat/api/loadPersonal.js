@@ -28,6 +28,7 @@ async (context, { channelUserId }) => {
     return { status: 'ok' };
   } catch (err) {
     console.log(err);
-    return { status: 'err', message: err.message, hideMessage: err.stack };
+    context.client.emit('session/error', { message: err.message, stack: err.stack });
+    return err;
   }
 };

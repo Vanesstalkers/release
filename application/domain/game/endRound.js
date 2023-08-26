@@ -4,6 +4,19 @@
     throw new Error('Действие запрещено.');
   }
 
+  const {
+    // конфиги
+    autoFinishAfterRoundsOverdue,
+    playerHandLimit,
+    allowedAutoCardPlayRoundStart,
+  } = game.settings;
+
+  const timerOverdueCounter = timerOverdue ? (game.timerOverdueCounter || 0) + 1 : 0;
+  // если много ходов было завершено по таймауту, то скорее всего все игроки вышли и ее нужно завершать
+  if (timerOverdueCounter > autoFinishAfterRoundsOverdue) {
+    game.endGame();
+  }
+
   // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
   const prevPlayer = game.getActivePlayer();
   const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
@@ -101,7 +114,8 @@
     });
   }
 
-  if (prevPlayerHand.itemsCount() > game.settings.playerHandLimit) {
+  if (prevPlayerHand.itemsCount() > playerHandLimit) {
+    // слишком много доминошек в руке
     if (!prevPlayer.eventData.disablePlayerHandLimit) {
       prevPlayerHand.moveAllItems({ target: gameDominoDeck });
       game.logs({
@@ -126,14 +140,20 @@
   newRoundLogEvents.push(`Начало раунда №${newRoundNumber}.`);
 
   const card = game.smartMoveRandomCard({ target: cardDeckActive });
-  if (card && game.settings.acceptAutoPlayRoundStartCard === true) {
+  if (card && allowedAutoCardPlayRoundStart === true) {
     card.play();
     newRoundLogEvents.push(`Активировано ежедневное событие "${card.title}".`);
   }
 
-  game.set({ round: newRoundNumber });
-  lib.timers.timerRestart(game, activePlayer.eventData.actionsDisabled === true ? { time: 5 } : {});
+  // обновляем таймер
+  const actionsDisabled = activePlayer.eventData.actionsDisabled === true;
+  const timerConfig = actionsDisabled ? { time: 5 } : {};
+  lib.timers.timerRestart(game, timerConfig);
+
+  // обновляем логи
   for (const logEvent of newRoundLogEvents) game.logs(logEvent);
+
+  game.set({ round: newRoundNumber, timerOverdueCounter });
 
   return { status: 'ok' };
 };

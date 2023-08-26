@@ -278,10 +278,10 @@ export default {
     this.$nextTick(this.update);
 
     const self = this;
-    window.prettyAlert = ({ message, hideMessage } = {}) => {
+    window.prettyAlert = ({ message, stack } = {}) => {
       if (message === 'Forbidden') message += ` (попробуйте обновить страницу)`;
       self.alert = message;
-      self.hideAlert = hideMessage;
+      self.hideAlert = stack;
       if (self.hideAlert) this.showHideAlert = false;
     };
 

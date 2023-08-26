@@ -137,7 +137,7 @@
         });
       } catch (exception) {
         lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
-          data: { message: exception.message, hideMessage: exception.stack },
+          data: { message: exception.message, stack: exception.stack },
         });
       }
     }
@@ -281,7 +281,7 @@
           await this.removeGame();
         } else {
           lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
-            data: { message: exception.message, hideMessage: exception.stack },
+            data: { message: exception.message, stack: exception.stack },
           });
         }
       }

@@ -2,8 +2,8 @@ async (context, { gameId }) => {
   try {
     const { sessionId } = context.session.state;
     const session = lib.store('session').get(sessionId);
-    if (gameId && gameId !== session.gameId) throw new Error('Пользователь не участвует в игре');
     const user = session.user();
+    if (gameId && gameId !== user.gameId) throw new Error('Пользователь не участвует в игре');
 
     const gameLoaded = await db.redis.hget('games', gameId);
     if (!gameLoaded) {
@@ -14,12 +14,15 @@ async (context, { gameId }) => {
 
     session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
     session.onClose.push(async () => {
+      // проверка на последнего игрока не нужна, потому что игра автоматически завершится через allowedAutoCardPlayRoundStart раундов
+
       session.unsubscribe(`game-${gameId}`);
     });
 
     return { status: 'ok', gameId, playerId: user.playerId };
   } catch (err) {
     console.log(err);
-    return { status: 'err', message: err.message, hideMessage: err.stack };
+    context.client.emit('session/error', { message: err.message, stack: err.stack });
+    return err;
   }
 };

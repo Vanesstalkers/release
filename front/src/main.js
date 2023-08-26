@@ -15,12 +15,6 @@ Vue.config.productionTip = false;
 
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
-  window.prettyAlert = (data = {}) => {
-    const { message, hideMessage } = data;
-    if (message === 'Forbidden') {
-      // стандартный ответ impress при доступе к запрещенному ресурсу (скорее всего нужна авторизация)
-    } else alert(message);
-  };
 
   // лежит как пример
   // router.beforeEach((to, from, next) => {
@@ -28,6 +22,7 @@ const init = async () => {
   // });
 
   const state = {
+    viewLoaded: true,
     currentUser: '',
     currentLobby: '',
     isMobile: false,
@@ -48,15 +43,20 @@ const init = async () => {
         const { login, password, demo } = config || {};
         const { success: onSuccess, error: onError } = handlers;
 
-        const token = localStorage.getItem('metarhia.session.token');
+        const token = localStorage.getItem('smartgames.session.token');
         const session =
-          (await api.auth
-            .initSession({
-              token,
-              windowTabId: window.name,
-              login,
-              password,
-              demo,
+          (await api.action
+            .public({
+              path: 'lib.user.api.initSession',
+              args: [
+                {
+                  token,
+                  windowTabId: window.name,
+                  login,
+                  password,
+                  demo,
+                },
+              ],
             })
             .catch((err) => {
               if (typeof onError === 'function') onError(err);
@@ -70,7 +70,7 @@ const init = async () => {
           return;
         }
 
-        if (sessionToken && sessionToken !== token) localStorage.setItem('metarhia.session.token', sessionToken);
+        if (sessionToken && sessionToken !== token) localStorage.setItem('smartgames.session.token', sessionToken);
         if (userId) {
           this.$set(this.$root.state, 'currentUser', userId);
           if (typeof onSuccess === 'function') onSuccess(session);
@@ -99,7 +99,7 @@ const init = async () => {
   window.metacom = metacom;
   window.api = api;
 
-  await metacom.load('auth', 'lobby', 'game', 'helper', 'db', 'session', 'user', 'action');
+  await metacom.load('db', 'session', 'action');
 
   api.db.on('smartUpdated', (data) => {
     mergeDeep({ target: state.store, source: data });
@@ -115,7 +115,14 @@ const init = async () => {
       console.log(err);
     });
   });
-  api.session.on('msg', (data) => {
+  api.session.on('logout', () => {
+    app.$set(app.$root.state, 'currentUser', '');
+    localStorage.removeItem('smartgames.session.token');
+    router.push({ path: `/` }).catch((err) => {
+      console.log(err);
+    });
+  });
+  api.session.on('error', (data) => {
     prettyAlert(data);
   });
 

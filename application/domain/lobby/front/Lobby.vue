@@ -201,7 +201,11 @@ export default {
       },
     };
   },
-  watch: {},
+  watch: {
+    lobbyDataLoaded: function () {
+      this.$set(this.$root.state, 'viewLoaded', true);
+    },
+  },
   computed: {
     state() {
       return this.$root.state || {};
@@ -402,6 +406,8 @@ export default {
     }
   },
   async beforeDestroy() {
+    this.$set(this.$root.state, 'viewLoaded', false);
+    
     return; // при входе в игру не выходим из лобби
 
     await api.action
@@ -478,17 +484,30 @@ export default {
     text-align: right;
     border: 3px solid var(--boxshadow);
     border-left: 0;
-    text-shadow: var(--textshadow) 0px 0px 0px, var(--textshadow) 0.669131px 0.743145px 0px,
-      var(--textshadow) 1.33826px 1.48629px 0px, var(--textshadow) 2.00739px 2.22943px 0px,
-      var(--textshadow) 2.67652px 2.97258px 0px, var(--textshadow) 3.34565px 3.71572px 0px,
-      var(--textshadow) 4.01478px 4.45887px 0px, var(--textshadow) 4.68391px 5.20201px 0px;
-    box-shadow: var(--border) 0px 0px 0px, var(--boxshadow) 0.819152px 0.573576px 0px,
-      var(--boxshadow) 1.6383px 1.14715px 0px, var(--boxshadow) 2.45746px 1.72073px 0px,
-      var(--boxshadow) 3.27661px 2.29431px 0px, var(--boxshadow) 4.09576px 2.86788px 0px,
-      var(--boxshadow) 4.91491px 3.44146px 0px, var(--boxshadow) 5.73406px 4.01504px 0px,
-      var(--boxshadow) 6.55322px 4.58861px 0px, var(--boxshadow) 7.37237px 5.16219px 0px,
-      var(--boxshadow) 8.19152px 5.73576px 0px, var(--boxshadow) 9.01067px 6.30934px 0px,
-      var(--boxshadow) 9.82982px 6.88292px 0px, var(--boxshadow) 10.649px 7.45649px 0px,
+    text-shadow:
+      var(--textshadow) 0px 0px 0px,
+      var(--textshadow) 0.669131px 0.743145px 0px,
+      var(--textshadow) 1.33826px 1.48629px 0px,
+      var(--textshadow) 2.00739px 2.22943px 0px,
+      var(--textshadow) 2.67652px 2.97258px 0px,
+      var(--textshadow) 3.34565px 3.71572px 0px,
+      var(--textshadow) 4.01478px 4.45887px 0px,
+      var(--textshadow) 4.68391px 5.20201px 0px;
+    box-shadow:
+      var(--border) 0px 0px 0px,
+      var(--boxshadow) 0.819152px 0.573576px 0px,
+      var(--boxshadow) 1.6383px 1.14715px 0px,
+      var(--boxshadow) 2.45746px 1.72073px 0px,
+      var(--boxshadow) 3.27661px 2.29431px 0px,
+      var(--boxshadow) 4.09576px 2.86788px 0px,
+      var(--boxshadow) 4.91491px 3.44146px 0px,
+      var(--boxshadow) 5.73406px 4.01504px 0px,
+      var(--boxshadow) 6.55322px 4.58861px 0px,
+      var(--boxshadow) 7.37237px 5.16219px 0px,
+      var(--boxshadow) 8.19152px 5.73576px 0px,
+      var(--boxshadow) 9.01067px 6.30934px 0px,
+      var(--boxshadow) 9.82982px 6.88292px 0px,
+      var(--boxshadow) 10.649px 7.45649px 0px,
       var(--boxshadow) 11.4681px 8.03007px 0px;
     &:last-child {
       left: calc(var(--size) * -1vmin);
@@ -515,10 +534,15 @@ export default {
 .menu-item > label {
   cursor: pointer;
   color: crimson;
-  text-shadow: var(--textshadow) 0px 0px 0px, var(--textshadow) 0.669131px 0.743145px 0px,
-    var(--textshadow) 1.33826px 1.48629px 0px, var(--textshadow) 2.00739px 2.22943px 0px,
-    var(--textshadow) 2.67652px 2.97258px 0px, var(--textshadow) 3.34565px 3.71572px 0px,
-    var(--textshadow) 4.01478px 4.45887px 0px, var(--textshadow) 4.68391px 5.20201px 0px;
+  text-shadow:
+    var(--textshadow) 0px 0px 0px,
+    var(--textshadow) 0.669131px 0.743145px 0px,
+    var(--textshadow) 1.33826px 1.48629px 0px,
+    var(--textshadow) 2.00739px 2.22943px 0px,
+    var(--textshadow) 2.67652px 2.97258px 0px,
+    var(--textshadow) 3.34565px 3.71572px 0px,
+    var(--textshadow) 4.01478px 4.45887px 0px,
+    var(--textshadow) 4.68391px 5.20201px 0px;
   font-family: fantasy;
   font-weight: bold;
   letter-spacing: 10px;
@@ -530,14 +554,18 @@ export default {
   background-size: 100% 10px;
   background-repeat: no-repeat;
   background-position: 100% 0%;
-  transition: background-size 0.7s, background-position 0.5s ease-in-out;
+  transition:
+    background-size 0.7s,
+    background-position 0.5s ease-in-out;
 }
 .menu-item:hover > label,
 .menu-item.pinned > label,
 .menu-item.tutorial-active > label {
   background-size: 100% 100%;
   background-position: 0% 100%;
-  transition: background-position 0.7s, background-size 0.5s ease-in-out;
+  transition:
+    background-position 0.7s,
+    background-size 0.5s ease-in-out;
   box-shadow: 1px 0px 20px 6px rgba(0, 0, 0, 1);
 }
 .menu-item > label > svg {
@@ -560,7 +588,9 @@ export default {
   top: 100%;
   background-image: url(@/assets/clear-black-back.png);
   color: white;
-  transition: visibility 0s, opacity 0.5s linear;
+  transition:
+    visibility 0s,
+    opacity 0.5s linear;
   overflow: auto;
 }
 .menu-item.pinned > div,
@@ -583,9 +613,15 @@ export default {
   font-size: 24px;
   letter-spacing: 6px;
   color: black;
-  text-shadow: white 0px 0px 0px, white 0.669131px 0.743145px 0px, white 1.33826px 1.48629px 0px,
-    white 2.00739px 2.22943px 0px, white 2.67652px 2.97258px 0px, white 3.34565px 3.71572px 0px,
-    white 4.01478px 4.45887px 0px, white 4.68391px 5.20201px 0px;
+  text-shadow:
+    white 0px 0px 0px,
+    white 0.669131px 0.743145px 0px,
+    white 1.33826px 1.48629px 0px,
+    white 2.00739px 2.22943px 0px,
+    white 2.67652px 2.97258px 0px,
+    white 3.34565px 3.71572px 0px,
+    white 4.01478px 4.45887px 0px,
+    white 4.68391px 5.20201px 0px;
   background-image: linear-gradient(crimson, crimson);
 }
 .menu-item.info > label > svg {

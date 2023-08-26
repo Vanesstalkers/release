@@ -10,7 +10,10 @@
         if (!password) password = '';
       }
       password = await metarhia.metautil.hashPassword(password);
-      if (!token) token = api.auth.provider.generateToken();
+      if (!token) {
+        const { characters, secret, length } = config.sessions;
+        token = metarhia.metautil.generateToken(secret, characters, length);
+      }
 
       await super.create({ login, password, token });
 
@@ -65,9 +68,15 @@
     sessions() {
       return this.#sessions.values();
     }
-    broadcastToSessions({ data, type = 'session/msg' } = {}) {
+    broadcastToSessions({ data, type = 'session/error' } = {}) {
       for (const session of this.sessions()) {
         session.send(type, data);
+      }
+    }
+    logout() {
+      for (const session of this.sessions()) {
+        this.unlinkSession(session);
+        session.send('session/logout');
       }
     }
   };
