@@ -30,9 +30,9 @@
 
         <ul v-if="menu.showTutorials && inGame" class="tutorials">
           <li v-on:click.stop="action({ tutorial: 'game-tutorial-start' })">Стартовое приветствие игры</li>
-          <li v-on:click.stop="action({ tutorial: 'game-tutorial-links', step: 'planeControls' })">
+          <!-- <li v-on:click.stop="action({ tutorial: 'game-tutorial-links', step: 'planeControls' })">
             Контроллеры игрового поля
-          </li>
+          </li> -->
         </ul>
         <ul v-if="menu.showTutorials && !inGame" class="tutorials">
           <li v-on:click.stop="action({ tutorial: 'lobby-tutorial-start' })">Стартовое приветствие</li>
@@ -109,6 +109,9 @@ export default {
     },
     helperData() {
       return this.state.store.user?.[this.state.currentUser]?.helper || {};
+    },
+    helperDialogActive() {
+      return this.helperData.text || this.helperData.img ? true : false;
     },
     helperLinks() {
       return this.state.store.user?.[this.state.currentUser]?.helperLinks || {};
@@ -265,11 +268,12 @@ export default {
       }
     },
     showTutorial({ tutorial, code }) {
-      if (tutorial)
-        api.action.call({
-          path: 'lib.helper.api.action',
-          args: [{ tutorial, usedLink: code }],
-        });
+      if (this.helperDialogActive) return; // другое обучение уже активировано
+      if (!tutorial) return;
+      api.action.call({
+        path: 'lib.helper.api.action',
+        args: [{ tutorial, usedLink: code }],
+      });
       return;
     },
   },
@@ -527,6 +531,13 @@ export default {
   display: flex;
   flex-wrap: wrap;
 }
+#lobby.mobile-view .helper-dialog > .content,
+#lobby.mobile-view .helper-menu > .content {
+  padding: 10px;
+  padding-right: 20px;
+  min-height: 60px;
+  background: black;
+}
 .helper-dialog > .content.nowrap,
 .helper-menu > .content.nowrap {
   flex-wrap: nowrap;
@@ -588,6 +599,11 @@ export default {
   top: 10px;
   width: 64px;
   height: 64px;
+}
+#lobby.mobile-view .helper-dialog > .helper-avatar,
+#lobby.mobile-view .helper-menu > .helper-avatar {
+  width: 40px;
+  height: 40px;
 }
 
 #app[tutorial-active]:after {

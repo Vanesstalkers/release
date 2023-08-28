@@ -177,6 +177,7 @@
 </template>
 
 <script>
+import { addEvents, removeEvents, events } from './lobbyEvents';
 import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
@@ -268,17 +269,6 @@ export default {
           this.lobbyDataLoaded = true;
         })
         .catch(prettyAlert);
-
-      const self = this; // без self потеряется ссылка внутри EventListener
-      function resize() {
-        const bgHeight = 1024;
-        const bgWidth = 2048;
-        self.bg.top = window.innerHeight / 2 - bgHeight / 2;
-        self.bg.left = window.innerWidth / 2 - bgWidth / 2;
-        self.bg.scale = Math.max(window.innerHeight / bgHeight, window.innerWidth / bgWidth);
-      }
-      resize();
-      window.addEventListener('resize', resize);
     },
 
     show(mask) {
@@ -404,10 +394,13 @@ export default {
     } else {
       this.initSession();
     }
+    addEvents(this);
+    events.resizeBG();
   },
   async beforeDestroy() {
+    removeEvents();
     this.$set(this.$root.state, 'viewLoaded', false);
-    
+
     return; // при входе в игру не выходим из лобби
 
     await api.action
@@ -527,6 +520,9 @@ export default {
   transform: translate(-50%, -50%);
   transition: top 0.7s;
 }
+#lobby.mobile-view .menu-item {
+  font-size: 10px;
+}
 .menu-item.pinned,
 .menu-item.preview {
   z-index: 2;
@@ -560,7 +556,7 @@ export default {
 }
 .menu-item:hover > label,
 .menu-item.pinned > label,
-.menu-item.tutorial-active > label {
+#lobby:not(.mobile-view) .menu-item.tutorial-active > label {
   background-size: 100% 100%;
   background-position: 0% 100%;
   transition:
@@ -748,6 +744,10 @@ export default {
 .menu-item.tutorial-active {
   background: white;
 }
+#lobby.mobile-view .menu-item.tutorial-active {
+  background: transparent;
+  box-shadow: none;
+}
 
 #lobby:before {
   content: '';
@@ -900,6 +900,8 @@ export default {
   display: flex;
   flex-wrap: wrap;
   color: #f4e205;
+  max-width: 90%;
+  position: fixed;
 }
 #lobby > .auth > .form > * {
   width: 100%;

@@ -39,7 +39,7 @@
       </div>
     </GUIWrapper>
 
-    <div v-if="showChat" class="chat-content">
+    <div v-if="showChat" class="chat-content scroll-off">
       <chat
         :channels="{
           [`game-${gameState.gameId}`]: {
@@ -59,7 +59,7 @@
       />
     </div>
 
-    <div v-if="showLog" class="log-content">
+    <div v-if="showLog" class="log-content scroll-off">
       <div v-for="[id, logItem] in Object.entries(logs).reverse()" :key="id" class="log-item">
         [ {{ new Date(logItem.time).toTimeString().split(' ')[0] }} ]:
         {{ logItem.msg }}

@@ -85,9 +85,12 @@ function addMouseEvents(self) {
         self.gamePlaneRotation = config.rotation;
 
         // имитируем плавность
-        if (delta < 0.5) return;
+        if (delta < 0.5 || delta > 2) return;
         else config.initialDistance = distance;
-        self.gamePlaneScale += (delta - 1) * 0.5;
+        const scale = (delta - 1) * 0.5;
+        if (self.gamePlaneScale + scale > 0.5) return;
+        if (self.gamePlaneScale + scale < 0.2) return;
+        self.gamePlaneScale += scale;
       } else {
         config.currentX = event.touches[0].pageX;
         config.currentY = event.touches[0].pageY;

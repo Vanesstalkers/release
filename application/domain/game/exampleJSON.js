@@ -1,6 +1,5 @@
 ({
   'single-blitz': {
-    addTime: Date.now(),
     settings: {
       timer: 30,
       timerReleasePremium: 10,
@@ -12,7 +11,7 @@
       allowedAutoCardPlayRoundStart: false,
       singlePlayer: true,
       cardsToRemove: ['audit', 'coffee', 'weekend'],
-      autoFinishAfterRoundsOverdue: 0,
+      autoFinishAfterRoundsOverdue: 10,
     },
     playerList: [
       {
@@ -30,7 +29,6 @@
     ],
   },
   'duel-blitz': {
-    addTime: Date.now(),
     settings: {
       timer: 30,
       timerReleasePremium: 10,
@@ -63,7 +61,6 @@
     ],
   },
   'ffa-blitz': {
-    addTime: Date.now(),
     settings: {
       timer: 30,
       timerReleasePremium: 10,

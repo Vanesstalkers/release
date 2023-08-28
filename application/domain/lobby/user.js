@@ -19,8 +19,8 @@
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
       helperLinks = {
         ...{
-          menuTop: { selector: '.menu-item.top', tutorial: 'lobby-tutorial-links', type: 'lobby' },
-          menuChat: { selector: '.menu-item.chat', tutorial: 'lobby-tutorial-links', type: 'lobby' },
+          menuTop: { selector: '.menu-item.top > label', tutorial: 'lobby-tutorial-links', type: 'lobby' },
+          menuChat: { selector: '.menu-item.chat > label', tutorial: 'lobby-tutorial-links', type: 'lobby' },
         },
         ...helperLinks,
       };

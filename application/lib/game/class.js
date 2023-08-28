@@ -16,6 +16,7 @@
       const gameJSON = domain.game.exampleJSON[subtype];
       if (!gameJSON) throw new Error(`Not found initial game data (type='${type}', subtype='${subtype}').`);
       const gameData = lib.utils.structuredClone(gameJSON);
+      gameData.addTime = Date.now();
       gameData.type = type;
       gameData.subtype = subtype;
       this.fromJSON(gameData, { newGame: true });
@@ -157,7 +158,8 @@
     endGame({ winningPlayer, canceledByUser } = {}) {
       lib.timers.timerDelete(this);
       this.emitCardEvents('endRound'); // костыли должны восстановить свои значения
-      this.checkCrutches();
+
+      if (this.status !== 'IN_PROCESS') canceledByUser = true; // можно отменить игру, еще она еще не начата (ставим true, чтобы ниже попасть в условие cancel-ветку)
       this.set({ status: 'FINISHED' });
       if (winningPlayer) this.setWinner({ player: winningPlayer });
 
@@ -173,11 +175,12 @@
           ? userId === this.winUserId
             ? 'win'
             : 'lose'
-          : 'lose';
+          : 'lose'; // игра закончилась автоматически
         player.set({ endGameStatus });
         playerEndGameStatus[userId] = endGameStatus;
       }
 
+      this.checkCrutches();
       this.broadcastAction('gameFinished', {
         gameId: this.id(),
         gameType: this.type,
