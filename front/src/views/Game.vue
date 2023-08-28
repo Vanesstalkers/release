@@ -76,7 +76,8 @@
       :style="{ ...gamePlaneCustomStyleData, opacity: 1, transformOrigin: 'left top', ...gamePlaneControlStyle }"
     >
       <plane v-for="id in Object.keys(game.planeMap)" :key="id" :planeId="id" :gamePlaneScale="gamePlaneScale" />
-      <bridge v-for="id in Object.keys(game.bridgeMap)" :key="id" :bridgeId="id" />
+      <!-- bridgeMap может не быть на старте игры при формировании поля с нуля -->
+      <bridge v-for="id in Object.keys(game.bridgeMap || {})" :key="id" :bridgeId="id" />
 
       <div
         v-for="position in possibleAddPlanePositions"
@@ -87,7 +88,7 @@
         :targetPortDirect="position.targetPortDirect"
         :style="position.style"
         class="fake-plane"
-        v-on:click="linkPlaneToField"
+        v-on:click="putPlaneOnField"
       />
     </div>
 
@@ -357,9 +358,9 @@ export default {
       // return;
       await this.handleGameApi({ name: 'takeCard', data: { count: 5 } });
     },
-    async linkPlaneToField(event) {
+    async putPlaneOnField(event) {
       await this.handleGameApi({
-        name: 'linkPlaneToField',
+        name: 'putPlaneOnField',
         data: {
           gameId: this.gameState.gameId,
           joinPortId: event.target.attributes.joinPortId.value,

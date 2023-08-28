@@ -108,11 +108,30 @@
     this.set({ gameId: null, playerId: null });
     await this.saveChanges();
 
+    this.unsubscribe(`game-${gameId}`);
     for (const session of this.sessions()) {
       session.unsubscribe(`game-${gameId}`);
       session.set({ gameId: null, playerId: null });
       await session.saveChanges();
       session.send('session/leaveGame', {});
     }
+  }
+  async gameFinished({ gameId, gameType, playerEndGameStatus, crutchCount }) {
+    const endGameStatus = playerEndGameStatus[this.id()];
+
+    const rankings = lib.utils.clone(this.rankings || {});
+    if (!rankings[gameType]) rankings[gameType] = {};
+    const { games = 0, win = 0, money = 0, crutch = 0, penalty = 0 } = rankings[gameType];
+    rankings[gameType].money = money + 1000;
+    rankings[gameType].games = games + 1;
+    rankings[gameType].crutch = crutch + crutchCount;
+    rankings[gameType].penalty = penalty + crutchCount * 1000;
+
+    if (endGameStatus === 'win') rankings[gameType].win = win + 1;
+
+
+    const tutorial = lib.helper.getTutorial('game-tutorial-finished');
+    this.set({ helper: tutorial[endGameStatus], rankings });
+    await this.saveChanges();
   }
 });

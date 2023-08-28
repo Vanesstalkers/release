@@ -25,10 +25,10 @@
       if (!game.availablePorts.length) {
         const planeDeck = player.getObjectByCode('Deck[plane]');
         const plane = planeDeck.getObjects({ className: 'Plane' })[0];
-        if (plane) domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+        if (plane) game.run('showPlanePortsAvailability', { joinPlaneId: plane._id });
       }
-      const availablePort = game.availablePorts[0];
-      if (availablePort) domain.game.linkPlaneToField(game, { ...availablePort });
+      const availablePortConfig = game.availablePorts[0];
+      if (availablePortConfig) game.run('putPlaneOnField', availablePortConfig);
       this.emit('addPlane');
     },
     timerOverdue: function ({ game, player }) {

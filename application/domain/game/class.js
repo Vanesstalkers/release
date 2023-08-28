@@ -1,6 +1,4 @@
 (class Game extends lib.game.class() {
-  bridgeMap = {};
-
   constructor(data = {}) {
     super();
     Object.assign(this, {
@@ -10,6 +8,41 @@
     });
     this.preventSaveFields(['availableZones']);
 
+    this.events({
+      handlers: {
+        addPlane: function () {
+          this.emitCardEvents('addPlane');
+          this.checkStatus({ cause: 'PLAYFIELD_CREATING' });
+        },
+        noAvailablePorts: function ({ joinPlane }) {
+          const planeParent = joinPlane.getParent();
+          if (this.status === 'PREPARE_START') {
+            planeParent.removeItem(joinPlane, { deleteFromStorage: true });
+            if (Object.keys(this.planeMap).length === 0) {
+              // размещается первый plane на пустое поле
+              this.addPlane(joinPlane);
+            } else {
+              // все port заблокированы, размещать plane некуда
+              this.set({ noAvailablePorts: true });
+              this.checkStatus({ cause: 'PLAYFIELD_CREATING' });
+            }
+          } else {
+            if (!joinPlane.customClass.includes('card-plane')) {
+              const planeDeck = this.getObjectByCode('Deck[plane]');
+              joinPlane.moveToTarget(planeDeck);
+            } else {
+              planeParent.removeItem(joinPlane, { deleteFromStorage: true });
+            }
+          }
+        },
+      },
+    });
+  }
+
+  run(actionName, data) {
+    const action = domain.game.actions[actionName];
+    if (!action) throw new Error(`action "${actionName}" not found`);
+    return action.call(this, data);
   }
 
   fromJSON(data, { newGame } = {}) {
@@ -37,7 +70,7 @@
       data.playerList = [];
       for (const _id of Object.keys(data.playerMap)) data.playerList.push(this.store.player[_id]);
     }
-    for (const item of data.playerList || []) this.addPlayer(item);
+    for (const item of data.playerList || []) this.run('addPlayer', item);
 
     if (data.deckMap) {
       data.deckList = [];
@@ -76,204 +109,10 @@
       data.bridgeList = [];
       for (const _id of Object.keys(data.bridgeMap)) data.bridgeList.push(this.store.bridge[_id]);
     }
-    for (const item of data.bridgeList || []) this.addBridge(item);
+    for (const item of data.bridgeList || []) this.run('addBridge', item);
 
     this.enableChanges();
     return this;
-  }
-  addPlayer(data) {
-    const store = this.getStore();
-    const player = new domain.game.Player(data, { parent: this });
-    this.set({ playerMap: { [player._id]: {} } });
-
-    if (data.deckMap) {
-      data.deckList = [];
-      for (const _id of Object.keys(data.deckMap)) data.deckList.push(store.deck[_id]);
-    }
-    for (const item of data.deckList || []) {
-      const deckItemClass =
-        item.type === 'domino' ? domain.game.Dice : item.type === 'plane' ? domain.game.Plane : domain.game.Card;
-      item.access = { [player._id]: {} };
-      player.addDeck(item, { deckItemClass });
-    }
-  }
-  createBridgeBetweenPlanes({ joinPort, targetPort, fake }) {
-    const { targetLinkPoint } = domain.game.getLinkCoordinates({ joinPort, targetPort });
-
-    if (fake) return;
-
-    const DIRECTIONS = joinPort.constructor.DIRECTIONS;
-    const targetPortDirect = DIRECTIONS[targetPort.getDirect()];
-
-    const joinPlane = joinPort.getParent();
-    const targetPlane = targetPort.getParent();
-    // !!! zoneLinks может быть несколько (links[...]) - пока что не актуально (нет таких Plane)
-    const [joinPlaneZoneCode] = Object.values(joinPort.links);
-    const [targetPlaneZoneCode] = Object.values(targetPort.links);
-    const reverseLinks = targetPortDirect.bridge.reverse;
-    const bridgeZoneLinks = {};
-    const bridgeToCardPlane = joinPlane.isCardPlane();
-    if (bridgeToCardPlane) {
-      // у card-plane отсутствует связанная zone
-      bridgeZoneLinks[reverseLinks ? 'ZoneSide[2]' : 'ZoneSide[1]'] = [targetPlane.code + targetPlaneZoneCode];
-    } else {
-      bridgeZoneLinks[reverseLinks ? 'ZoneSide[2]' : 'ZoneSide[1]'] = [targetPlane.code + targetPlaneZoneCode];
-      bridgeZoneLinks[reverseLinks ? 'ZoneSide[1]' : 'ZoneSide[2]'] = [joinPlane.code + joinPlaneZoneCode];
-    }
-    const bridgeData = {
-      _code: joinPlane.code + '-' + targetPlane.code,
-      left: targetLinkPoint.left,
-      top: targetLinkPoint.top,
-      rotation: targetPlane.rotation,
-      zoneLinks: { 'Zone[1]': bridgeZoneLinks },
-      zoneList: [
-        {
-          _code: 1,
-          left: 0,
-          top: 0,
-          itemType: 'any',
-          vertical: targetPortDirect.bridge.vertical,
-        },
-      ],
-      bridgeToCardPlane,
-    };
-
-    const bridgeCode = this.addBridge(bridgeData);
-    joinPort.set({ linkedBridge: bridgeCode });
-    targetPort.set({ linkedBridge: bridgeCode });
-  }
-  checkPlaneCollysion(checkPlane) {
-    const planePosition = checkPlane.getPosition();
-
-    function checkCollysion(pos1, pos2) {
-      return !(pos1.bottom < pos2.top || pos1.top > pos2.bottom || pos1.right < pos2.left || pos1.left > pos2.right);
-    }
-
-    const collysionList = [];
-    for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
-      if (plane !== checkPlane && checkCollysion(planePosition, plane.getPosition())) collysionList.push(plane.code);
-    }
-
-    return { collysionList, planePosition };
-  }
-  getAvailablePortsToJoinPlane({ joinPort }) {
-    const availablePorts = [];
-
-    const joinPlane = joinPort.getParent();
-    for (const plane of this.getObjects({ className: 'Plane', directParent: this })) {
-      if (plane === joinPlane) continue;
-      for (const port of plane.getObjects({ className: 'Port' })) {
-        if (!port.linkedBridge) {
-          for (const portDirect of Object.keys(port.direct)) {
-            port.updateDirect(portDirect);
-            this.createBridgeBetweenPlanes({ joinPort: joinPort, targetPort: port, fake: true });
-            const checkPlaneCollysion = this.checkPlaneCollysion(joinPlane);
-            if (checkPlaneCollysion.collysionList.length === 0) {
-              availablePorts.push({
-                joinPortId: joinPort._id,
-                joinPortDirect: joinPort.getDirect(),
-                targetPortId: port._id,
-                targetPortDirect: portDirect,
-                position: checkPlaneCollysion.planePosition,
-              });
-            }
-          }
-        }
-      }
-    }
-    return availablePorts;
-  }
-  addBridge(data) {
-    const store = this.getStore();
-    const bridge = new domain.game.Bridge(data, { parent: this });
-    this.set({ bridgeMap: { [bridge._id]: {} } });
-
-    if (data.zoneMap) {
-      data.zoneList = [];
-      for (const _id of Object.keys(data.zoneMap)) data.zoneList.push(store.zone[_id]);
-    }
-    for (const item of data.zoneList || []) {
-      const zone = new domain.game.Zone(item, { parent: bridge });
-      bridge.set({ zoneMap: { [zone._id]: {} } });
-    }
-
-    if (data.zoneLinks) {
-      for (const [zoneCode, sideList] of Object.entries(data.zoneLinks)) {
-        for (const [sideCode, links] of Object.entries(sideList)) {
-          for (const link of links) {
-            const [linkZoneCode, linkSideCode] = link.split('.');
-            const zone = bridge.getObjectByCode(zoneCode);
-            const side = zone.getObjectByCode(sideCode);
-            const linkZone = bridge.game().getObjectByCode(linkZoneCode);
-            const linkSide = linkZone.getObjectByCode(linkSideCode);
-            side.addLink(linkSide);
-            linkSide.addLink(side);
-            linkZone.updateValues();
-          }
-        }
-      }
-    }
-
-    return bridge.code;
-  }
-
-  getDeletedDices() {
-    const result = [];
-    for (const zone of this.getObjects({ className: 'Zone' })) {
-      result.push(...zone.getObjects({ className: 'Dice' }).filter((dice) => dice.deleted));
-    }
-    return result;
-  }
-
-  smartMoveRandomCard({ target }) {
-    const deck = this.getObjectByCode('Deck[card]');
-    let card = deck.getRandomItem();
-    if (card) card.moveToTarget(target);
-    else {
-      this.restoreCardsFromDrop();
-      card = deck.getRandomItem();
-      if (card) card.moveToTarget(target);
-    }
-    return card;
-  }
-  restoreCardsFromDrop() {
-    const deck = this.getObjectByCode('Deck[card]');
-    const deckDrop = this.getObjectByCode('Deck[card_drop]');
-    for (const card of deckDrop.getObjects({ className: 'Card' })) {
-      if (card.restoreAvailable()) card.moveToTarget(deck);
-    }
-    if (!this.isSinglePlayer()) return;
-    const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
-    let plane,
-      skipArray = [];
-    while ((plane = gamePlaneDeck.getRandomItem({ skipArray }))) {
-      if (plane === null) return; // если перебор закончился, то getRandomItem вернет null
-      skipArray.push(plane._id.toString());
-
-      domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-      if (this.availablePorts.length === 0) continue;
-
-      gamePlaneDeck.removeItem(plane);
-      this.addPlane(plane);
-
-      const { userId } = this.getActivePlayer();
-      this.logs({
-        msg: `По завершению месяца (закончилась колода карт событий) добавлен новый блок на игровое поле.`,
-        userId,
-      });
-
-      const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-      const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
-
-      const joinPort = this.getObjectById(joinPortId);
-      joinPort.updateDirect(joinPortDirect);
-      const targetPort = this.getObjectById(targetPortId);
-      targetPort.updateDirect(targetPortDirect);
-      this.createBridgeBetweenPlanes({ joinPort, targetPort });
-
-      this.set({ availablePorts: [] });
-      return;
-    }
   }
 
   addCardEvent({ event, source }) {
@@ -346,29 +185,31 @@
             if (this.getFreePlayerSlot()) return;
 
             const gamePlaneDeck = this.getObjectByCode('Deck[plane]');
+            const addPlaneConfig = { preventEmitClassEvent: true };
+            const skipArray = [];
             for (let i = 0; i < this.settings.planesAtStart; i++) {
-              const plane = gamePlaneDeck.getRandomItem();
+              const plane = gamePlaneDeck.getRandomItem({ skipArray });
               if (plane) {
-                gamePlaneDeck.removeItem(plane);
-                this.addPlane(plane, { preventEmitClassEvent: true });
-                if (i > 0) {
-                  domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
-                  const availablePort = this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-                  const { joinPortId, joinPortDirect, targetPortId, targetPortDirect } = availablePort;
+                skipArray.push(plane.id());
+                if (i === 0) {
+                  // игровое поле пустое
+                  gamePlaneDeck.removeItem(plane);
+                  this.addPlane(plane, addPlaneConfig);
+                } else {
+                  this.run('showPlanePortsAvailability', { joinPlaneId: plane.id() });
+                  if (this.availablePorts.length === 0) continue;
 
-                  const joinPort = this.getObjectById(joinPortId);
-                  joinPort.updateDirect(joinPortDirect);
-                  const targetPort = this.getObjectById(targetPortId);
-                  targetPort.updateDirect(targetPortDirect);
-                  this.createBridgeBetweenPlanes({ joinPort, targetPort });
-
-                  this.set({ availablePorts: [] });
+                  const availablePortConfig =
+                    this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+                  this.run('putPlaneOnField', availablePortConfig, { addPlaneConfig });
                 }
+              } else {
+                i = this.settings.planesAtStart;
               }
             }
 
-            const planesPlacedByPlayerCount = this.settings.planesNeedToStart - this.settings.planesAtStart;
-            for (let i = 0; i < planesPlacedByPlayerCount; i++) {
+            const planesToBePlacedByPlayers = this.settings.planesNeedToStart - this.settings.planesAtStart;
+            for (let i = 0; i < planesToBePlacedByPlayers; i++) {
               const hand = playerList[i % playerList.length].getObjectByCode('Deck[plane]');
               for (let j = 0; j < this.settings.planesToChoosee; j++) {
                 const plane = gamePlaneDeck.getRandomItem();
@@ -377,7 +218,7 @@
             }
 
             this.set({ status: 'PREPARE_START' });
-            if (planesPlacedByPlayerCount > 0) {
+            if (planesToBePlacedByPlayers > 0) {
               lib.timers.timerRestart(this);
             } else {
               this.checkStatus({ cause: 'START_GAME' });
@@ -393,7 +234,8 @@
             const playerPlaneDeck = activePlayer.getObjectByCode('Deck[plane]');
             const planeList = playerPlaneDeck.getObjects({ className: 'Plane' });
             for (const plane of planeList) plane.moveToTarget(gamePlaneDeck);
-            if (Object.keys(this.planeMap).length < this.settings.planesNeedToStart && this.noAvailablePorts !== true) {
+            const notEnoughPlanes = Object.keys(this.planeMap).length < this.settings.planesNeedToStart;
+            if (notEnoughPlanes && this.noAvailablePorts !== true) {
               this.changeActivePlayer();
               lib.timers.timerRestart(this);
             } else {
@@ -410,16 +252,16 @@
               deck.moveRandomItems({ count: this.settings.playerHandStart, target: playerHand });
             }
 
-            domain.game.endRound(this, { forceActivePlayer: playerList[0] });
+            this.run('endRound', { forceActivePlayer: playerList[0] });
             break;
 
           case 'PLAYER_TIMER_END':
             const planeDeck = activePlayer.getObjectByCode('Deck[plane]');
             const plane = planeDeck.getObjects({ className: 'Plane' })[0];
-            if (plane) domain.game.getPlanePortsAvailability(this, { joinPlaneId: plane._id });
+            if (plane) this.run('showPlanePortsAvailability', { joinPlaneId: plane._id });
 
-            const availablePort = this.availablePorts[0];
-            if (availablePort) domain.game.linkPlaneToField(this, { ...availablePort });
+            const availablePortConfig = this.availablePorts[0];
+            if (availablePortConfig) this.run('putPlaneOnField', availablePortConfig);
             break;
         }
         break;
@@ -427,7 +269,7 @@
       case 'IN_PROCESS':
         switch (cause) {
           case 'PLAYER_TIMER_END':
-            domain.game.endRound(this, { timerOverdue: true });
+            this.run('endRound', { timerOverdue: true });
             break;
 
           case 'FINAL_RELEASE':

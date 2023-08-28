@@ -12,6 +12,7 @@ async (context, { gameId }) => {
       throw new Error('Игра была отменена');
     }
 
+    user.subscribe(`game-${gameId}`, { rule: 'actions-only' });
     session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
     session.onClose.push(async () => {
       // проверка на последнего игрока не нужна, потому что игра автоматически завершится через allowedAutoCardPlayRoundStart раундов

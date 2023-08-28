@@ -1,71 +1,76 @@
-(game, { timerOverdue, forceActivePlayer } = {}) => {
-  if (game.status !== 'IN_PROCESS') {
-    console.log('game', { status: game.status, id: game.id() });
+(function ({ timerOverdue, forceActivePlayer } = {}) {
+  if (this.status !== 'IN_PROCESS') {
+    console.log('game', { status: this.status, id: this.id() });
     throw new Error('Действие запрещено.');
   }
 
   const {
-    // конфиги
-    autoFinishAfterRoundsOverdue,
-    playerHandLimit,
-    allowedAutoCardPlayRoundStart,
-  } = game.settings;
+    round,
+    activeEvent, // нельзя тут объявлять, потому что он динамически обновиться в emitCardEvents
+    settings: {
+      // конфиги
+      autoFinishAfterRoundsOverdue,
+      playerHandLimit,
+      allowedAutoCardPlayRoundStart,
+    },
+  } = this;
 
-  const timerOverdueCounter = timerOverdue ? (game.timerOverdueCounter || 0) + 1 : 0;
+  const timerOverdueCounter = timerOverdue ? (this.timerOverdueCounter || 0) + 1 : 0;
   // если много ходов было завершено по таймауту, то скорее всего все игроки вышли и ее нужно завершать
   if (timerOverdueCounter > autoFinishAfterRoundsOverdue) {
-    game.endGame();
+    this.endGame();
   }
 
   // player чей ход только что закончился (получаем принципиально до вызова changeActivePlayer)
-  const prevPlayer = game.getActivePlayer();
+  const prevPlayer = this.getActivePlayer();
   const prevPlayerHand = prevPlayer.getObjectByCode('Deck[domino]');
 
-  if (game.round > 0) {
+  if (round > 0) {
     if (timerOverdue) {
-      game.logs({
-        msg: `Игрок {{player}} не успел завершить все действия за отведенное время, и раунд №${game.round} завершился автоматически.`,
+      this.logs({
+        msg: `Игрок {{player}} не успел завершить все действия за отведенное время, и раунд №${round} завершился автоматически.`,
         userId: prevPlayer.userId,
       });
     } else {
-      game.logs({
-        msg: `Игрок {{player}} закончил раунд №${game.round}.`,
+      this.logs({
+        msg: `Игрок {{player}} закончил раунд №${round}.`,
         userId: prevPlayer.userId,
       });
     }
   }
 
-  if (timerOverdue || game.activeEvent) {
+  if (timerOverdue || this.activeEvent) {
     // таймер закончился или нажата кнопка окончания раунда при не завершенном активном событии
 
-    if (game.activeEvent) {
-      const source = game.getObjectById(game.activeEvent.sourceId);
-      game.logs(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
+    if (this.activeEvent) {
+      const source = this.getObjectById(this.activeEvent.sourceId);
+      this.logs(`Так как раунд был завершен, активное событие "${source.title}" сработало автоматически.`);
     }
-    game.emitCardEvents('timerOverdue');
+    this.emitCardEvents('timerOverdue');
   }
 
-  if (game.activeEvent)
+  // activeEvent обнулится в emitCardEvents
+  if (this.activeEvent)
     throw new Error(
-      game.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
+      this.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
     );
 
   // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
 
-  game.emitCardEvents('endRound');
-  game.clearCardEvents();
+  this.emitCardEvents('endRound');
+  this.clearCardEvents();
 
   // ЛОГИКА НАЧАЛА НОВОГО РАУНДА
 
   // player которому передают ход
-  const activePlayer = game.changeActivePlayer({ player: forceActivePlayer });
+  const activePlayer = this.changeActivePlayer({ player: forceActivePlayer });
   const playerHand = activePlayer.getObjectByCode('Deck[domino]');
-  const gameDominoDeck = game.getObjectByCode('Deck[domino]');
-  const cardDeckDrop = game.getObjectByCode('Deck[card_drop]');
-  const cardDeckActive = game.getObjectByCode('Deck[card_active]');
+  const gameDominoDeck = this.getObjectByCode('Deck[domino]');
+  const cardDeckDrop = this.getObjectByCode('Deck[card_drop]');
+  const cardDeckActive = this.getObjectByCode('Deck[card_active]');
 
   // если есть временно удаленные dice, то восстанавливаем состояние до их удаления
-  const deletedDices = game.getDeletedDices();
+  const deletedDices = this.run('getDeletedDices');
   let restoreAlreadyPlacedDice = false;
   for (const dice of deletedDices) {
     const zone = dice.getParent();
@@ -81,7 +86,7 @@
     // была размещена костяшка на прилегающую к Bridge зоне
     if (dice.relatedPlacement) {
       for (const relatedDiceId of Object.keys(dice.relatedPlacement)) {
-        const relatedDice = game.getObjectById(relatedDiceId);
+        const relatedDice = this.getObjectById(relatedDiceId);
         relatedDice.moveToTarget(prevPlayerHand);
       }
     }
@@ -90,7 +95,7 @@
     zone.updateValues();
     for (const side of zone.sideList) {
       for (const linkCode of Object.values(side.links)) {
-        const linkedSide = game.getObjectByCode(linkCode);
+        const linkedSide = this.getObjectByCode(linkCode);
         const linkedZone = linkedSide.getParent();
         const linkedDice = linkedZone.getNotDeletedItem();
 
@@ -104,7 +109,7 @@
     }
   }
   if (deletedDices.length) {
-    game.logs({
+    this.logs({
       msg:
         `Найдены удаленные, но не замененные костяшки. Вся группа удаленных костяшек была восстановлена на свои места.` +
         (restoreAlreadyPlacedDice
@@ -118,7 +123,7 @@
     // слишком много доминошек в руке
     if (!prevPlayer.eventData.disablePlayerHandLimit) {
       prevPlayerHand.moveAllItems({ target: gameDominoDeck });
-      game.logs({
+      this.logs({
         msg: `У игрока {{player}} превышено максимальное количество костяшек в руке на конец хода. Все его костяшки сброшены в колоду.`,
         userId: prevPlayer.userId,
       });
@@ -133,13 +138,13 @@
     card.moveToTarget(cardDeckDrop);
   }
 
-  game.checkCrutches();
+  this.checkCrutches();
 
-  const newRoundNumber = game.round + 1;
+  const newRoundNumber = round + 1;
   const newRoundLogEvents = [];
   newRoundLogEvents.push(`Начало раунда №${newRoundNumber}.`);
 
-  const card = game.smartMoveRandomCard({ target: cardDeckActive });
+  const card = this.run('smartMoveRandomCard', { target: cardDeckActive });
   if (card && allowedAutoCardPlayRoundStart === true) {
     card.play();
     newRoundLogEvents.push(`Активировано ежедневное событие "${card.title}".`);
@@ -148,12 +153,10 @@
   // обновляем таймер
   const actionsDisabled = activePlayer.eventData.actionsDisabled === true;
   const timerConfig = actionsDisabled ? { time: 5 } : {};
-  lib.timers.timerRestart(game, timerConfig);
+  lib.timers.timerRestart(this, timerConfig);
 
   // обновляем логи
-  for (const logEvent of newRoundLogEvents) game.logs(logEvent);
+  for (const logEvent of newRoundLogEvents) this.logs(logEvent);
 
-  game.set({ round: newRoundNumber, timerOverdueCounter });
-
-  return { status: 'ok' };
-};
+  this.set({ round: newRoundNumber, timerOverdueCounter });
+});

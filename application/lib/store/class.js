@@ -74,6 +74,11 @@
           wrapPublishData(data) {
             return { [this.col()]: { [this.id()]: data } };
           }
+          broadcastPrivateData(channelsMap, config = {}) {
+            for (const [channel, data] of Object.entries(channelsMap)) {
+              this.broadcastData(data, { ...config, customChannel: channel });
+            }
+          }
           broadcastData(data, config = {}) {
             const { customChannel } = config;
 
@@ -120,6 +125,12 @@
                         ? this.broadcastDataVueStoreRuleHandler(data, { accessConfig })
                         : data;
                     break;
+                  /**
+                   * только события
+                   */
+                  case 'actions-only':
+                    publishData = {};
+                    break;
                   case 'all':
                   default:
                     publishData = data;
@@ -130,6 +141,11 @@
             }
 
             if (typeof this.broadcastDataAfterHandler === 'function') this.broadcastDataAfterHandler(data, config);
+          }
+          broadcastPrivateAction(name, channelsMap, config = {}) {
+            for (const [channel, data] of Object.entries(channelsMap)) {
+              this.broadcastAction(name, data, { ...config, customChannel: channel });
+            }
           }
           broadcastAction(name, data, { customChannel } = {}) {
             for (const [subscriberChannel, { accessConfig = {} } = {}] of this.#channel.subscribers.entries()) {
@@ -235,9 +251,15 @@
     getChanges() {
       return this.#changes;
     }
+    /**
+     * Включает авто-контроль за изменениями (для последующего сохранения и рассылки)
+     */
     enableChanges() {
       this.#disableChanges = false;
     }
+    /**
+     * Выключает авто-контроль за изменениями (для последующего сохранения и рассылки)
+     */
     disableChanges() {
       this.#disableChanges = true;
     }

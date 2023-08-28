@@ -68,6 +68,9 @@
     sessions() {
       return this.#sessions.values();
     }
+    online() {
+      return this.#sessions.size > 0;
+    }
     broadcastToSessions({ data, type = 'session/error' } = {}) {
       for (const session of this.sessions()) {
         session.send(type, data);

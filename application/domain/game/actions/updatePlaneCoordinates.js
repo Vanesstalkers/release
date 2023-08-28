@@ -1,4 +1,4 @@
-({ joinPort, targetPort }) => {
+(function ({ joinPort, targetPort }) {
   const DIRECTIONS = joinPort.constructor.DIRECTIONS;
 
   const joinPlane = joinPort.getParent();
@@ -75,5 +75,5 @@
     }
   }
 
-  return { status: 'ok', targetLinkPoint, joinLinkPoint };
-};
+  return { targetLinkPoint, joinLinkPoint };
+});

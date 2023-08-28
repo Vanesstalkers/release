@@ -104,7 +104,7 @@ export default {
     async selectPlane(event) {
       const $plane = event.target.closest('.plane');
       if ($plane.closest('.player.iam')) {
-        await this.handleGameApi({ name: 'getPlanePortsAvailability', data: { joinPlaneId: this.planeId } });
+        await this.handleGameApi({ name: 'showPlanePortsAvailability', data: { joinPlaneId: this.planeId } });
       }
     },
     async choosePlane() {

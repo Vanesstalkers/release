@@ -14,7 +14,7 @@
       portList: [{ _code: 1, left: 22.5, top: 105, direct: { bottom: true }, links: [], t: 'any', s: 'core' }],
     });
     const plane = deck.getObjectByCode(`Plane[${code}]`);
-    domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+    game.run('showPlanePortsAvailability', { joinPlaneId: plane._id });
     if (game.availablePorts.length) game.set({ activeEvent: { sourceId: this._id } });
   },
   handlers: {
@@ -25,10 +25,10 @@
     timerOverdue: function ({ game }) {
       if (!game.availablePorts) {
         const plane = game.getObjectByCode('Plane[event_req_tax]');
-        domain.game.getPlanePortsAvailability(game, { joinPlaneId: plane._id });
+        game.run('showPlanePortsAvailability', { joinPlaneId: plane._id });
       }
-      const availablePort = game.availablePorts[0];
-      if (availablePort) domain.game.linkPlaneToField(game, { ...availablePort });
+      const availablePortConfig = game.availablePorts[0];
+      if (availablePortConfig) game.run('putPlaneOnField', availablePortConfig);
     },
   },
 });

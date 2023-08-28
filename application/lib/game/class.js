@@ -264,9 +264,8 @@
         else if (activePlayer.eventData.actionsDisabled && eventName !== 'endRound' && eventName !== 'leaveGame')
           throw new Error('Игрок не может совершать действия в этот ход.');
 
-        const event = domain.game[eventName];
-        const result = event(this, eventData);
-        const { clientCustomUpdates } = result;
+        const result = this.run(eventName, eventData);
+        const { clientCustomUpdates } = result || {};
 
         await this.saveChanges();
 

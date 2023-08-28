@@ -22,16 +22,10 @@
       <div :class="['control', 'disabled', replaceAllowed || dice.deleted ? 'hidden' : '']">
         <font-awesome-icon :icon="['fass', 'trash']" size="2xl" style="color: #ccc" />
       </div>
-      <div
-        :class="['control', replaceAllowed && !dice.deleted ? '' : 'hidden']"
-        v-on:click.stop="deleteDice"
-      >
+      <div :class="['control', replaceAllowed && !dice.deleted ? '' : 'hidden']" v-on:click.stop="deleteDice">
         <font-awesome-icon :icon="['fass', 'trash']" size="2xl" style="color: #f4e205" />
       </div>
-      <div
-        :class="['control', replaceAllowed && dice.deleted ? '' : 'hidden']"
-        v-on:click.stop="restoreDice"
-      >
+      <div :class="['control', replaceAllowed && dice.deleted ? '' : 'hidden']" v-on:click.stop="restoreDice">
         <font-awesome-icon :icon="['fas', 'trash-arrow-up']" size="2xl" style="color: #f4e205" />
       </div>
     </div>
@@ -129,7 +123,7 @@ export default {
       if (this.locked) return;
       this.gameState.pickedDiceId = this.diceId;
       this.hideZonesAvailability();
-      await this.handleGameApi({ name: 'getZonesAvailability', data: { diceId: this.diceId } });
+      await this.handleGameApi({ name: 'showZonesAvailability', data: { diceId: this.diceId } });
     },
     async rotateDice() {
       await this.handleGameApi({ name: 'rotateDice', data: { diceId: this.diceId } });
