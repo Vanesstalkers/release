@@ -9,14 +9,14 @@
 
     <GUIWrapper
       :pos="['top', 'left']"
-      :offset="{ left: state.isMobile ? 60 : [60, 80, 110, 130, 160, 190][state.guiScale] }"
+      :offset="{ top: 20, left: state.isMobile ? 60 : [60, 80, 110, 130, 160, 190][state.guiScale] }"
       :contentClass="['gui-small']"
       :wrapperStyle="{ zIndex: 1 }"
     >
       <div style="display: flex">
-        <div class="chat gui-btn" v-on:click="showChat = !showChat" />
-        <div class="log gui-btn" v-on:click="toggleLog" />
-        <div class="move gui-btn" v-on:click="showMoveControls = !showMoveControls" />
+        <div :class="['chat', 'gui-btn', showChat ? 'active' : '']" v-on:click="toggleChat" />
+        <div :class="['log', 'gui-btn', showLog ? 'active' : '']" v-on:click="toggleLog" />
+        <div :class="['move', 'gui-btn', showMoveControls ? 'active' : '']" v-on:click="toggleMoveControls" />
       </div>
       <div v-if="showMoveControls" class="gameplane-controls">
         <div class="zoom-minus" v-on:click="zoomGamePlane({ deltaY: 1 })" />
@@ -437,7 +437,14 @@ export default {
     closeCardInfo() {
       this.$set(this.$root.state, 'shownCard', '');
     },
+    toggleChat() {
+      this.showLog = false;
+      this.showMoveControls = false;
+      this.showChat = !this.showChat;
+    },
     async toggleLog() {
+      this.showMoveControls = false;
+      this.showChat = false;
       if (this.showLog) return (this.showLog = false);
       await api.action
         .call({ path: 'lib.game.api.showLogs', args: [{ lastItemTime: Object.values(this.logs).pop()?.time }] })
@@ -445,6 +452,11 @@ export default {
           this.showLog = true;
         })
         .catch(prettyAlert);
+    },
+    toggleMoveControls() {
+      this.showLog = false;
+      this.showChat = false;
+      this.showMoveControls = !this.showMoveControls;
     },
     async callGameEnter() {
       // без этого не смогу записать gameId и playerId в context сессии
@@ -583,29 +595,32 @@ export default {
 .deck > .card-event {
   width: 60px;
   height: 90px;
-  color: white;
   border: none;
   font-size: 36px;
   display: flex;
   justify-content: center;
   align-content: center;
+  color: #ff5900;
+  text-shadow: 1px 1px 0 #fff;
 }
 
 .deck[code='Deck[domino]'] {
   position: absolute;
   top: 35px;
   right: 100px;
-  background: url(../assets/hat.png);
+  background: url(../assets/dominoes.png);
   background-size: cover;
-  padding: 20px;
+  padding: 14px;
   cursor: default;
 }
 .deck[code='Deck[domino]'] > .hat {
   color: white;
   font-size: 36px;
-  padding: 4px;
+  padding: 14px;
+  padding-top: 10px;
   border-radius: 50%;
-  box-shadow: inset 0px 0px 20px 0px black;
+  color: #ff5900;
+  text-shadow: 1px 1px 0px #fff;
 }
 
 .deck[code='Deck[card]'] {
@@ -620,8 +635,11 @@ export default {
   filter: grayscale(1);
   transform: scale(0.5);
   top: 65px;
-  right: 0px;
+  right: -10px;
   cursor: default;
+}
+.deck[code='Deck[card_drop]'] > .card-event {
+  color: #ccc;
 }
 
 .deck[code='Deck[card_active]'] {
@@ -705,11 +723,13 @@ export default {
 }
 
 .gameplane-controls {
+  position: absolute;
+  top: 0px;
+  left: 100%;
   height: 200px;
   width: 200px;
-  margin: 20px;
+  margin-left: auto;
   padding: 5px;
-  border: 8px solid #f4e205;
   border-radius: 50%;
   display: flex;
   flex-wrap: wrap;
@@ -721,9 +741,8 @@ export default {
   height: 30%;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 70%;
-  background-color: #f4e205;
-  box-shadow: 5px 5px 5px 0px #a69900;
+  background-size: 50%;
+  background-color: black;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -755,8 +774,6 @@ export default {
   background-image: url(../assets/rotate-right.png);
 }
 .gameplane-controls > .reset {
-  background-color: grey;
-  box-shadow: 5px 5px 5px 0px darkgrey;
   background-image: url(../assets/reset.png);
 }
 .gameplane-controls.tutorial-active {
@@ -767,14 +784,17 @@ export default {
 .gui-btn {
   width: 64px;
   height: 64px;
-  border: 4px solid #f4e205;
+  border: 2px solid #f4e205;
   border-radius: 50%;
-  background-color: #f4e205;
-  background-size: 50px;
+  background-color: black;
+  background-size: 40px;
   background-repeat: no-repeat;
   background-position: center;
   margin: 10px;
   cursor: pointer;
+}
+.gui-btn.active {
+  border-color: green;
 }
 .gui-btn:hover {
   opacity: 0.7;
@@ -788,6 +808,9 @@ export default {
 .gui-btn.move {
   background-image: url(../assets/move.png);
 }
+.mobile-view .gui-btn.move {
+  background-image: url(../assets/move-mobile.png);
+}
 
 .chat-content {
   z-index: 3;
@@ -800,6 +823,11 @@ export default {
   background-image: url(../assets/clear-black-back.png);
   border: 2px solid #f4e205;
   color: #f4e205;
+}
+.mobile-view .chat-content {
+  left: 0px;
+  width: calc(100% - 40px);
+  margin: 20px;
 }
 
 .log-content {
@@ -815,6 +843,11 @@ export default {
   color: #f4e205;
   overflow: auto;
   text-align: left;
+}
+.mobile-view .log-content {
+  left: 0px;
+  width: calc(100% - 40px);
+  margin: 20px;
 }
 .log-item {
   padding: 10px;

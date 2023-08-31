@@ -56,7 +56,10 @@
     }
     if (!fake) {
       for (const [key, value] of Object.entries(data)) {
-        if (bFields.includes(key)) preparedData[key] = value;
+        if (bFields.includes(key)) {
+          if (key === 'sideList') preparedData[key] = value.map(({ _id }) => ({ _id }));
+          else preparedData[key] = value;
+        }
       }
     }
     return { visibleId, preparedData };
@@ -86,7 +89,7 @@
   findAvailableZones() {
     const game = this.game();
     const result = [];
-    
+
     game.disableChanges();
     {
       // чтобы не мешать расчету для соседних зон при перемещении из одной зоны в другую (ниже вернем состояние)

@@ -1,5 +1,15 @@
 <template>
-  <div id="app">
+  <div id="app" :class="[state.isMobile ? 'mobile-view' : '']" :current-route="$root.state.currentRoute">
+    <button @click="toggleFullscreen" class="fullscreen-btn">
+      <span v-if="!fullscreen">
+        <font-awesome-icon icon="fa-solid fa-expand" class="fa-xl" />
+        На весь экран
+      </span>
+      <span v-if="fullscreen">
+        <font-awesome-icon icon="fa-solid fa-compress" class="fa-xl" />
+        Свернуть экран
+      </span>
+    </button>
     <div v-if="!viewLoaded" class="error show-with-delay">
       {{ error }}
     </div>
@@ -13,9 +23,12 @@
 <script>
 export default {
   data() {
-    return { error: '' };
+    return { fullscreen: false, error: '' };
   },
   computed: {
+    state() {
+      return this.$root.state || {};
+    },
     viewLoaded() {
       return this.$root.state.viewLoaded;
     },
@@ -24,10 +37,14 @@ export default {
     async logout() {
       await api.action.call({ path: 'domain.lobby.api.logout' }).catch(prettyAlert);
     },
+    toggleFullscreen() {
+      this.fullscreen = !this.fullscreen;
+      if (this.fullscreen) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    },
   },
   mounted() {
     const self = this;
-
     window.prettyAlert = ({ message, stack } = {}) => {
       if (message === 'Forbidden') {
         // стандартный ответ impress при доступе к запрещенному ресурсу (скорее всего нужна авторизация)
@@ -36,6 +53,10 @@ export default {
         self.error = message;
       }
     };
+    document.addEventListener('fullscreenchange', (event) => {
+      if (document.fullscreenElement) self.fullscreen = true;
+      else self.fullscreen = false;
+    });
   },
 };
 </script>
@@ -86,6 +107,38 @@ body {
   background: #ff000080;
   padding: 20px;
   font-size: 20px;
+}
+
+.fullscreen-btn {
+  position: fixed;
+  z-index: 1000;
+  font-size: 10px;
+  left: 170px;
+  top: 10px;
+  width: 110px;
+  color: #f4e205;
+  border-radius: 4px;
+  border: 1px solid #f4e205;
+  padding: 2px 0px;
+  background-color: black;
+  background-size: 50px;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: auto;
+  cursor: pointer;
+  opacity: 1;
+}
+#app.mobile-view .fullscreen-btn {
+  left: 70px;
+}
+#app[current-route='Lobby'] .fullscreen-btn {
+  left: 10px;
+}
+.fullscreen-btn svg {
+  padding-right: 4px;
+}
+.fullscreen-btn:hover {
+  opacity: 0.7;
 }
 
 .show-with-delay {

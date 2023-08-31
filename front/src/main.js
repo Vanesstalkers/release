@@ -16,11 +16,6 @@ Vue.config.productionTip = false;
 const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
 
-  // лежит как пример
-  // router.beforeEach((to, from, next) => {
-  //  return next({ name: 'Lobby' });
-  // });
-
   const state = {
     viewLoaded: true,
     currentUser: '',
@@ -29,10 +24,17 @@ const init = async () => {
     isLandscape: true,
     isPortrait: false,
     guiScale: 1,
+    currentRoute: '',
     store: {
       user: {},
     },
   };
+
+  router.beforeEach((to, from, next) => {
+    state.currentRoute = to.name;
+    return next();
+  });
+
   const mixin = {
     methods: {
       async initSession(config, handlers) {

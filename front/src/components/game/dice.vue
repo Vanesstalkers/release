@@ -9,10 +9,11 @@
       locked ? 'locked' : '',
       activeEvent ? 'active-event' : '',
       hide ? 'hide' : '',
+      isPicked ? 'picked' : '',
     ]"
     v-on:click="(e) => (activeEvent ? chooseDice() : pickDice())"
   >
-    <div v-if="!locked" class="controls">
+    <div v-if="!locked && !zone?.available" class="controls">
       <div :class="['control rotate', dice.deleted ? 'hidden' : '']" v-on:click.stop="rotateDice">
         <font-awesome-icon :icon="['fas', 'rotate']" size="2xl" style="color: #f4e205" />
       </div>
@@ -58,6 +59,7 @@ export default {
     diceId: String,
     inHand: Boolean,
     iam: Boolean,
+    zone: Object,
   },
   setup() {
     return inject('gameGlobals');
@@ -95,6 +97,9 @@ export default {
     replaceAllowed() {
       return this.dice.placedAtRound !== this.currentRound();
     },
+    isPicked() {
+      return this.gameState.pickedDiceId === this.diceId;
+    },
   },
   methods: {
     async chooseDice() {
@@ -121,18 +126,40 @@ export default {
     async pickDice() {
       if (!this.iam) return;
       if (this.locked) return;
-      this.gameState.pickedDiceId = this.diceId;
       this.hideZonesAvailability();
-      await this.handleGameApi({ name: 'showZonesAvailability', data: { diceId: this.diceId } });
+      if (this.isPicked) {
+        this.gameState.pickedDiceId = '';
+      } else {
+        this.gameState.pickedDiceId = this.diceId;
+        await this.handleGameApi({ name: 'showZonesAvailability', data: { diceId: this.diceId } });
+      }
     },
     async rotateDice() {
       await this.handleGameApi({ name: 'rotateDice', data: { diceId: this.diceId } });
+      if (this.gameState.pickedDiceId) {
+        await this.handleGameApi({
+          name: 'showZonesAvailability',
+          data: { diceId: this.gameState.pickedDiceId },
+        });
+      }
     },
     async deleteDice() {
       await this.handleGameApi({ name: 'deleteDice', data: { diceId: this.diceId } });
+      if (this.gameState.pickedDiceId) {
+        await this.handleGameApi({
+          name: 'showZonesAvailability',
+          data: { diceId: this.gameState.pickedDiceId },
+        });
+      }
     },
     async restoreDice() {
       await this.handleGameApi({ name: 'restoreDice', data: { diceId: this.diceId } });
+      if (this.gameState.pickedDiceId) {
+        await this.handleGameApi({
+          name: 'showZonesAvailability',
+          data: { diceId: this.gameState.pickedDiceId },
+        });
+      }
     },
   },
 };
@@ -232,6 +259,8 @@ export default {
   border-radius: 15px;
   background-image: url(../../assets/Dices.png);
 }
+
+.player.iam .hand-dices .domino-dice.picked > .el,
 .player.iam .hand-dices .domino-dice:not(.locked):hover > .el {
   box-shadow: inset 0 0 20px 8px lightgreen;
 }

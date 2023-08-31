@@ -17,7 +17,7 @@
         noAvailablePorts: function ({ joinPlane }) {
           const planeParent = joinPlane.getParent();
           if (this.status === 'PREPARE_START') {
-            planeParent.removeItem(joinPlane, { deleteFromStorage: true });
+            planeParent.removeItem(joinPlane);
             if (Object.keys(this.planeMap).length === 0) {
               // размещается первый plane на пустое поле
               this.addPlane(joinPlane);
@@ -31,7 +31,7 @@
               const planeDeck = this.getObjectByCode('Deck[plane]');
               joinPlane.moveToTarget(planeDeck);
             } else {
-              planeParent.removeItem(joinPlane, { deleteFromStorage: true });
+              planeParent.removeItem(joinPlane);
             }
           }
         },
@@ -46,7 +46,6 @@
   }
 
   fromJSON(data, { newGame } = {}) {
-    this.disableChanges(); // игра запишется в БД в store.create
 
     if (data.store) this.store = data.store;
     this.logs(data.logs);
@@ -111,7 +110,7 @@
     }
     for (const item of data.bridgeList || []) this.run('addBridge', item);
 
-    this.enableChanges();
+    this.clearChanges(); // игра запишется в БД в store.create
     return this;
   }
 

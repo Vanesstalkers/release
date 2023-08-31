@@ -12,6 +12,7 @@
     }
   }
 
+  if (isAvailable === 'rotate') dice.set({ sideList: [...dice.sideList.reverse()] });
   dice.set({ deleted: null });
   zone.updateValues();
 

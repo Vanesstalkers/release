@@ -7,12 +7,12 @@
       'card-worker-' + player.code,
       player.active ? 'active' : '',
       choiceEnabled ? 'active-event' : '',
+      showEndRoundBtn || showLeaveBtn ? 'has-action' : '',
     ]"
     :style="customStyle"
+    @click="controlAction"
   >
-    <div v-if="showControls && iam && sessionPlayerIsActive()" v-on:click="endRound" class="end-round-btn">
-      Закончить раунд
-    </div>
+    <div v-if="showEndRoundBtn" class="action-btn end-round-btn">Закончить раунд</div>
     <div v-if="player.active && player.timerEndTime && game.status != 'WAIT_FOR_PLAYERS'" class="end-round-timer">
       {{ this.localTimer }}
     </div>
@@ -22,7 +22,7 @@
     <div v-if="!iam" class="card-event">
       {{ cardDeckCount }}
     </div>
-    <div v-if="showLeaveBtn && iam" v-on:click="leaveGame" class="leave-game-btn">Выйти из игры</div>
+    <div v-if="showLeaveBtn" class="action-btn leave-game-btn">Выйти из игры</div>
   </div>
 </template>
 
@@ -98,11 +98,20 @@ export default {
         ).length || 0
       );
     },
+    showEndRoundBtn() {
+      return this.showControls && this.iam && this.sessionPlayerIsActive();
+    },
     showLeaveBtn() {
-      return this.game.status === 'FINISHED';
+      return this.game.status === 'FINISHED' && this.iam;
     },
   },
   methods: {
+    async controlAction() {
+      if (this.choiceEnabled) return; // выбор игрока в контексте события карты
+      if (this.showEndRoundBtn) return await this.endRound();
+      if (this.showLeaveBtn) return await this.leaveGame();
+    },
+
     async endRound() {
       this.hideZonesAvailability();
       this.gameState.pickedDiceId = '';
@@ -137,6 +146,12 @@ export default {
   box-shadow: inset 0px 20px 20px 0px black;
 
   background-image: url(../../assets/workers/1.jpg);
+}
+.card-worker.has-action {
+  cursor: pointer;
+}
+.card-worker.has-action:hover .action-btn {
+  background: green;
 }
 .card-worker-1 {
   background-image: url(../../assets/workers/1.jpg);

@@ -15,7 +15,7 @@
         :sideList="zone.sideList"
         :position="{ left: zone.left, top: zone.top, vertical: zone.vertical }"
       />
-      <dice v-for="id in Object.keys(zone.itemMap)" :key="id" :diceId="id" />
+      <dice v-for="id in Object.keys(zone.itemMap)" :key="id" :diceId="id" :zone="zone" />
     </div>
   </div>
 </template>
@@ -101,6 +101,7 @@ export default {
 }
 .zone.available {
   box-shadow: inset 0 0 20px 8px lightgreen;
+  cursor: pointer;
 }
 .zone.available.hard {
   box-shadow: inset 0 0 20px 8px yellow;

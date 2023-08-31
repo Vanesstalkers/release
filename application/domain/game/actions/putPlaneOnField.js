@@ -35,6 +35,6 @@
 
   // сделать через plane.moveToTarget нельзя, так как у game (в this) нет метода addItem
   const planeCurrentParent = joinPlane.getParent();
-  planeCurrentParent.removeItem(joinPlane, { deleteFromStorage: true });
+  planeCurrentParent.removeItem(joinPlane);
   this.addPlane(joinPlane, addPlaneConfig);
 });

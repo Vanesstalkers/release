@@ -117,25 +117,42 @@
     const parentId = this.id();
     const itemClass = this.getItemClass();
     if (item.constructor != itemClass) item = new itemClass(item, { parent: this });
-    this.game().markNew(item);
-    if (item.sideList) {
-      this.game().markNew(item.sideList[0]);
-      this.game().markNew(item.sideList[1]);
-    }
 
     this.set({ itemMap: { [item._id]: {} } });
-    item.updateFakeId({ parentId });
-    this.markItemUpdated({ item, action: 'add' });
+
+    const game = this.game();
+    if (!game.checkChangesDisabled()) {
+      // фейковые изменения (скорее всего расчет доступных зон) - данные для фронта обновлять не нужно
+
+      game.markNew(item);
+      if (item.sideList) {
+        game.markNew(item.sideList[0]);
+        game.markNew(item.sideList[1]);
+      }
+
+      item.updateFakeId({ parentId });
+      if (item.sideList) {
+        item.sideList[0].updateFakeId({ parentId });
+        item.sideList[1].updateFakeId({ parentId });
+      }
+      this.markItemUpdated({ item, action: 'add' });
+    }
 
     return true;
   }
-  removeItem(itemToRemove, { deleteFromStorage = false } = {}) {
+  removeItem(itemToRemove) {
     this.set({ itemMap: { [itemToRemove._id]: null } });
-    this.markItemUpdated({
-      item: itemToRemove,
-      action: itemToRemove.visible ? 'removeVisible' : 'remove',
-    });
-    if (deleteFromStorage) this.deleteFromObjectStorage(itemToRemove);
+
+    const game = this.game();
+    if (!game.checkChangesDisabled()) {
+      // фейковые изменения (скорее всего расчет доступных зон) - данные для фронта обновлять не нужно
+      this.markItemUpdated({
+        item: itemToRemove,
+        action: itemToRemove.visible ? 'removeVisible' : 'remove',
+      });
+    }
+
+    this.deleteFromObjectStorage(itemToRemove);
   }
   /**
    * Наполняем данные для рассылки фронту (о fakeId, которые нужно удалить из deck)

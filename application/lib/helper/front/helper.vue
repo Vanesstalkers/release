@@ -56,7 +56,7 @@
         </div>
       </div>
     </div>
-    <div :class="['helper-dialog', `scale-${state.guiScale}`, ...dialogClass]" :style="dialogStyle">
+    <div :class="['helper-dialog', 'scroll-off', `scale-${state.guiScale}`, ...dialogClass]" :style="dialogStyle">
       <div class="helper-avatar" />
       <div :class="['content', helperData.img && helperData.text ? 'nowrap' : '']">
         <div v-if="helperData.img" class="img">
@@ -647,5 +647,9 @@ export default {
 }
 .helper-link:hover {
   opacity: 0.7;
+}
+.mobile-view .helper-link {
+  width: 30px;
+  height: 30px;
 }
 </style>

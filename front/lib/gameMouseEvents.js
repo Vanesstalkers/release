@@ -56,7 +56,7 @@ function addMouseEvents(self) {
       }
     },
     touchStart(event) {
-      if (event.target.closest('.helper-dialog')) return;
+      if (event.target.closest('.scroll-off')) return;
       const touches = event.touches;
       if (touches.length === 2) {
         const [touch1, touch2] = touches;
@@ -73,7 +73,7 @@ function addMouseEvents(self) {
       }
     },
     touchMove(event) {
-      if (event.target.closest('.helper-dialog')) return;
+      if (event.target.closest('.scroll-off')) return;
       const touches = event.touches;
       if (touches.length === 2) {
         const [touch1, touch2] = touches;
