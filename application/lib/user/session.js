@@ -4,7 +4,21 @@
     // без этого правила на клиент попадут все данные юзера (в том числе логин и хэш пароля)
     #userSubscribeConfig = {
       rule: 'fields',
-      fields: ['name', 'currentTutorial', 'helper', 'helperLinks', 'finishedTutorials', 'rankings', 'personalChatMap'],
+      fields: [
+        'name',
+        'login',
+        'gender',
+        'info',
+        'avatarCode',
+        'avatarListCode',
+        'lobbyPinnedItems',
+        'currentTutorial',
+        'helper',
+        'helperLinks',
+        'finishedTutorials',
+        'rankings',
+        'personalChatMap',
+      ],
     };
 
     constructor({ id, client } = {}) {

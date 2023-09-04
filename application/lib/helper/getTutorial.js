@@ -7,5 +7,5 @@
     obj = lib.utils.getDeep(this, realPath);
   }
   if (!obj?.steps) throw new Error('Tutorial not found');
-  return lib.utils.structuredClone(obj.steps, { convertFuncToString: true });
+  return obj.steps;
 };

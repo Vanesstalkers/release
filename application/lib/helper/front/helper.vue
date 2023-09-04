@@ -17,7 +17,7 @@
         <div v-if="showHideAlert">
           <small>{{ hideAlert }}</small>
         </div>
-        <div v-if="hideAlert" class="show-hide" v-on:click.stop="showHideAlert = true" />
+        <!-- <div v-if="hideAlert" class="show-hide" v-on:click.stop="showHideAlert = true" /> -->
         <div class="close" v-on:click.stop="alert = null" />
       </div>
     </div>
@@ -83,6 +83,7 @@ export default {
   components: {},
   props: {
     inGame: Boolean,
+    showProfile: Function,
   },
   data() {
     return {
@@ -146,16 +147,22 @@ export default {
     },
   },
   methods: {
-    update() {
-      let { text, img, active, pos, fullscreen = false, frontActions } = this.helperData;
+    async update() {
+
+      let { text, img, active, pos, superPos = false, fullscreen = false, actions, buttons } = this.helperData;
       if (!pos) pos = 'bottom-right'; // тут может быть null
 
       this.$set(this.helperClassMap, 'dialog-active', text || img ? true : false);
       this.$set(this.helperClassMap, 'fullscreen', fullscreen);
+      this.$set(this.dialogClassMap, 'super-pos', false);
+      document.body.removeAttribute('tutorial-active');
 
       const dialogStyle = {};
       const offset = '20px';
-      if (fullscreen) {
+      if (superPos) {
+        document.body.setAttribute('tutorial-active', 1);
+        this.$set(this.dialogClassMap, 'super-pos', true);
+      } else if (fullscreen) {
         if (pos.includes('top'))
           Object.assign(dialogStyle, { top: offset, left: offset, width: '100%', height: '100%' });
       } else {
@@ -168,8 +175,15 @@ export default {
       }
       this.dialogStyle = dialogStyle;
 
-      if (frontActions) {
-        if (frontActions.before) new Function('return ' + frontActions.before)()(this);
+      let actionsData = {};
+      if (actions) {
+        if (actions.before) actionsData = new Function('return ' + actions.before)()(this) || {};
+      }
+      const { skipStep } = actionsData;
+      if (skipStep) {
+        const skipButton = buttons.find((button) => button.step);
+        this.action(skipButton);
+        return;
       }
 
       document.querySelectorAll('.tutorial-active').forEach((el) => {
@@ -211,7 +225,7 @@ export default {
         await api.action
           .call({
             path: 'lib.helper.api.action',
-            args: [{ action, step, tutorial }],
+            args: [{ action, step, tutorial, isMobile: this.state.isMobile }],
           })
           .catch(prettyAlert);
         if (tutorial) this.menu = null;
@@ -234,6 +248,7 @@ export default {
           bigControls: true,
           buttons: [
             { text: 'Спасибо, ничего не нужно', action: 'exit', exit: true },
+            { text: 'Открой мой профиль', action: 'profile' },
             { text: 'Покажи доступные обучения', action: 'tutorials' },
           ],
         };
@@ -246,6 +261,10 @@ export default {
           break;
         case 'init':
           this.initMenu();
+          break;
+        case 'profile':
+          this.menu = null;
+          this.showProfile();
           break;
         case 'tutorials':
           this.menu = {
@@ -270,10 +289,12 @@ export default {
     showTutorial({ tutorial, code }) {
       if (this.helperDialogActive) return; // другое обучение уже активировано
       if (!tutorial) return;
-      api.action.call({
-        path: 'lib.helper.api.action',
-        args: [{ tutorial, usedLink: code }],
-      });
+      api.action
+        .call({
+          path: 'lib.helper.api.action',
+          args: [{ tutorial, usedLink: code }],
+        })
+        .catch(prettyAlert);
       return;
     },
   },
@@ -282,6 +303,10 @@ export default {
     this.$nextTick(this.update);
 
     const self = this;
+    window.prettyAlertClear = () => {
+      this.alert = null;
+      this.hideAlert = null;
+    };
     window.prettyAlert = ({ message, stack } = {}) => {
       if (message === 'Forbidden') message += ` (попробуйте обновить страницу)`;
       self.alert = message;
@@ -327,7 +352,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .helper-avatar {
   border-radius: 50%;
   background-image: url(./assets/helper.png);
@@ -410,18 +435,6 @@ export default {
 }
 .mobile-view .helper-guru {
   scale: 0.6;
-  transform-origin: left bottom;
-}
-#lobby.mobile-view .helper-guru {
-  top: 20px;
-  right: 20px;
-  left: auto;
-  transform-origin: right top;
-}
-#lobby.mobile-view .helper-guru > .alert {
-  top: 110%;
-  bottom: auto;
-  right: 0%;
 }
 .helper.in-game .helper-guru {
   top: 20px;
@@ -441,12 +454,12 @@ export default {
   display: flex;
   z-index: 10000 !important;
   width: 600px;
-  right: 20px;
-  top: 20px;
+  left: 20px;
+  bottom: 100px;
   max-width: 100%;
 }
 #lobby .helper-menu {
-  transform-origin: right top;
+  transform-origin: left bottom;
 }
 #game .helper-menu {
   transform-origin: left top;
@@ -459,20 +472,19 @@ export default {
 }
 .helper-menu.scale-3 {
   scale: 1.5;
+  bottom: 140px;
 }
 .helper-menu.scale-4 {
   scale: 2;
+  bottom: 190px;
 }
 .helper-menu.scale-5 {
   scale: 2.5;
+  bottom: 250px;
 }
 .mobile-view .helper-menu {
   scale: 1;
-  transform-origin: left top;
-}
-#lobby.mobile-view .helper-menu {
-  right: 10px;
-  top: 10px;
+  left: 0px;
 }
 .helper.in-game .helper-menu {
   left: 0px;
@@ -495,8 +507,17 @@ export default {
   max-width: 100%;
   max-height: 95%;
 }
+.helper-dialog.super-pos {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .helper-dialog.scale-1 {
   scale: 0.8;
+}
+.helper-dialog.scale-1.super-pos {
+  transform: translate(-60%, -60%);
 }
 .helper-dialog.scale-2 {
   scale: 1;
@@ -504,15 +525,29 @@ export default {
 .helper-dialog.scale-3 {
   scale: 1.5;
 }
+.helper-dialog.scale-3.super-pos {
+  transform: translate(-30%, -30%);
+}
 .helper-dialog.scale-4 {
   scale: 2;
+}
+.helper-dialog.scale-4.super-pos {
+  transform: translate(-25%, -25%);
 }
 .helper-dialog.scale-5 {
   scale: 2.5;
 }
+.helper-dialog.scale-5.super-pos {
+  transform: translate(-20%, -20%);
+}
+
 .mobile-view .helper-dialog {
   scale: 1;
 }
+.mobile-view .helper-dialog.super-pos {
+  transform: translate(-50%, -50%);
+}
+
 .helper.dialog-active > .helper-dialog {
   display: flex;
 }
@@ -606,7 +641,7 @@ export default {
   height: 40px;
 }
 
-#app[tutorial-active]:after {
+body[tutorial-active] #app:after {
   content: '';
   position: fixed !important;
   z-index: 9999;

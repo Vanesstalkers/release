@@ -21,10 +21,10 @@
         <button class="new" v-on:click="createDemoUser">Создать нового пользователя</button>
       </div>
     </div>
-    <helper />
+    <helper :showProfile="showProfile" />
 
-    <div :class="['menu-item', 'info', !state.isMobile ? 'preview' : '']">
-      <label v-on:click="pinMenuItem">
+    <div :class="['menu-item', pinned.info ? 'pinned' : '', 'info', !state.isMobile ? 'preview' : '']">
+      <label v-on:click="pinMenuItem('info')">
         УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
       <div>
@@ -44,8 +44,8 @@
         </ul>
       </div>
     </div>
-    <div class="menu-item game">
-      <label v-on:click="pinMenuItem">
+    <div :class="['menu-item', pinned.game ? 'pinned' : '', 'game']">
+      <label v-on:click="pinMenuItem('game')">
         ИГРОВАЯ КОМНАТА <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
       <div>
@@ -74,73 +74,17 @@
         </div>
       </div>
     </div>
-    <div class="menu-item list">
-      <label v-on:click="pinMenuItem">
+    <div :class="['menu-item', pinned.list ? 'pinned' : '', 'list']">
+      <label v-on:click="pinMenuItem('list')">
         ПРАВИЛА ИГР <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
-      <div>
-        <ul>
-          <li class="disabled">
-            <label class="not-disabled">Игра "Релиз"</label>
-            <div>Игра про ИТ-разработку</div>
-            <ul>
-              <li>
-                <label v-on:click.stop="showRules('release')">Правила игры</label>
-                <hr />
-                <span v-on:click="showGallery('release')">Список карт</span>
-              </li>
-            </ul>
-          </li>
-          <li class="disabled">
-            <label>Автобизнес</label>
-            <div>Колода для игр про продажи автомобилей</div>
-            <ul>
-              <li>
-                <label v-on:click.stop="showRules('auto-deck')">Описание колоды</label>
-                <hr />
-                <span v-on:click="showGallery('auto', 'car')">Карты авто</span><br />
-                <span v-on:click="showGallery('auto', 'service')">Карты сервисов</span><br />
-                <span v-on:click="showGallery('auto', 'client')">Карты клиентов</span><br />
-                <span v-on:click="showGallery('auto', 'spec')">Карты особенностей</span><br />
-              </li>
-              <li>
-                <label v-on:click.stop="showRules('auto-sales')">Игра "Авто-продажи"</label>
-              </li>
-              <li>
-                <label v-on:click.stop="showRules('auto-auction')">Игра "Авто-аукцион"</label>
-              </li>
-              <li>
-                <label v-on:click.stop="showRules('auto-express')">Игра "Авто-экспресс"</label>
-              </li>
-            </ul>
-          </li>
-          <li class="disabled">
-            <label>Скорринг</label>
-            <div>Колода для игр про работу в банках</div>
-            <ul>
-              <li>
-                <label v-on:click.stop="showRules('bank-deck')">Описание колоды</label>
-                <hr />
-                <span v-on:click="showGallery('bank', 'product')">Карты продуктов</span><br />
-                <span v-on:click="showGallery('bank', 'service')">Карты сервисов</span><br />
-                <span v-on:click="showGallery('bank', 'scoring')">Карты скоринга</span><br />
-                <span v-on:click="showGallery('bank', 'client')">Карты клиентов</span><br />
-                <span v-on:click="showGallery('bank', 'spec')">Карты особенностей</span><br />
-              </li>
-              <li>
-                <label v-on:click.stop="showRules('bank-sales')">Игра "Банк-продаж"</label>
-              </li>
-              <li>
-                <label v-on:click.stop="showRules('bank-risks')">Игра "Банк-рисков"</label>
-              </li>
-            </ul>
-          </li>
-        </ul>
-        <!-- <iframe id="fred" style="border:1px solid #666CCC" title="PDF in an i-Frame" src="./rules.pdf" frameborder="1" scrolling="auto" height="1100" width="850" ></iframe> -->
-      </div>
+      <rules />
     </div>
-    <div class="menu-item chat">
-      <label v-on:click="pinMenuItem"> ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" /> </label>
+    <div :class="['menu-item', pinned.chat ? 'pinned' : '', 'chat']">
+      <label v-on:click="pinMenuItem('chat')">
+        ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+        <small v-if="unreadMessages > 0">есть новые сообщения</small>
+      </label>
       <chat
         :channels="{
           [`lobby-${state.currentLobby}`]: {
@@ -151,14 +95,18 @@
         }"
         :defActiveChannel="`lobby-${state.currentLobby}`"
         :userData="userData"
+        :isVisible="pinned.chat"
+        :hasUnreadMessages="hasUnreadMessages"
       />
     </div>
-    <div class="menu-item top">
-      <label v-on:click="pinMenuItem">
+    <div :class="['menu-item', pinned.top ? 'pinned' : '', 'top']">
+      <label v-on:click="pinMenuItem('top')">
         ЗАЛ СЛАВЫ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
       </label>
       <rankings :games="lobby.rankings" />
     </div>
+
+    <profile v-if="profileActive" :closeProfile="closeProfile" :userData="userData" />
 
     <img
       id="bg-img"
@@ -178,28 +126,34 @@
 
 <script>
 import { addEvents, removeEvents, events } from './lobbyEvents';
-import { Fancybox } from '@fancyapps/ui';
-import '@fancyapps/ui/dist/fancybox/fancybox.css';
 
 import helper from '~/lib/helper/front/helper.vue';
 import rankings from './rankings.vue';
+import rules from './rules.vue';
+import profile from './profile.vue';
 import chat from '~/lib/chat/front/chat.vue';
 
 export default {
   components: {
     helper,
     rankings,
+    rules,
+    profile,
     chat,
   },
   data() {
     return {
       lobbyDataLoaded: false,
       auth: { login: '', password: '', err: null },
+      unreadMessages: 0,
+      profileActive: false,
       bg: {
         top: 0,
         left: 0,
         showMask: '',
       },
+      pinnedUtemsLoaded: false,
+      pinned: { chat: false, list: false, top: false, game: false, info: false },
     };
   },
   watch: {
@@ -215,7 +169,12 @@ export default {
       return this.state.store || {};
     },
     userData() {
-      return { id: this.state.currentUser, ...(this.store.user?.[this.state.currentUser] || {}) };
+      const currentUserData = this.store.user?.[this.state.currentUser];
+      if (currentUserData && currentUserData.lobbyPinnedItems && !this.pinnedItemsLoaded) {
+        this.$set(this, 'pinned', currentUserData.lobbyPinnedItems);
+        this.pinnedItemsLoaded = true;
+      }
+      return { id: this.state.currentUser, ...(currentUserData || {}) };
     },
     lobby() {
       return this.store.lobby?.[this.state.currentLobby] || {};
@@ -275,8 +234,14 @@ export default {
       if (mask === '' && this.state.isMobile) return;
       this.bg.showMask = mask;
     },
-    pinMenuItem(e) {
-      e.target.closest('.menu-item').classList.toggle('pinned');
+    pinMenuItem(code) {
+      this.pinned[code] = !this.pinned[code];
+      api.action
+        .call({
+          path: 'lib.user.api.update',
+          args: [{ lobbyPinnedItems: this.pinned }],
+        })
+        .catch(prettyAlert);
     },
     async addGame({ type, subtype } = {}) {
       if (!type || !subtype) throw new Error('game type not set');
@@ -299,92 +264,21 @@ export default {
         .catch(prettyAlert);
     },
     showInfo(name) {
-      api.action.call({
-        path: 'lib.helper.api.action',
-        args: [{ tutorial: 'lobby-tutorial-sales', step: name }],
-      });
+      api.action
+        .call({
+          path: 'lib.helper.api.action',
+          args: [{ tutorial: 'lobby-tutorial-sales', step: name }],
+        })
+        .catch(prettyAlert);
     },
-    showRules(name) {
-      api.action.call({
-        path: 'lib.helper.api.action',
-        args: [{ tutorial: 'lobby-tutorial-gameRules', step: name }],
-      });
-      return;
+    showProfile() {
+      this.profileActive = true;
     },
-    showGallery(deck, type) {
-      let images = [];
-      switch (deck) {
-        case 'release':
-          images = [
-            { name: 'audit' },
-            { name: 'claim' },
-            { name: 'coffee' },
-            { name: 'crutch' },
-            { name: 'crutch' },
-            { name: 'crutch' },
-            { name: 'disease' },
-            { name: 'dream' },
-            { name: 'emergency' },
-            { name: 'flowstate' },
-            { name: 'give_project' },
-            { name: 'insight' },
-            { name: 'lib' },
-            { name: 'pilot' },
-            { name: 'refactoring' },
-            { name: 'req_legal' },
-            { name: 'req_tax' },
-            { name: 'security' },
-            { name: 'showoff' },
-            { name: 'superman' },
-            { name: 'take_project' },
-            { name: 'teamlead' },
-            { name: 'transfer' },
-            { name: 'weekend' },
-            { name: 'water' },
-          ]
-            .map(({ name }) => `release/${name}.jpg`)
-            .filter((value, index, array) => {
-              return array.indexOf(value) === index;
-            });
-          break;
-        case 'auto':
-          switch (type) {
-            case 'car':
-              for (let i = 1; i <= 32; i++) images.push(`auto/car/car (${i}).png`);
-              break;
-            case 'service':
-              for (let i = 1; i <= 32; i++) images.push(`auto/service/service (${i}).png`);
-              break;
-            case 'client':
-              for (let i = 1; i <= 24; i++) images.push(`auto/client/client (${i}).png`);
-              break;
-            case 'spec':
-              for (let i = 1; i <= 24; i++) images.push(`auto/spec/spec (${i}).png`);
-              break;
-          }
-          break;
-        case 'bank':
-          switch (type) {
-            case 'product':
-              for (let i = 1; i <= 32; i++) images.push(`bank/product/product (${i}).png`);
-              break;
-            case 'service':
-              for (let i = 1; i <= 32; i++) images.push(`bank/service/service (${i}).png`);
-              break;
-            case 'client':
-              for (let i = 1; i <= 24; i++) images.push(`bank/client/client (${i}).png`);
-              break;
-            case 'spec':
-              for (let i = 1; i <= 24; i++) images.push(`bank/spec/spec (${i}).png`);
-              break;
-            case 'scoring':
-              for (let i = 1; i <= 38; i++) images.push(`bank/scoring/scoring (${i}).png`);
-              break;
-          }
-          break;
-      }
-
-      new Fancybox(images.map((path) => ({ src: `/img/cards/${path}`, type: 'image' })));
+    closeProfile() {
+      this.profileActive = false;
+    },
+    hasUnreadMessages(count = 0) {
+      this.unreadMessages = count;
     },
   },
   async created() {},
@@ -529,6 +423,7 @@ export default {
 }
 .menu-item > label {
   cursor: pointer;
+  position: relative;
   color: crimson;
   text-shadow:
     var(--textshadow) 0px 0px 0px,
@@ -655,6 +550,17 @@ export default {
 .menu-item.chat {
   top: 60%;
   left: 10%;
+}
+.menu-item.chat > label > small {
+  font-size: 16px;
+  letter-spacing: 0px;
+  text-align: right;
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  left: 0px;
+  top: -16px;
+  color: #0078d7;
 }
 .menu-item.chat.pinned,
 .menu-item.chat.tutorial-active {

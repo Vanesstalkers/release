@@ -2,11 +2,26 @@
   steps: {
     hello: {
       initialStep: true,
+      superPos: true,
       text: 'Приветствую на портале обучающих настольных игр для бизнеса. Я могу провести небольшую экскурсию по сайту.',
       buttons: [
-        { text: 'Продолжай', step: 'games' },
+        { text: 'Продолжай', step: 'fullscreen' },
         { text: 'Я разберусь', step: 'exit', exit: true },
       ],
+    },
+    fullscreen: {
+      superPos: true,
+      actions: {
+        before: (self) => {
+          const { isMobile } = self.state;
+          let skipStep = true;
+          if (isMobile) skipStep = false;
+          return { skipStep };
+        },
+      },
+      text: 'В левом верхнем углу кнопка, которая включает режим полного экрана. Повторное нажатие на нее отключит этот режим.',
+      active: '.fullscreen-btn',
+      buttons: [{ text: 'Продолжай', step: 'games' }],
     },
     games: {
       pos: 'bottom-left',
@@ -31,7 +46,14 @@
       buttons: [{ text: 'Дальше', step: 'exit' }],
     },
     exit: {
-      text: 'В любой момент времени вы можете снова ко мне обратиться, нажав на мою иконку.',
+      superPos: true,
+      actions: {
+        _prepare: (step, { isMobile }) => {
+          const replaceText = isMobile ? 'правом верхнем' : 'левом нижнем';
+          step.text = step.text.replace('[[menu-position]]', replaceText);
+        },
+      },
+      text: 'Ну и если что, то в [[menu-position]] углу будет расположена моя иконка, которая открывает меню, через которое в любой момент можно получить доступ к своему профилю, а также повторно запустить обучение.',
       buttons: [{ text: 'Понятно', action: 'exit' }],
     },
   },

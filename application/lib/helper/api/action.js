@@ -1,4 +1,4 @@
-async (context, { action, step, tutorial: tutorialName, usedLink }) => {
+async (context, { action, step, tutorial: tutorialName, usedLink, isMobile }) => {
   const { userId } = context.session.state;
   const user = lib.store('user').get(userId);
   let { currentTutorial } = user;
@@ -14,8 +14,11 @@ async (context, { action, step, tutorial: tutorialName, usedLink }) => {
       : Object.values(tutorial).find(({ initialStep }) => initialStep);
     if (!helper) throw new Error('Tutorial initial step not found');
 
+    const { _prepare: prepareStep } = helper.actions || {};
+    const nextStep = lib.utils.structuredClone(helper, { convertFuncToString: true });
+    if (prepareStep) prepareStep(nextStep, { isMobile });
+    user.set({ helper: nextStep });
     user.set({ currentTutorial: { active: tutorialName } });
-    user.set({ helper });
     if (usedLink) user.set({ helperLinks: { [usedLink]: { used: true } } });
   } else if (currentTutorial.active) {
     if (action === 'exit') {
@@ -26,7 +29,10 @@ async (context, { action, step, tutorial: tutorialName, usedLink }) => {
       });
     } else {
       const tutorial = lib.helper.getTutorial(currentTutorial.active);
-      const nextStep = tutorial[step];
+      const { _prepare: prepareStep } = tutorial[step].actions || {};
+      const nextStep = lib.utils.structuredClone(tutorial[step], { convertFuncToString: true });
+      if (prepareStep) prepareStep(nextStep, { isMobile });
+
       if (nextStep) {
         user.set({ helper: nextStep }, { reset: ['helper'] }); // reset обязателен, так как набор ключей в каждом helper-step может быть разный
         user.set({ currentTutorial: { step } });

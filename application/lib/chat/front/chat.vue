@@ -83,6 +83,8 @@ export default {
         return {};
       },
     },
+    isVisible: Boolean,
+    hasUnreadMessages: Function,
   },
   data() {
     return {
@@ -117,13 +119,15 @@ export default {
           online: this.lobby.users?.[id]?.online,
           name: channel.name,
           users: {
-            [this.userData.id]: { name: this.userData.name, online: true },
+            [this.state.currentUser]: { name: this.userData.name, online: true },
             [id]: this.lobby.users?.[id] || {},
           },
           items: channel.items || {},
           unreadItems: Object.values(channel.items || {}).filter(({ time }) =>
             // для активного канала все новые сообщения не считаются unreadItems, а чтобы обновить значение lastView на сервере, при переключении канала вызовем api.loadPersonal
-            this.activeChannel === id ? 0 : time > (this.userData.personalChatMap?.[id]?.lastView || 0)
+            this.isVisible && this.activeChannel === id
+              ? 0
+              : time > (this.userData.personalChatMap?.[id]?.lastView || 0)
           ).length,
         },
       ]);
@@ -165,16 +169,20 @@ export default {
     userList() {
       const users = Object.entries(this.users)
         .filter(([id, user]) => user && user.name && user.online)
-        .map(([id, user]) => Object.assign(user, { id }));
+        .map(([id, user]) => Object.assign(user, { id }))
+        .filter(({ id }) => id);
+      let unreadItems = 0;
       for (const [channelId, channel] of this.personalChatList) {
         const user = users.find(({ id }) => id === channelId);
         if (channel.unreadItems) {
+          unreadItems++;
           if (user) user.unreadItems = channel.unreadItems;
           else users.push({ id: channelId, ...channel });
         } else {
           if (user && user.unreadItems) delete user.unreadItems;
         }
       }
+      this.hasUnreadMessages(unreadItems);
       return users;
     },
     guestsCount() {
@@ -246,10 +254,12 @@ export default {
       }
     },
     saveName() {
-      api.action.call({
-        path: 'lib.user.api.update',
-        args: [{ name: this.userName }],
-      });
+      api.action
+        .call({
+          path: 'lib.user.api.update',
+          args: [{ name: this.userName }],
+        })
+        .catch(prettyAlert);
     },
     sendChatMsg() {
       this.disableSendMsgBtn = 5;

@@ -21,7 +21,7 @@ async (context, { lobbyId }) => {
   if (gameId) {
     const gameLoaded = await db.redis.hget('games', gameId);
     if (gameLoaded) {
-      session.set({ gameId, playerId });
+      session.set({ gameId, playerId, lobbyId });
       await session.saveChanges();
       session.send('session/joinGame', { gameId, playerId });
     } else {

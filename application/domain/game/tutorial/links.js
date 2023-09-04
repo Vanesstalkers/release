@@ -4,7 +4,7 @@
       pos: 'bottom-left',
       text: 'Вы можете управлять положением и размером игрового поля с помощью кнопок в верхнем левом углу экрана.',
       active: '.gameplane-controls',
-      frontActions: {
+      actions: {
         before: (self) => {
           const $rootEl = self.$root.$el;
           const $controls = $rootEl.querySelector('.gameplane-controls');

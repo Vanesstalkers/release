@@ -14,7 +14,10 @@
       :wrapperStyle="{ zIndex: 1 }"
     >
       <div style="display: flex">
-        <div :class="['chat', 'gui-btn', showChat ? 'active' : '']" v-on:click="toggleChat" />
+        <div
+          :class="['chat', 'gui-btn', showChat ? 'active' : '', unreadMessages ? 'unread-messages' : '']"
+          v-on:click="toggleChat"
+        />
         <div :class="['log', 'gui-btn', showLog ? 'active' : '']" v-on:click="toggleLog" />
         <div :class="['move', 'gui-btn', showMoveControls ? 'active' : '']" v-on:click="toggleMoveControls" />
       </div>
@@ -39,7 +42,7 @@
       </div>
     </GUIWrapper>
 
-    <div v-if="showChat" class="chat-content scroll-off">
+    <div :class="['chat-content', 'scroll-off', showChat ? 'visible' : '']">
       <chat
         :channels="{
           [`game-${gameState.gameId}`]: {
@@ -56,6 +59,8 @@
         }"
         :defActiveChannel="`game-${gameState.gameId}`"
         :userData="userData"
+        :isVisible="showChat"
+        :hasUnreadMessages="hasUnreadMessages"
       />
     </div>
 
@@ -92,7 +97,13 @@
       />
     </div>
 
-    <GUIWrapper :pos="['top', 'right']" :wrapperClass="['game-info']">
+    <GUIWrapper
+      :pos="['top', 'right']"
+      :offset="{
+        right: state.isLandscape ? (state.isMobile ? 80 : [110, 110, 130, 200, 270, 340][state.guiScale]) : 0,
+      }"
+      :wrapperClass="['game-info']"
+    >
       <div class="wrapper">
         <div class="game-status-label">{{ statusLabel }}</div>
         <div v-for="deck in deckList" :key="deck._id" class="deck" :code="deck.code">
@@ -169,6 +180,7 @@ export default {
   data() {
     return {
       showChat: false,
+      unreadMessages: 0,
       showLog: false,
       showMoveControls: false,
 
@@ -479,6 +491,9 @@ export default {
       addEvents(this);
       addMouseEvents(this);
     },
+    hasUnreadMessages(count = 0) {
+      this.unreadMessages = count;
+    },
   },
   async created() {},
   async mounted() {
@@ -648,8 +663,16 @@ export default {
   right: 0px;
   display: flex;
 }
-.deck[code='Deck[card_active]'] .card-event:not(:first-child) {
+#game.landscape-view .deck[code='Deck[card_active]'] {
+  top: 0px;
+  right: -135px;
+}
+
+.deck[code='Deck[card_active]'] .card-event {
   margin-top: -135px;
+}
+.deck[code='Deck[card_active]'] .card-event:first-child {
+  margin-top: 0px !important;
 }
 .deck-active {
   display: flex;
@@ -802,6 +825,10 @@ export default {
 .gui-btn.chat {
   background-image: url(../assets/chat.png);
 }
+.gui-btn.chat.unread-messages {
+  border: 2px solid #0078d7;
+  box-shadow: 1px 0px 20px 6px #0078d7;
+}
 .gui-btn.log {
   background-image: url(../assets/log.png);
 }
@@ -823,6 +850,10 @@ export default {
   background-image: url(../assets/clear-black-back.png);
   border: 2px solid #f4e205;
   color: #f4e205;
+  display: none;
+}
+.chat-content.visible {
+  display: block;
 }
 .mobile-view .chat-content {
   left: 0px;

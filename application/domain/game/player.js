@@ -18,10 +18,12 @@
       'planeMap',
       'deckMap',
       'userId',
+      'avatarCode',
     ]);
 
     this.set({
       userId: data.userId,
+      avatarCode: data.avatarCode,
       active: data.active,
       ready: data.ready,
       timerEndTime: data.timerEndTime,

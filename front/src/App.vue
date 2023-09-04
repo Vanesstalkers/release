@@ -1,5 +1,9 @@
 <template>
-  <div id="app" :class="[state.isMobile ? 'mobile-view' : '']" :current-route="$root.state.currentRoute">
+  <div
+    id="app"
+    :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
+    :current-route="$root.state.currentRoute"
+  >
     <button @click="toggleFullscreen" class="fullscreen-btn">
       <span v-if="!fullscreen">
         <font-awesome-icon icon="fa-solid fa-expand" class="fa-xl" />
@@ -110,7 +114,7 @@ body {
 }
 
 .fullscreen-btn {
-  position: fixed;
+  position: fixed !important;
   z-index: 1000;
   font-size: 10px;
   left: 170px;
@@ -169,5 +173,70 @@ body {
 }
 button[disabled='disabled'] {
   opacity: 0.5;
+}
+
+.fancybox__container .fancybox__toolbar {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+.fancybox__container .fancybox__toolbar .fancybox__toolbar__column.is-middle {
+  position: absolute;
+  bottom: 100px;
+  width: 100%;
+}
+.fancybox__container.has-toolbar.is-compact .fancybox__toolbar__column.is-middle {
+  bottom: 80px;
+}
+.fancybox__container.has-toolbar .fancybox__toolbar .choose-btn {
+  background-color: #f4e205;
+  margin-top: 10px;
+  padding: 0px 10px;
+  white-space: nowrap;
+  color: black;
+  text-transform: uppercase;
+  position: absolute;
+  bottom: 20%;
+  left: 0px;
+  width: 200px;
+  left: calc(50% - 100px);
+
+  background: #f4e205;
+  border: 2px solid #f4e205;
+  color: black;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.fancybox__container.has-toolbar .fancybox__toolbar .choose-btn:active {
+  opacity: 0;
+}
+.fancybox__container.has-toolbar .fancybox__toolbar .choose-btn:after {
+  content: '';
+  background: #837800;
+  display: block;
+  position: absolute;
+  padding-top: 25%;
+  padding-left: 120%;
+  opacity: 0;
+  transition: all 0.8s;
+}
+.fancybox__container.has-toolbar .fancybox__toolbar .choose-btn:active:after {
+  padding: 0;
+  margin: 0;
+  opacity: 1;
+  transition: 0s;
+}
+.fancybox__container .fancybox__content img.new {
+  outline: 4px solid #f4e205;
+}
+.fancybox__container .fancybox__content label {
+  color: #f4e205;
+  font-size: 24px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 </style>

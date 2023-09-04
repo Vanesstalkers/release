@@ -7,7 +7,7 @@
 
       const method = lib.utils.getDeep(this, splittedPath);
       if (typeof method !== 'function') throw new Error(`Method (path="${path}") not found`);
-      if (!Array.isArray(args)) args = [args];
+      if (!Array.isArray(args)) args = [args || {}];
       return await method(context, ...args);
     } catch (err) {
       console.log(err);

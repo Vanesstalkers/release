@@ -155,6 +155,11 @@
         else target[key] = source[key];
       } else {
         // тут значения, которые не изменились
+
+        if (target[key] === null) {
+          // target[key] мог быть обнулен через reset
+          target[key] = source[key];
+        }
       }
     }
   },

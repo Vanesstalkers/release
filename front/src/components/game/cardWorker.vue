@@ -144,29 +144,12 @@ export default {
   border-radius: 10px;
   margin: 0px 0px 0px 5px;
   box-shadow: inset 0px 20px 20px 0px black;
-
-  background-image: url(../../assets/workers/1.jpg);
 }
 .card-worker.has-action {
   cursor: pointer;
 }
 .card-worker.has-action:hover .action-btn {
   background: green;
-}
-.card-worker-1 {
-  background-image: url(../../assets/workers/1.jpg);
-}
-.card-worker-2 {
-  background-image: url(../../assets/workers/2.jpg);
-}
-.card-worker-3 {
-  background-image: url(../../assets/workers/3.jpg);
-}
-.card-worker-4 {
-  background-image: url(../../assets/workers/4.jpg);
-}
-.card-worker-5 {
-  background-image: url(../../assets/workers/5.jpg);
 }
 .card-worker.active {
   outline: 4px solid green;

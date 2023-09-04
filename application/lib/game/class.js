@@ -117,14 +117,19 @@
     getPlayerByUserId(id) {
       return this.getPlayerList().find((player) => player.userId === id);
     }
-    async playerJoin({ userId, userName }) {
+    async playerJoin({ userId, userName, userAvatarCode }) {
       try {
         if (this.status === 'FINISHED') throw new Error('Игра уже завершена.');
 
         const player = this.getFreePlayerSlot();
         if (!player) throw new Error('Свободных мест не осталось');
 
-        player.set({ ready: true, userId, userName });
+        player.set({
+          ready: true,
+          userId,
+          userName,
+          avatarCode: userAvatarCode || Math.ceil(Math.random() * 12),
+        });
         this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 
         this.checkStatus({ cause: 'PLAYER_JOIN' });

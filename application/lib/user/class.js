@@ -45,6 +45,11 @@
         { json: true }
       );
     }
+    async updateUserCache(data) {
+      if (!Object.keys(data).length) return;
+      const cacheData = await db.redis.hget('users', this.id(), { json: true });
+      await db.redis.hset('users', this.id(), { ...cacheData, ...data }, { json: true });
+    }
 
     /**
      * Сохраняет данные при получении обновлений

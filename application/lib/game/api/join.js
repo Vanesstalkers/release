@@ -13,6 +13,7 @@ async (context, { gameId }) => {
 
   lib.store.broadcaster.publishAction(`game-${gameId}`, 'playerJoin', {
     userId,
+    userAvatarCode: user.avatarCode,
     userName: user.name || user.login,
   });
   return { status: 'ok' };
