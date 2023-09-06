@@ -197,6 +197,7 @@ export default {
     const gameState = reactive({
       gameId: '',
       sessionPlayerId: '',
+      serverTimeDiff: 0,
       pickedDiceId: '',
       selectedDiceSideId: '',
       shownCard: '',
@@ -480,6 +481,7 @@ export default {
         .then((data) => {
           this.gameState.gameId = data.gameId;
           this.gameState.sessionPlayerId = data.playerId;
+          this.$set(this.$root.state, 'serverTimeDiff', data.serverTime - Date.now());
         })
         .catch((err) => {
           prettyAlert(err);

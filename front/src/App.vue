@@ -228,10 +228,10 @@ button[disabled='disabled'] {
   transition: 0s;
 }
 .fancybox__container .fancybox__content img.new {
-  outline: 4px solid #f4e205;
+  outline: 4px solid gold;
 }
 .fancybox__container .fancybox__content label {
-  color: #f4e205;
+  color: gold;
   font-size: 24px;
   position: absolute;
   top: 10px;

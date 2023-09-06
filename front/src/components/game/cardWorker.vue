@@ -60,7 +60,7 @@ export default {
       // через watch не осилил (проблема при создании игры - "Vue cannot detect property addition or deletion")
       if (player.timerEndTime && this.localTimerUpdateTime !== player.timerUpdateTime) {
         clearTimeout(this.localTimerId);
-        this.localTimer = Math.floor((player.timerEndTime - Date.now()) / 1000);
+        this.localTimer = Math.floor((player.timerEndTime - state.serverTimeDiff - Date.now()) / 1000);
         this.localTimerUpdateTime = player.timerUpdateTime;
         this.localTimerId = setInterval(() => {
           if (this.localTimer !== null) {
@@ -73,8 +73,7 @@ export default {
     },
     customStyle() {
       const style = {};
-      // style.backgroundImage = `url(../../assets/cards/${this.card.name||'unknown'}.jpg)`;
-      // style.backgroundImage = `url(../../assets/plane.png)`;
+      style.backgroundImage = `url(${state.serverOrigin}/img/workers/${this.player.avatarCode}.png)`;
       return style;
     },
     choiceEnabled() {

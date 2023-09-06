@@ -1,5 +1,4 @@
 async () => {
-
   lib.user.mainClass = domain.lobby.user;
   lib.user.sessionClass = domain.lobby.session;
 
@@ -11,6 +10,10 @@ async () => {
         if (err !== 'not_found') throw err; // любая ошибка, кроме ожидаемой "not_found";
         await lobby.create({ code });
       });
+
+      const { Midjourney } = npm.midjourney;
+      lobby.midjourneyClient = new Midjourney(config.midjourney);
+      await lobby.midjourneyClient.init();
     });
   }
 };

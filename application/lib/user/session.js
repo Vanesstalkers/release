@@ -10,7 +10,7 @@
         'gender',
         'info',
         'avatarCode',
-        'avatarListCode',
+        'avatars',
         'lobbyPinnedItems',
         'currentTutorial',
         'helper',

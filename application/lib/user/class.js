@@ -4,7 +4,7 @@
     constructor({ id } = {}) {
       super({ col: 'user', id });
     }
-    async create({ login, password, token }, { demo = false } = {}) {
+    async create({ login, password, token, gender = 'male' }, { demo = false } = {}) {
       if (demo) {
         if (!login) login = 'demo' + Math.random();
         if (!password) password = '';
@@ -15,7 +15,7 @@
         token = metarhia.metautil.generateToken(secret, characters, length);
       }
 
-      await super.create({ login, password, token });
+      await super.create({ login, password, token, gender });
 
       const initiatedUser = await db.redis.hget('users', this.id());
       if (!initiatedUser) await this.addUserToCache();

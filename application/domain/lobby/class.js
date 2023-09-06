@@ -134,7 +134,18 @@
       },
     };
 
-    await super.create({ code, users, rankings });
+    const defaultDir = './application/static/img/workers';
+    const defMaleCode = `_default/male`;
+    const maleCodeList = node.fs
+      .readdirSync(`${defaultDir}/${defMaleCode}`)
+      .map((fileName) => `${defMaleCode}/${node.path.parse(fileName).name}`);
+    const defFemaleCode = `_default/female`;
+    const femaleCodeList = node.fs
+      .readdirSync(`${defaultDir}/${defFemaleCode}`)
+      .map((fileName) => `${defFemaleCode}/${node.path.parse(fileName).name}`);
+    const avatars = { male: maleCodeList, female: femaleCodeList };
+
+    await super.create({ code, users, rankings, avatars });
 
     this.checkRatings();
     await this.saveChanges();
@@ -269,6 +280,74 @@
         this.set({ users: { [userId]: { online: null } } }); // удаляем именно через null, чтобы отловить событие в broadcastDataVueStoreRuleHandler
       }
       await this.saveChanges();
+    }
+  }
+  async userGenerateAvatar({ userId, userGender, userInfo, currentUserAvatarCode, newDefaultAvatars }) {
+    try {
+      const prompt = `${userGender} computer programmer, ${userInfo || ''} --s 750 --ar 2:3`;
+      const Imagine = await this.midjourneyClient.Imagine(prompt, (uri, progress) => {
+        // console.log('loading', uri, 'progress', progress);
+      });
+      if (!Imagine) throw 'no message';
+
+      const avatarCode = Imagine.id;
+      const url = `${Imagine.proxy_url}?width=796&height=1196`;
+
+      const response = await new Promise((resolve, reject) => {
+        node.https.get(url, resolve).on('error', reject);
+      });
+
+      if (response.statusCode !== 200) {
+        throw new Error(`Error: HTTP Status Code ${response.statusCode}`);
+      }
+
+      const buffers = [];
+      response.on('data', (chunk) => {
+        buffers.push(chunk);
+      });
+      await new Promise((resolve, reject) => {
+        response.on('end', resolve);
+        response.on('error', reject);
+      });
+      const fileBuffer = Buffer.concat(buffers);
+
+      const outputDirectory = process.cwd() + `/application/static/img/workers/${avatarCode}`;
+      if (!node.fs.existsSync(outputDirectory)) node.fs.mkdirSync(outputDirectory);
+
+      const image = npm.sharp(fileBuffer);
+      const metadata = await image.metadata();
+      const partWidth = Math.floor(metadata.width / 2);
+      const partHeight = Math.floor(metadata.height / 2);
+
+      for (let i = 0; i < 4; i++) {
+        const x = (i % 2) * partWidth;
+        const y = Math.floor(i / 2) * partHeight;
+
+        await npm
+          .sharp(fileBuffer)
+          .extract({ left: x, top: y, width: partWidth, height: partHeight })
+          .toFile(`${outputDirectory}/${i + 1}.png`);
+      }
+
+      lib.store.broadcaster.publishData(`user-${userId}`, { avatars: { code: avatarCode, gender: userGender } });
+
+      if (newDefaultAvatars) {
+        const { code: newDefCode, gender: newDefGender } = newDefaultAvatars;
+        const avatars = [...this.avatars[newDefGender]];
+        for (let i = 1; i <= 4; i++) {
+          const code = newDefCode + '/' + i;
+          if (code === currentUserAvatarCode) continue;
+          const randomIdx = Math.floor(Math.random() * avatars.length);
+          avatars[randomIdx] = code;
+        }
+        this.set({ avatars: { [newDefGender]: avatars } });
+        await this.saveChanges();
+      }
+    } catch (exception) {
+      console.log({ exception });
+      lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
+        data: { message: `Ошибка генерации (${exception.message})`, stack: exception.stack },
+      });
     }
   }
 

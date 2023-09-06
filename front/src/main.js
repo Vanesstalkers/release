@@ -17,6 +17,7 @@ const init = async () => {
   if (!window.name) window.name = Date.now() + Math.random();
 
   const state = {
+    serverOrigin: '',
     viewLoaded: true,
     currentUser: '',
     currentLobby: '',
@@ -95,8 +96,12 @@ const init = async () => {
   const port = new URLSearchParams(location.search).get('port') || 8800;
 
   // process.env.NODE_ENV = 'development' === (location.hostname === 'localhost' || location.hostname.startsWith('192.168.'))
-  const url = process.env.NODE_ENV === 'development' ? `${location.hostname}:${port}` : `${location.hostname}/api`;
-  const metacom = Metacom.create(`${protocol}://${url}`);
+  const serverHost =
+    process.env.NODE_ENV === 'development' ? `${location.hostname}:${port}` : `${location.hostname}/api`;
+  // const serverHost = `${location.hostname}:${port}`;
+  // const serverHost = `${location.host}/api`;
+  state.serverOrigin = `${location.protocol}//${serverHost}`;
+  const metacom = Metacom.create(`${protocol}://${serverHost}`);
   const { api } = metacom;
   window.metacom = metacom;
   window.api = api;

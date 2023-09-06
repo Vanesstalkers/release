@@ -29,7 +29,6 @@
           <input v-model="userName" />
         </div>
         <br />
-        <!-- <div>{{ 'userGender=' + userGender }}</div> -->
         <div class="input-group">
           <label>Пол</label>
           <div class="form_toggle">
@@ -55,12 +54,10 @@
       <div
         class="avatar"
         :style="{
-          backgroundImage: userData.avatarCode
-            ? `url(http://localhost:8800/img/workers/${userData.avatarCode}.png)`
-            : 'none',
+          backgroundImage: avatarBackgroundImage,
         }"
       >
-        <!-- <img :src="`http://localhost:8800/img/workers/${userData.avatarCode}.png`" /> -->
+        <div v-if="!userData.avatarCode" :style="{ paddingTop: '10px' }">Аватар не выбран</div>
         <button class="action-btn generate-btn" @click="generate" :disable="disableGenerateBtn">
           <div><font-awesome-icon :icon="['far', 'star']" /> Сгенерировать персональные аватарки</div>
           <div class="price">100.000 &#8381;</div>
@@ -71,9 +68,7 @@
       <div
         class="avatar-bg"
         :style="{
-          backgroundImage: userData.avatarCode
-            ? `url(http://localhost:8800/img/workers/${userData.avatarCode}.png)`
-            : 'none',
+          backgroundImage: avatarBackgroundImage,
         }"
       />
     </div>
@@ -109,7 +104,7 @@ export default {
     };
   },
   watch: {
-    'userData.avatarListCode': function () {
+    'userData.avatars.code': function () {
       this.disableGenerateBtn = false;
       // !!! тут надо свернуть Fancybox (если открыт)
     },
@@ -117,6 +112,12 @@ export default {
   computed: {
     state() {
       return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
+    lobby() {
+      return this.store.lobby?.[this.state.currentLobby] || {};
     },
     showSaveBtn() {
       return (
@@ -126,6 +127,10 @@ export default {
         this.userGender != this.userData.gender ||
         this.userInfo != this.userData.info
       );
+    },
+    avatarBackgroundImage() {
+      const defaultImage = `_default/${this.userGender}_empty`;
+      return `url(${this.state.serverOrigin}/img/workers/${this.userData.avatarCode || defaultImage}.png)`;
     },
   },
   methods: {
@@ -178,15 +183,12 @@ export default {
         })
         .catch(prettyAlert);
     },
-    showGallery(deck, type) {
-      let images = [];
-      for (let i = 1; i <= 12; i++) {
-        images.push({ code: i });
-      }
-      if (this.userData.avatarListCode) {
+    showGallery() {
+      const images = this.lobby.avatars[this.userGender].map((code) => ({ code }));
+      if (this.userData.avatars?.code) {
         for (let i = 1; i <= 4; i++) {
           images.unshift({
-            code: `${this.userData.avatarListCode}/${i}`,
+            code: `${this.userData.avatars.code}/${i}`,
             newAvatar: true,
           });
         }
@@ -196,7 +198,7 @@ export default {
       new Fancybox(
         images.map((image) => ({
           ...image,
-          src: `http://localhost:8800/img/workers/${image.code}.png`,
+          src: `${state.serverOrigin}/img/workers/${image.code}.png`,
           type: 'image',
         })),
         {
@@ -343,6 +345,7 @@ export default {
   justify-content: space-around;
   height: 95%;
   padding: 0px 20px;
+  overflow: auto;
 }
 
 .form_toggle {
@@ -403,6 +406,7 @@ export default {
 }
 .content .input-form {
   max-width: 300px;
+  min-height: 400px;
 }
 
 .avatar .gallery-btn {
@@ -418,13 +422,15 @@ export default {
 
 .avatar .generate-btn {
   position: absolute;
-  right: 0px;
-  top: 0px;
-  width: 120px;
-  margin: 5% 10%;
+  bottom: 60px;
+  margin: 0px;
+  width: 90%;
+  left: 5%;
   font-size: 10px;
   font-weight: bold;
   text-align: left;
+  background-color: gold;
+  border-color: gold;
 }
 .avatar .generate-btn .price {
   text-align: right;
@@ -457,13 +463,6 @@ export default {
   }
   .content .input-form {
     background-image: url(@/assets/clear-grey-back.png);
-  }
-  .generate-btn {
-    top: auto;
-    bottom: 60px;
-    margin: 0px;
-    width: 90%;
-    left: 5%;
   }
 }
 </style>
