@@ -1,4 +1,4 @@
-async (context, { gameId }) => {
+async (context, { gameId, avatarCode }) => {
   const { sessionId } = context.session.state;
   const session = lib.store('session').get(sessionId);
   const { userId } = session;
@@ -13,7 +13,7 @@ async (context, { gameId }) => {
 
   lib.store.broadcaster.publishAction(`game-${gameId}`, 'playerJoin', {
     userId,
-    userAvatarCode: user.avatarCode,
+    userAvatarCode: user.avatarCode || avatarCode,
     userName: user.name || user.login,
   });
   return { status: 'ok' };

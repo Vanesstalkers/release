@@ -128,7 +128,7 @@
           ready: true,
           userId,
           userName,
-          avatarCode: userAvatarCode || Math.ceil(Math.random() * 12),
+          avatarCode: userAvatarCode,
         });
         this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 

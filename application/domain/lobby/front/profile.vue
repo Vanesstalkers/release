@@ -30,6 +30,11 @@
         </div>
         <br />
         <div class="input-group">
+          <label>Имя в телеграм</label>
+          <input v-model="tgUsername" />
+        </div>
+        <br />
+        <div class="input-group">
           <label>Пол</label>
           <div class="form_toggle">
             <div class="form_toggle-item item-1">
@@ -60,7 +65,7 @@
         <div v-if="!userData.avatarCode" :style="{ paddingTop: '10px' }">Аватар не выбран</div>
         <button class="action-btn generate-btn" @click="generate" :disable="disableGenerateBtn">
           <div><font-awesome-icon :icon="['far', 'star']" /> Сгенерировать персональные аватарки</div>
-          <div class="price">100.000 &#8381;</div>
+          <div class="price">&#8381; 100.000</div>
         </button>
         <button class="action-btn gallery-btn" @click="showGallery">Выбрать аватар из списка</button>
         <!-- <img :style="{ maxWidth: '80%', maxHeight: '80%' }" :src="userData.generatedIconUri" /> -->
@@ -96,6 +101,7 @@ export default {
       userPassword: '',
       userPasswordConfirm: '',
       userName: this.userData.name,
+      tgUsername: this.userData.tgUsername,
       userGender: this.userData.gender,
       userInfo: this.userData.info,
       disableLoginInput: true,
@@ -124,6 +130,7 @@ export default {
         this.userLogin != this.userData.login ||
         this.userPassword ||
         this.userName != this.userData.name ||
+        this.tgUsername != this.userData.tgUsername ||
         this.userGender != this.userData.gender ||
         this.userInfo != this.userData.info
       );
@@ -154,6 +161,7 @@ export default {
         this.userPasswordConfirm = '';
       }
       if (this.userName != this.userData.name) updateData.name = this.userName;
+      if (this.tgUsername != this.userData.tgUsername) updateData.tgUsername = this.tgUsername;
       if (this.userGender != this.userData.gender) updateData.gender = this.userGender;
       if (this.userInfo != this.userData.info) updateData.info = this.userInfo;
       if (Object.keys(updateData).length) {

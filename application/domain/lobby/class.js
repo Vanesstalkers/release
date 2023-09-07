@@ -1,8 +1,12 @@
 (class Lobby extends lib.store.class(class {}, { broadcastEnabled: true }) {
   users = {};
   games = {};
+  watchers = {};
   rankings = {};
   rankingsUsersTop = [];
+
+  #telegramBot;
+  #midjourneyClient;
 
   constructor({ id } = {}) {
     super({ col: 'lobby', id });
@@ -16,6 +20,15 @@
     //   this[name] = method;
     // }
   }
+  telegramBot(bot) {
+    if (!bot) return this.#telegramBot;
+    this.#telegramBot = bot;
+  }
+  midjourneyClient(client) {
+    if (!client) return this.#midjourneyClient;
+    this.#midjourneyClient = client;
+  }
+
   async create({ code }) {
     const users = {
       1: {
@@ -285,7 +298,7 @@
   async userGenerateAvatar({ userId, userGender, userInfo, currentUserAvatarCode, newDefaultAvatars }) {
     try {
       const prompt = `${userGender} computer programmer, ${userInfo || ''} --s 750 --ar 2:3`;
-      const Imagine = await this.midjourneyClient.Imagine(prompt, (uri, progress) => {
+      const Imagine = await this.midjourneyClient().Imagine(prompt, (uri, progress) => {
         // console.log('loading', uri, 'progress', progress);
       });
       if (!Imagine) throw 'no message';
@@ -350,6 +363,11 @@
       });
     }
   }
+  async startWatching({ telegramId, telegramUsername }) {
+    this.set({ watchers: { [telegramUsername]: { chatId: telegramId } } });
+    await this.saveChanges();
+    await this.telegramBot().sendMessage(telegramId, `Отслеживание включено`);
+  }
 
   // !!! нужно решить, как организовать связку chat+lobby (в частности, решить где должна быть эта функция)
   async delayedChatEvent({ userId, targetId, chatEvent }) {
@@ -370,9 +388,18 @@
     await this.saveChanges();
   }
   async addGame(gameData) {
-    const { id: gameId, type, subtype } = gameData;
+    const { creator, id: gameId, type, subtype } = gameData;
+    const gameConfig = domain.game.exampleJSON[subtype];
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
+
+    if (gameConfig.playerList.length > 1) {
+      const { tgUsername } = creator;
+      for (const [username, { chatId }] of Object.entries(this.watchers)) {
+        if (username === tgUsername) continue;
+        await this.telegramBot().sendMessage(chatId, `Нужны игроки в новую игру (${subtype})`);
+      }
+    }
   }
   async gameFinished({ gameId, gameType }) {
     this.unsubscribe(`game-${gameId}`);

@@ -73,7 +73,7 @@ export default {
     },
     customStyle() {
       const style = {};
-      style.backgroundImage = `url(${state.serverOrigin}/img/workers/${this.player.avatarCode}.png)`;
+      style.backgroundImage = `url(${this.state.serverOrigin}/img/workers/${this.player.avatarCode}.png)`;
       return style;
     },
     choiceEnabled() {

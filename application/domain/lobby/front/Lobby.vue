@@ -23,90 +23,81 @@
     </div>
     <helper :showProfile="showProfile" />
 
-    <div :class="['menu-item', pinned.info ? 'pinned' : '', 'info', !state.isMobile ? 'preview' : '']">
-      <label v-on:click="pinMenuItem('info')">
-        УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
-      </label>
-      <div>
-        <ul>
-          <li>
-            <label v-on:click.stop="showInfo('games')">Разработка игр на заказ</label>
-            <div>Настольные обучающие игры для любой сферы бизнеса</div>
-          </li>
-          <li>
-            <label v-on:click.stop="showInfo('it')">Создание онлайн-версий игр</label>
-            <div>Собственная команда программистов</div>
-          </li>
-          <li>
-            <label v-on:click.stop="showInfo('contacts')">Связаться с нами</label>
-            <div>Контактная информация</div>
-          </li>
-        </ul>
+    <div class="menu-item-list">
+      <div :class="['menu-item', pinned.info ? 'pinned' : '', 'info', !state.isMobile ? 'preview' : '']">
+        <label v-on:click="pinMenuItem('info')">
+          УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+        </label>
+
+        <perfect-scrollbar class="menu-item-content">
+          <ul>
+            <li>
+              <label v-on:click.stop="showInfo('delivery')">Продажа настольных игр</label>
+              <div>В любом количестве с доставкой до офиса</div>
+            </li>
+            <li>
+              <label v-on:click.stop="showInfo('games')">Разработка игр на заказ</label>
+              <div>Настольные обучающие игры для любой сферы бизнеса</div>
+            </li>
+            <li>
+              <label v-on:click.stop="showInfo('it')">Создание онлайн-версий игр</label>
+              <div>Собственная команда программистов</div>
+            </li>
+            <li>
+              <label v-on:click.stop="showInfo('contacts')">Связаться с нами</label>
+              <div>Контактная информация</div>
+            </li>
+          </ul>
+        </perfect-scrollbar>
       </div>
-    </div>
-    <div :class="['menu-item', pinned.game ? 'pinned' : '', 'game']">
-      <label v-on:click="pinMenuItem('game')">
-        ИГРОВАЯ КОМНАТА <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
-      </label>
-      <div>
-        <div class="new-game-btn-list">
-          <div v-on:click="addGame({ type: 'release', subtype: 'single-blitz' })">
-            <font-awesome-icon :icon="['fas', 'user']" size="2xl" />
-            Фриланс
-          </div>
-          <div v-on:click="addGame({ type: 'release', subtype: 'duel-blitz' })">
-            <font-awesome-icon :icon="['fas', 'user-group']" size="2xl" />
-            Дуэль
-          </div>
-          <div v-on:click="addGame({ type: 'release', subtype: 'ffa-blitz' })">
-            <font-awesome-icon :icon="['fas', 'users']" size="2xl" />
-            Каждый за себя
-          </div>
-          <div class="disabled">
-            <font-awesome-icon :icon="['fas', 'dice-four']" size="2xl" style="color: #fff" />
-            Команды
-          </div>
-        </div>
-        <hr :style="{ margin: '10px 30px', borderColor: '#f4e205' }" />
-        <div v-for="game in lobbyGameList" :key="game._id">
-          Раунд: ( {{ game.round }} ) Набрано игроков: ( {{ game.joinedPlayers }} )
-          <button class="lobby-btn" v-on:click="joinGame({ gameId: game.id })">Присоединиться к игре</button>
-        </div>
+      <div :class="['menu-item', pinned.game ? 'pinned' : '', 'game']">
+        <label v-on:click="pinMenuItem('game')">
+          ИГРОВАЯ КОМНАТА <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+        </label>
+        <games class="menu-item-content" />
       </div>
-    </div>
-    <div :class="['menu-item', pinned.list ? 'pinned' : '', 'list']">
-      <label v-on:click="pinMenuItem('list')">
-        ПРАВИЛА ИГР <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
-      </label>
-      <rules />
-    </div>
-    <div :class="['menu-item', pinned.chat ? 'pinned' : '', 'chat']">
-      <label v-on:click="pinMenuItem('chat')">
-        ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
-        <small v-if="unreadMessages > 0">есть новые сообщения</small>
-      </label>
-      <chat
-        :channels="{
-          [`lobby-${state.currentLobby}`]: {
-            name: 'Общий чат',
-            users: this.lobby.users || {},
-            items: this.lobby.chat || {},
-          },
-        }"
-        :defActiveChannel="`lobby-${state.currentLobby}`"
-        :userData="userData"
-        :isVisible="pinned.chat"
-        :hasUnreadMessages="hasUnreadMessages"
-      />
-    </div>
-    <div :class="['menu-item', pinned.top ? 'pinned' : '', 'top']">
-      <label v-on:click="pinMenuItem('top')">
-        ЗАЛ СЛАВЫ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
-      </label>
-      <rankings :games="lobby.rankings" />
+      <div :class="['menu-item', pinned.list ? 'pinned' : '', 'list']">
+        <label v-on:click="pinMenuItem('list')">
+          ПРАВИЛА ИГР <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+        </label>
+        <rules class="menu-item-content" />
+      </div>
+      <div :class="['menu-item', pinned.chat ? 'pinned' : '', 'chat']">
+        <label v-on:click="pinMenuItem('chat')">
+          ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+          <small v-if="unreadMessages > 0">есть новые сообщения</small>
+        </label>
+        <chat
+          class="menu-item-content"
+          :channels="{
+            [`lobby-${state.currentLobby}`]: {
+              name: 'Общий чат',
+              users: this.lobby.users || {},
+              items: this.lobby.chat || {},
+            },
+          }"
+          :defActiveChannel="`lobby-${state.currentLobby}`"
+          :userData="userData"
+          :isVisible="pinned.chat"
+          :hasUnreadMessages="hasUnreadMessages"
+        />
+      </div>
+      <div :class="['menu-item', pinned.top ? 'pinned' : '', 'top']">
+        <label v-on:click="pinMenuItem('top')">
+          ЗАЛ СЛАВЫ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+        </label>
+        <rankings class="menu-item-content" :games="lobby.rankings" />
+      </div>
     </div>
 
     <profile v-if="profileActive" :closeProfile="closeProfile" :userData="userData" />
+
+    <div class="main-logo">
+      <div class="contact-icons-wrapper">
+        <a href="https://t.me/smartgamesstudio" target="_black" class="telegram-link"> </a>
+        <a href="https://t.me/smartgamesstudio" target="_black" class="vk-link"> </a>
+      </div>
+    </div>
 
     <img
       id="bg-img"
@@ -125,9 +116,12 @@
 </template>
 
 <script>
+import { PerfectScrollbar } from 'vue2-perfect-scrollbar';
 import { addEvents, removeEvents, events } from './lobbyEvents';
 
+import GUIWrapper from '@/components/gui-wrapper.vue';
 import helper from '~/lib/helper/front/helper.vue';
+import games from './games.vue';
 import rankings from './rankings.vue';
 import rules from './rules.vue';
 import profile from './profile.vue';
@@ -135,7 +129,10 @@ import chat from '~/lib/chat/front/chat.vue';
 
 export default {
   components: {
+    PerfectScrollbar,
+    GUIWrapper,
     helper,
+    games,
     rankings,
     rules,
     profile,
@@ -178,19 +175,6 @@ export default {
     },
     lobby() {
       return this.store.lobby?.[this.state.currentLobby] || {};
-    },
-    lobbyGameMap() {
-      return this.lobby?.games || {};
-    },
-    lobbyGameList() {
-      const list = Object.entries(this.lobbyGameMap).map(([id, game]) => Object.assign(game, { id }));
-      return list.map((game) => {
-        if (game.playerMap) {
-          const players = Object.keys(game.playerMap).map((id) => game.store?.player[id] || {});
-          game.joinedPlayers = players.filter((player) => player.ready).length + ' из ' + players.length;
-        }
-        return game;
-      });
     },
   },
   methods: {
@@ -243,26 +227,6 @@ export default {
         })
         .catch(prettyAlert);
     },
-    async addGame({ type, subtype } = {}) {
-      if (!type || !subtype) throw new Error('game type not set');
-      await api.action
-        .call({
-          path: 'domain.game.api.new',
-          args: [{ type, subtype }],
-        })
-        .then(({ gameId }) => {
-          if (gameId) this.joinGame({ gameId });
-        })
-        .catch(prettyAlert);
-    },
-    async joinGame({ gameId }) {
-      await api.action
-        .call({
-          path: 'lib.game.api.join',
-          args: [{ gameId }],
-        })
-        .catch(prettyAlert);
-    },
     showInfo(name) {
       api.action
         .call({
@@ -308,104 +272,12 @@ export default {
   },
 };
 </script>
+<style src="vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css" />
 <style lang="scss">
+@import '@/mixins.scss';
 #lobby {
   height: 100%;
   width: 100%;
-}
-
-:root {
-  --size: 3;
-  --skew: 7;
-  --orange: hsl(20, 100%, 71%);
-  --svgfilter: url(#squiggly-0);
-  --boxshadow: rgb(22, 12, 3);
-  --textshadow: rgb(42, 22, 23);
-}
-@media only screen and (max-width: 600px) {
-  :root {
-    --size: 2;
-  }
-}
-@media only screen and (max-width: 400px) {
-  :root {
-    --size: 1.4;
-  }
-}
-.lightning:before,
-.lightning:after {
-  content: '';
-  width: 25%;
-}
-.lightning {
-  z-index: 1;
-
-  display: flex;
-  position: relative;
-  margin: 4vmin;
-  filter: var(--svgfilter);
-  span {
-    color: black;
-    letter-spacing: 10px; //calc(var(--size) * 1vmin);
-    font-size: 1rem;
-    padding: calc(0.5 * 1rem) 0 0 0;
-    margin-right: -1rem;
-    text-align: left;
-    text-shadow: none;
-  }
-  > * {
-    margin: 0;
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    padding: 20px 40px; //calc(var(--size) * 0.8vmin) calc(var(--size) * 1.6vmin);
-    background: rgba(#f4e205, 1); //yellow;
-
-    transform: skew(calc(var(--skew) * -1deg), calc(var(--skew) * -1deg));
-    font-size: 80px; //calc(var(--size) * 3vmax);
-    font-weight: 700;
-    color: Crimson;
-
-    text-transform: uppercase;
-    text-align: right;
-    border: 3px solid var(--boxshadow);
-    border-left: 0;
-    text-shadow:
-      var(--textshadow) 0px 0px 0px,
-      var(--textshadow) 0.669131px 0.743145px 0px,
-      var(--textshadow) 1.33826px 1.48629px 0px,
-      var(--textshadow) 2.00739px 2.22943px 0px,
-      var(--textshadow) 2.67652px 2.97258px 0px,
-      var(--textshadow) 3.34565px 3.71572px 0px,
-      var(--textshadow) 4.01478px 4.45887px 0px,
-      var(--textshadow) 4.68391px 5.20201px 0px;
-    box-shadow:
-      var(--border) 0px 0px 0px,
-      var(--boxshadow) 0.819152px 0.573576px 0px,
-      var(--boxshadow) 1.6383px 1.14715px 0px,
-      var(--boxshadow) 2.45746px 1.72073px 0px,
-      var(--boxshadow) 3.27661px 2.29431px 0px,
-      var(--boxshadow) 4.09576px 2.86788px 0px,
-      var(--boxshadow) 4.91491px 3.44146px 0px,
-      var(--boxshadow) 5.73406px 4.01504px 0px,
-      var(--boxshadow) 6.55322px 4.58861px 0px,
-      var(--boxshadow) 7.37237px 5.16219px 0px,
-      var(--boxshadow) 8.19152px 5.73576px 0px,
-      var(--boxshadow) 9.01067px 6.30934px 0px,
-      var(--boxshadow) 9.82982px 6.88292px 0px,
-      var(--boxshadow) 10.649px 7.45649px 0px,
-      var(--boxshadow) 11.4681px 8.03007px 0px;
-    &:last-child {
-      left: calc(var(--size) * -1vmin);
-      position: relative;
-      text-align: left;
-      // font-size: 8vmin;
-      span {
-        border-top: 1px solid;
-      }
-    }
-  }
 }
 
 .menu-item {
@@ -413,27 +285,113 @@ export default {
   position: absolute;
   transform: translate(-50%, -50%);
   transition: top 0.7s;
+
+  &.pinned,
+  &.preview {
+    z-index: 2;
+  }
+
+  .menu-item-content {
+    visibility: hidden;
+    opacity: 0;
+    border: 4px solid #f4e205;
+    position: absolute;
+    left: 0px;
+    top: 100%;
+    background-image: url(@/assets/clear-black-back.png);
+    color: white;
+    transition:
+      visibility 0s,
+      opacity 0.5s linear;
+    overflow: auto;
+  }
 }
-#lobby.mobile-view .menu-item {
-  font-size: 10px;
+.menu-item.pinned > div,
+.menu-item.tutorial-active > div {
+  max-height: none !important;
 }
-.menu-item.pinned,
-.menu-item.preview {
-  z-index: 2;
+
+#lobby.mobile-view .menu-item-list {
+  position: relative;
+  height: calc(100% - 150px - 50px);
+  width: 100%;
+  margin-top: 150px;
+  @include flex($wrap: wrap);
+
+  .menu-item {
+    font-size: 10px;
+
+    &.info {
+      top: 0%;
+    }
+    &.top {
+      top: 20%;
+    }
+    &.list {
+      top: 40%;
+    }
+    &.chat {
+      top: 60%;
+    }
+    &.game {
+      top: 80%;
+    }
+
+    &.pinned,
+    &.tutorial-active {
+      top: 0px;
+      height: calc(100% - 5% - 50px);
+      z-index: 2;
+    }
+  }
 }
+#lobby.mobile-view.landscape-view .menu-item-list {
+  margin-top: 5%;
+  width: 50%;
+  height: 100%;
+
+  .menu-item {
+    &.game {
+      left: 100%;
+      top: 150px;
+      width: 90%;
+      &.pinned {
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        label {
+          display: initial;
+          white-space: nowrap;
+          left: 5%;
+        }
+        .menu-item-content {
+          width: 185%;
+        }
+      }
+    }
+    > div {
+      top: auto;
+      left: 5%;
+      width: 185%;
+      height: calc(100% - 30px);
+    }
+  }
+}
+
+$textshadow: rgb(42, 22, 23);
 .menu-item > label {
   cursor: pointer;
   position: relative;
   color: crimson;
   text-shadow:
-    var(--textshadow) 0px 0px 0px,
-    var(--textshadow) 0.669131px 0.743145px 0px,
-    var(--textshadow) 1.33826px 1.48629px 0px,
-    var(--textshadow) 2.00739px 2.22943px 0px,
-    var(--textshadow) 2.67652px 2.97258px 0px,
-    var(--textshadow) 3.34565px 3.71572px 0px,
-    var(--textshadow) 4.01478px 4.45887px 0px,
-    var(--textshadow) 4.68391px 5.20201px 0px;
+    $textshadow 0px 0px 0px,
+    $textshadow 0.669131px 0.743145px 0px,
+    $textshadow 1.33826px 1.48629px 0px,
+    $textshadow 2.00739px 2.22943px 0px,
+    $textshadow 2.67652px 2.97258px 0px,
+    $textshadow 3.34565px 3.71572px 0px,
+    $textshadow 4.01478px 4.45887px 0px,
+    $textshadow 4.68391px 5.20201px 0px;
   font-family: fantasy;
   font-weight: bold;
   letter-spacing: 10px;
@@ -470,24 +428,6 @@ export default {
   display: inline-block;
 }
 
-.menu-item > div {
-  visibility: hidden;
-  opacity: 0;
-  border: 4px solid #f4e205;
-  position: absolute;
-  left: 0px;
-  top: 100%;
-  background-image: url(@/assets/clear-black-back.png);
-  color: white;
-  transition:
-    visibility 0s,
-    opacity 0.5s linear;
-  overflow: auto;
-}
-.menu-item.pinned > div,
-.menu-item.tutorial-active > div {
-  max-height: none !important;
-}
 #lobby:not(.mobile-view) .menu-item:hover > div,
 .menu-item.pinned > div,
 .menu-item.preview > div,
@@ -611,31 +551,7 @@ export default {
   width: 90%;
   height: 100%;
 }
-#lobby.mobile-view .menu-item.pinned,
-#lobby.mobile-view .menu-item.tutorial-active {
-  top: 20% !important;
-  height: 70%;
-  z-index: 2;
-}
-#lobby.mobile-view.landscape-view .menu-item.pinned,
-#lobby.mobile-view.landscape-view .menu-item.tutorial-active {
-  top: 10% !important;
-}
-#lobby.mobile-view .menu-item.info {
-  top: 25%;
-}
-#lobby.mobile-view .menu-item.top {
-  top: 35%;
-}
-#lobby.mobile-view .menu-item.list {
-  top: 50%;
-}
-#lobby.mobile-view .menu-item.chat {
-  top: 65%;
-}
-#lobby.mobile-view .menu-item.game {
-  top: 80%;
-}
+
 #lobby.mobile-view .menu-item.game > label {
   max-width: 220px;
   margin: auto;
@@ -655,23 +571,58 @@ export default {
   box-shadow: none;
 }
 
-#lobby:before {
-  content: '';
+#lobby > .main-logo {
   z-index: 1;
   position: absolute;
-  left: 0px;
+  width: 400px;
+  height: 200px;
+  left: calc(50% - 200px);
   top: 0px;
-  height: 100%;
-  width: 100%;
   background-image: url(assets/logo.png);
-  background-size: 400px 200px;
-  background-position: center top;
-  background-repeat: no-repeat;
+  background-size: cover;
+  transform-origin: top;
+
+  .contact-icons-wrapper {
+    position: absolute;
+    top: 115px;
+    right: 30px;
+    display: flex;
+    justify-content: center;
+
+    * {
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      margin: 5px;
+      background-size: cover;
+      box-shadow: 1.5px 1px black;
+      border-radius: 50%;
+
+      &:hover {
+        opacity: 0.7;
+      }
+    }
+    .telegram-link {
+      background-image: url(assets/telegram.png);
+    }
+    .vk-link {
+      background-image: url(assets/vk.png);
+    }
+  }
 }
-#lobby.mobile-view:before {
-  background-size: 300px 150px;
+#lobby.mobile-view > .main-logo {
+  width: 300px;
+  height: 150px;
+  left: calc(50% - 150px);
+
+  .contact-icons-wrapper {
+    top: 80px;
+    right: 15px;
+  }
 }
-#lobby.mobile-view.landscape-view:before {
+#lobby.mobile-view.landscape-view > .main-logo {
+  left: auto;
+  right: 10px;
   top: -25px;
 }
 
@@ -736,37 +687,6 @@ export default {
   margin: 6px 0px;
 }
 
-.new-game-btn-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.new-game-btn-list > div {
-  width: 40%;
-  text-align: left;
-  border: 2px solid #f4e205;
-  color: white;
-  background-color: transparent;
-  padding: 4px 10px;
-  margin: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.new-game-btn-list > div > svg {
-  width: 40px;
-}
-.new-game-btn-list > div.disabled {
-  border: 2px solid #ccc;
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-.new-game-btn-list > div:not(.disabled):hover {
-  background: #f4e205;
-  color: black;
-}
-.new-game-btn-list > div:not(.disabled):hover > svg {
-  color: black !important;
-}
 .lobby-btn {
   background: #f4e205;
   border: 2px solid #f4e205;

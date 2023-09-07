@@ -7,6 +7,7 @@
       fields: [
         'name',
         'login',
+        'tgUsername',
         'gender',
         'info',
         'avatarCode',

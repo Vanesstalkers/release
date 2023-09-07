@@ -307,7 +307,7 @@ export default {
 .chat-form {
   display: flex;
   flex-wrap: wrap;
-  overflow: hidden;
+  overflow: hidden !important;
 }
 .chat-header {
   width: 100%;
@@ -405,19 +405,21 @@ export default {
   margin-top: -10px;
   z-index: 2;
   box-shadow: inset 0px 0px 2px 2px #f4e205;
-}
-.chat-controls-alert .info {
-  padding: 8px;
-}
-.chat-controls-alert .input-group {
-  display: flex;
-  justify-content: space-evenly;
-}
-.chat-controls-alert .input-group > input {
-  border: 1px solid #f4e205;
-  background: black;
-  color: white;
-  padding: 4px 10px;
+  .info {
+    padding: 8px;
+  }
+  .input-group {
+    display: flex;
+    justify-content: center;
+
+    input {
+      width: 100px;
+      border: 1px solid #f4e205;
+      background: black;
+      color: white;
+      padding: 4px 10px;
+    }
+  }
 }
 
 .chat-controls > textarea {
