@@ -19,6 +19,7 @@
         'finishedTutorials',
         'rankings',
         'personalChatMap',
+        'money',
       ],
     };
 

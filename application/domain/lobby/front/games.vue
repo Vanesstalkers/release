@@ -58,10 +58,6 @@ export default {
     },
     userData() {
       const currentUserData = this.store.user?.[this.state.currentUser];
-      if (currentUserData && currentUserData.lobbyPinnedItems && !this.pinnedItemsLoaded) {
-        this.$set(this, 'pinned', currentUserData.lobbyPinnedItems);
-        this.pinnedItemsLoaded = true;
-      }
       return { id: this.state.currentUser, ...(currentUserData || {}) };
     },
     lobby() {
@@ -168,8 +164,9 @@ export default {
 
 .game-item {
   @include flex($justify: space-between);
-  margin: 4px 10px;
-  min-height: 30px;
+  margin: 4px auto;
+	min-height: 30px;
+	max-width: 300px;
 }
 
 @media only screen and (max-width: 360px) {

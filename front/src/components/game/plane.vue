@@ -13,6 +13,7 @@
     v-on:click.stop="(e) => (activeEvent ? choosePlane() : selectPlane(e))"
     :code="plane.code"
   >
+    <div class="price">{{ plane.price }}k</div>
     <div class="zone-wraper">
       <plane-zone v-for="id in zoneIds" :key="id" v-bind:zoneId="id" :linkLines="linkLines" />
     </div>
@@ -230,5 +231,18 @@ export default {
 }
 
 .plane.card-plane {
+}
+
+.plane > .price {
+  display: none;
+  color: gold;
+	font-size: 54px;
+	position: absolute;
+	z-index: 2;
+	top: 0px;
+	left: 0px;
+  background: #00000090;
+	padding: 8px 20px;
+	border-top-left-radius: 20px;
 }
 </style>

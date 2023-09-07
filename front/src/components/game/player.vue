@@ -122,7 +122,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .player:not(.iam) {
   position: relative;
   margin-top: 10px;
@@ -240,6 +240,9 @@ export default {
 }
 .hand-planes .plane {
   position: relative;
+}
+.hand-planes .plane > .price {
+  display: block !important;
 }
 .player.iam .hand-planes .plane:hover {
   cursor: pointer;

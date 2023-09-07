@@ -149,7 +149,7 @@ export default {
         left: 0,
         showMask: '',
       },
-      pinnedUtemsLoaded: false,
+      pinnedItemsLoaded: false,
       pinned: { chat: false, list: false, top: false, game: false, info: false },
     };
   },
@@ -355,7 +355,7 @@ export default {
       left: 100%;
       top: 150px;
       width: 90%;
-      &.pinned {
+      &.pinned, &.tutorial-active {
         left: 0px;
         top: 0px;
         width: 100%;
@@ -464,7 +464,7 @@ $textshadow: rgb(42, 22, 23);
 }
 .menu-item.info > div,
 .menu-item.info.preview:hover > div {
-  height: 270px;
+  height: 380px;
   width: 400px;
   border-color: crimson;
 }

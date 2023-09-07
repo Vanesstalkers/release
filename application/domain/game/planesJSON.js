@@ -1,6 +1,7 @@
 [
   {
     _code: 1,
+    price: 250,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': ['Zone[2].ZoneSide[1]'],
@@ -54,6 +55,7 @@
   },
   {
     _code: 2,
+    price: 180,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -118,6 +120,7 @@
   },
   {
     _code: 3,
+    price: 160,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': [],
@@ -165,6 +168,7 @@
   },
   {
     _code: 4,
+    price: 120,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -219,6 +223,7 @@
   },
   {
     _code: 5,
+    price: 100,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -273,6 +278,7 @@
   },
   {
     _code: 6,
+    price: 150,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -322,6 +328,7 @@
   },
   {
     _code: 7,
+    price: 220,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': ['Zone[4].ZoneSide[1]', 'Zone[4].ZoneSide[2]'],
@@ -369,6 +376,7 @@
   },
   {
     _code: 8,
+    price: 250,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': ['Zone[4].ZoneSide[1]'],
@@ -440,6 +448,7 @@
   },
   {
     _code: 9,
+    price: 250,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': ['Zone[1].ZoneSide[1]', 'Zone[1].ZoneSide[2]'],
@@ -495,6 +504,7 @@
   },
   {
     _code: 10,
+    price: 100,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -549,6 +559,7 @@
   },
   {
     _code: 11,
+    price: 120,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -603,6 +614,7 @@
   },
   {
     _code: 12,
+    price: 180,
     zoneLinks: {
       'Zone[1]': {
         'ZoneSide[1]': [],
@@ -645,6 +657,7 @@
   },
   {
     _code: 13,
+    price: 180,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': [],
@@ -696,6 +709,7 @@
   },
   {
     _code: 14,
+    price: 170,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': ['Zone[1].ZoneSide[2]'],
@@ -747,6 +761,7 @@
   },
   {
     _code: 15,
+    price: 170,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': ['Zone[1].ZoneSide[1]'],
@@ -789,6 +804,7 @@
   },
   {
     _code: 16,
+    price: 230,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': ['Zone[1].ZoneSide[2]', 'Zone[4].ZoneSide[2]'],
@@ -823,6 +839,7 @@
   },
   {
     _code: 17,
+    price: 200,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': ['Zone[1].ZoneSide[2]'],
@@ -887,6 +904,7 @@
   },
   {
     _code: 18,
+    price: 230,
     zoneLinks: {
       'Zone[2]': {
         'ZoneSide[1]': [],

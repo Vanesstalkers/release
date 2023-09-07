@@ -30,7 +30,7 @@
   }
 
   async create({ code }) {
-    const users = {
+    const users = {/* 
       1: {
         rankings: {
           release: { games: 100, money: 100000, win: 55, crutch: 1, penalty: 1000, totalTime: 3000, avrTime: 30 },
@@ -59,7 +59,7 @@
           bank: { games: 97, money: 100, win: 25 },
         },
       },
-    };
+     */};
 
     const rankings = {
       release: {
@@ -72,7 +72,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
             title: 'Трудоголики',
@@ -80,9 +79,8 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
-          topFreelancers: { title: 'Фрилансеры', headers: [], usersTop: ['1', '2', '3', '4'] },
+          // topFreelancers: { title: 'Фрилансеры', headers: [] },
           bestQuality: {
             title: 'Лучшее качество',
             headers: [
@@ -90,7 +88,6 @@
               { code: 'crutch', title: 'Костылей' },
               { code: 'penalty', title: 'Штрафов' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
           bestT2M: {
             title: 'Лучший time2market',
@@ -99,7 +96,6 @@
               { code: 'totalTime', title: 'Потрачено времени' },
               { code: 'avrTime', title: 'В среднем' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
         },
       },
@@ -112,7 +108,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
             title: 'Трудоголики',
@@ -120,7 +115,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
         },
       },
@@ -133,7 +127,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'money', title: 'Заработано денег' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
           topPlayers: {
             title: 'Трудоголики',
@@ -141,7 +134,6 @@
               { code: 'games', title: 'Написано проектов' },
               { code: 'win', title: 'Закончено проектов' },
             ],
-            usersTop: ['1', '2', '3', '4'],
           },
         },
       },
@@ -418,7 +410,7 @@
   rankingSortFunc = {
     'release.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
     'release.topPlayers': (a, b) => ((a.games || -1) > (b.games || -1) ? -1 : 1),
-    'release.topFreelancers': null,
+    // 'release.topFreelancers': null,
     'release.bestQuality': (a, b) => ((a.crutch || -1) / (a.games || -1) < (b.crutch || -1) / (b.games || -1) ? -1 : 1),
     'release.bestT2M': (a, b) => ((a.avrTime || -1) < (b.avrTime || -1) ? -1 : 1),
     'car.richestPlayers': (a, b) => ((a.money || -1) > (b.money || -1) ? -1 : 1),
@@ -432,7 +424,7 @@
     const rankingList = Object.entries(game.rankingMap).map(([code, ranking]) => ({ ...ranking, code }));
     const rankingsUsersTop = [];
     for (const ranking of rankingList) {
-      const users = Object.values(ranking.usersTop); // клонирование массива usersTop
+      const users = Object.values(ranking.usersTop || []); // клонирование массива usersTop
       if (initiatorUserId && !users.includes(initiatorUserId)) users.push(initiatorUserId);
       const draftUsersTop = users.map((userId) => ({ ...(this.users[userId].rankings?.[gameType] || {}), userId }));
 

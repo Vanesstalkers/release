@@ -7,6 +7,7 @@
     const code = 'event_req_legal';
     deck.addItem({
       _code: code,
+      price: 50,
       release: true,
       customClass: ['card-plane', 'card-event', 'card-event-req_legal'],
       zoneLinks: {},

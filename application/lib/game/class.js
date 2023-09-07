@@ -190,6 +190,8 @@
         gameId: this.id(),
         gameType: this.type,
         playerEndGameStatus,
+        fullPrice: this.getFullPrice(),
+        roundCount: this.round,
         crutchCount: this.crutchCount(),
       });
 

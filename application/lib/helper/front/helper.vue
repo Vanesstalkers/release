@@ -68,6 +68,12 @@
         <div class="video" />
         <div v-if="helperData.buttons" class="controls">
           <button v-for="button in helperData.buttons" :key="button.text" v-on:click.stop="action({ ...button })">
+            <font-awesome-icon
+              v-if="button.icon"
+              :icon="button.icon"
+              size="lg"
+              style="color: #f4e205; padding-right: 4px"
+            />
             {{ button.text }}
             <div v-if="button.exit" class="exit-icon" />
           </button>
@@ -151,6 +157,14 @@ export default {
 
       let { text, img, active, pos, superPos = false, fullscreen = false, actions, buttons } = this.helperData;
       if (!pos) pos = 'bottom-right'; // тут может быть null
+      if (typeof pos === 'object') {
+        if (this.state.isMobile) {
+          pos = pos.mobile;
+          if (typeof pos === 'object') {
+            pos = this.state.isLandscape ? pos.landscape : pos.portrait;
+          }
+        } else pos = pos.desktop;
+      }
 
       this.$set(this.helperClassMap, 'dialog-active', text || img ? true : false);
       this.$set(this.helperClassMap, 'fullscreen', fullscreen);
@@ -158,7 +172,7 @@ export default {
       document.body.removeAttribute('tutorial-active');
 
       const dialogStyle = {};
-      const offset = '20px';
+      const offset = this.state.isMobile ? '0px' : '20px';
       if (superPos) {
         document.body.setAttribute('tutorial-active', 1);
         this.$set(this.dialogClassMap, 'super-pos', true);
@@ -216,12 +230,18 @@ export default {
         a.href = link;
         a.target = '_blank';
         document.body.appendChild(a);
-        // const url = window.URL.createObjectURL(link);
-        // a.href = url;
-        // a.download = 'rules';
         a.click();
       } else {
-        // await api.helper.action({ action, step, tutorial });
+        let { actions } = this.helperData;
+        let actionsData = {};
+        if (actions) {
+          if (actions[action]) {
+            actionsData = new Function('return ' + actions[action])()(this) || {};
+            const { exit = true } = actionsData;
+            if (exit) action = 'exit';
+          }
+        }
+
         await api.action
           .call({
             path: 'lib.helper.api.action',
@@ -436,6 +456,9 @@ export default {
 .mobile-view .helper-guru {
   scale: 0.6;
 }
+.mobile-view .helper-guru > .alert {
+  padding: 10px 10px 10px 50px;
+}
 .helper.in-game .helper-guru {
   top: 20px;
   bottom: auto;
@@ -463,6 +486,8 @@ export default {
 }
 #game .helper-menu {
   transform-origin: left top;
+  top: 20px;
+  bottom: auto;
 }
 .helper-menu.scale-1 {
   scale: 0.8;
@@ -568,8 +593,7 @@ export default {
 }
 #lobby.mobile-view .helper-dialog > .content,
 #lobby.mobile-view .helper-menu > .content {
-  padding: 10px;
-  padding-right: 20px;
+  padding: 10px 20px 24px 10px;
   min-height: 60px;
   background: black;
 }
@@ -579,6 +603,10 @@ export default {
 }
 .helper-menu > .content {
   min-height: 50px;
+}
+
+.helper-dialog > .content > .text {
+  width: 100%;
 }
 
 .helper-dialog > .content > .controls,
@@ -610,6 +638,7 @@ export default {
 #lobby.mobile-view .helper-dialog > .content > .controls > button,
 #lobby.mobile-view .helper-menu > .content > .controls > button {
   padding: 10px 10px;
+  font-size: 10px;
 }
 
 .helper-dialog > .content > .controls.big > button,
@@ -686,5 +715,9 @@ body[tutorial-active] #app:after {
 .mobile-view .helper-link {
   width: 30px;
   height: 30px;
+}
+
+#lobby.mobile-view.landscape-view .helper-dialog {
+  width: 50%;
 }
 </style>

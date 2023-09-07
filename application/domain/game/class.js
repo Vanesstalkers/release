@@ -46,7 +46,6 @@
   }
 
   fromJSON(data, { newGame } = {}) {
-
     if (data.store) this.store = data.store;
     this.logs(data.logs);
     this.type = data.type;
@@ -160,8 +159,10 @@
       const parentZoneSide = parentZone.sideList.find(({ diceSideCode }) => diceSideCode === diceSide.code);
 
       let hasCrutch = false;
-      for (const expectedValue of Object.keys(parentZoneSide.expectedValues)) {
-        if (expectedValue.toString() !== diceSide.value.toString()) hasCrutch = true;
+      if (parentZoneSide?.expectedValues) {
+        for (const expectedValue of Object.keys(parentZoneSide.expectedValues)) {
+          if (expectedValue.toString() !== diceSide.value.toString()) hasCrutch = true;
+        }
       }
       if (hasCrutch === false) updatedMap[diceSideId] = null;
     }
@@ -169,6 +170,9 @@
   }
   crutchCount() {
     return Object.keys(this.crutchMap || {}).length;
+  }
+  getFullPrice() {
+    return this.getObjects({ className: 'Plane', directParent: this }).reduce((sum, plane) => sum + plane.price, 0);
   }
   /**
    * Проверяет и обновляет статус игры, если это необходимо

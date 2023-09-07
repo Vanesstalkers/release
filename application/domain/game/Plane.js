@@ -9,6 +9,7 @@
     this.broadcastableFields([
       '_id',
       'code',
+      'price',
       'zoneMap',
       'portMap',
       'width',
@@ -21,6 +22,7 @@
     ]);
 
     this.set({
+      price: data.price,
       width: data.width || this.width,
       height: data.height || this.height,
       release: data.release || false,

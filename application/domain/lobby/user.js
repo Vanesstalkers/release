@@ -116,22 +116,33 @@
       session.send('session/leaveGame', {});
     }
   }
-  async gameFinished({ gameId, gameType, playerEndGameStatus, crutchCount }) {
+  async gameFinished({ gameId, gameType, playerEndGameStatus, fullPrice, roundCount, crutchCount }) {
     const endGameStatus = playerEndGameStatus[this.id()];
 
     const rankings = lib.utils.clone(this.rankings || {});
     if (!rankings[gameType]) rankings[gameType] = {};
-    const { games = 0, win = 0, money = 0, crutch = 0, penalty = 0 } = rankings[gameType];
-    rankings[gameType].money = money + 1000;
+    const { games = 0, win = 0, money = 0, crutch = 0, penalty = 0, totalTime = 0 } = rankings[gameType];
+
+    let income = 0;
+    let penaltySum = 0;
+    if (endGameStatus === 'win') {
+      penaltySum = 100 * crutchCount * 1000;
+      income = fullPrice * 1000 - penaltySum;
+      rankings[gameType].money = money + income;
+      rankings[gameType].penalty = penalty + penaltySum;
+      rankings[gameType].crutch = crutch + crutchCount;
+      rankings[gameType].win = win + 1;
+    }
     rankings[gameType].games = games + 1;
-    rankings[gameType].crutch = crutch + crutchCount;
-    rankings[gameType].penalty = penalty + crutchCount * 1000;
+    rankings[gameType].totalTime = totalTime + roundCount;
+    rankings[gameType].avrTime = Math.floor(rankings[gameType].totalTime / rankings[gameType].win);
 
-    if (endGameStatus === 'win') rankings[gameType].win = win + 1;
-
-
-    const tutorial = lib.helper.getTutorial('game-tutorial-finished');
-    this.set({ helper: tutorial[endGameStatus], rankings });
+    const tutorial = lib.utils.structuredClone(lib.helper.getTutorial('game-tutorial-finished'));
+    let incomeText = `${income.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₽`;
+    if (penaltySum > 0)
+      incomeText += ` (с учетом штрафа ${penaltySum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}₽)`;
+    tutorial[endGameStatus].text = tutorial[endGameStatus].text.replace('[[win-money]]', incomeText);
+    this.set({ money: (this.money || 0) + income, helper: tutorial[endGameStatus], rankings });
     await this.saveChanges();
   }
 });

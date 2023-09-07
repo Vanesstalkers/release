@@ -105,7 +105,9 @@
       :wrapperClass="['game-info']"
     >
       <div class="wrapper">
-        <div class="game-status-label">{{ statusLabel }}</div>
+        <div class="game-status-label">
+          Бюджет <span style="color: gold">{{ fullPrice }}k</span> {{ statusLabel }}
+        </div>
         <div v-for="deck in deckList" :key="deck._id" class="deck" :code="deck.code">
           <div v-if="deck._id && deck.code === 'Deck[domino]'" class="hat" v-on:click="takeDice">
             {{ Object.keys(deck.itemMap).length }}
@@ -279,6 +281,11 @@ export default {
     logs() {
       return this.game.logs || {};
     },
+    fullPrice() {
+      return Object.keys(this.game.planeMap)
+        .map((planeId) => this.store.plane?.[planeId] || {})
+        .reduce((sum, plane) => sum + plane.price, 0);
+    },
     statusLabel() {
       switch (this.game.status) {
         case 'WAIT_FOR_PLAYERS':
@@ -286,7 +293,7 @@ export default {
         case 'PREPARE_START':
           return 'Создание игрового поля';
         case 'IN_PROCESS':
-          return 'Раунд ' + this.game.round;
+          return `Раунд ${this.game.round}`;
         case 'FINISHED':
           return 'Игра закончена';
       }
