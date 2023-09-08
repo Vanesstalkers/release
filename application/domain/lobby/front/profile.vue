@@ -1,7 +1,11 @@
 <template>
-  <div class="shown-profile" :style="{ color: 'white' }">
-    <H1> Профиль игрока</H1>
-    <div class="close" v-on:click.stop="closeProfile" />
+  <div :class="['shown-profile', `scale-${state.guiScale}`]" :style="{ color: 'white' }">
+    <H1>
+      <span>
+        Профиль игрока
+        <div class="close" v-on:click.stop="closeProfile" />
+      </span>
+    </H1>
 
     <div class="content">
       <div class="input-form">
@@ -56,29 +60,26 @@
 
         <button v-if="showSaveBtn" class="action-btn save-btn" @click="save">Сохранить</button>
       </div>
-      <div
-        class="avatar"
-        :style="{
-          backgroundImage: avatarBackgroundImage,
-        }"
-      >
-        <div v-if="!userData.avatarCode" :style="{ paddingTop: '10px' }">Аватар не выбран</div>
-        <button class="action-btn generate-btn" @click="generate" :disable="disableGenerateBtn">
-          <div><font-awesome-icon :icon="['far', 'star']" /> Сгенерировать персональные аватарки</div>
-          <div class="price">&#8381; 100.000</div>
-        </button>
-        <button class="action-btn gallery-btn" @click="showGallery">Выбрать аватар из списка</button>
-        <!-- <img :style="{ maxWidth: '80%', maxHeight: '80%' }" :src="userData.generatedIconUri" /> -->
+      <div class="avatar">
+        <div class="input-group money">
+          <label>Денег доступно:</label>
+          <div>{{ userData.money?.toString()?.replace(/\B(?=(\d{3})+(?!\d))/g, '.') || 0 }} &#8381;</div>
+        </div>
+        <div
+          class="avatar-img"
+          :style="{
+            backgroundImage: avatarBackgroundImage,
+          }"
+        >
+          <div v-if="!userData.avatarCode" class="no-avatar-msg">Аватар не выбран</div>
+          <button class="action-btn generate-btn" @click="generate" :disable="disableGenerateBtn">
+            <div><font-awesome-icon :icon="['far', 'star']" /> Сгенерировать персональные аватарки</div>
+            <div class="price">&#8381; 1.000.000</div>
+          </button>
+          <button class="action-btn gallery-btn" @click="showGallery">Выбрать аватар из списка</button>
+        </div>
       </div>
-      <div
-        class="avatar-bg"
-        :style="{
-          backgroundImage: avatarBackgroundImage,
-        }"
-      />
     </div>
-
-    <!-- {{ JSON.stringify(userData, null, 2) }} -->
   </div>
 </template>
 
@@ -260,39 +261,64 @@ export default {
   top: 0px;
   left: 0px;
   background-image: url(@/assets/clear-black-back.png);
-}
-.shown-profile > .close {
-  background-image: url(@/assets/close.png);
-  background-color: black;
-  cursor: pointer;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
-  background-size: 30px;
-  border-radius: 10px;
-}
-.shown-profile > .close:hover {
-  opacity: 0.7;
-}
-.shown-profile h1 {
-  color: #f4e205;
-  text-shadow:
-    var(--textshadow) 0px 0px 0px,
-    var(--textshadow) 0.669131px 0.743145px 0px,
-    var(--textshadow) 1.33826px 1.48629px 0px,
-    var(--textshadow) 2.00739px 2.22943px 0px,
-    var(--textshadow) 2.67652px 2.97258px 0px,
-    var(--textshadow) 3.34565px 3.71572px 0px,
-    var(--textshadow) 4.01478px 4.45887px 0px,
-    var(--textshadow) 4.68391px 5.20201px 0px;
-  font-family: fantasy;
-  font-weight: bold;
-  letter-spacing: 10px;
-  padding-left: 6px;
-  font-size: 2em;
-  height: 5%;
+
+  transform-origin: top center;
+  &.scale-2 {
+    scale: 1.2;
+  }
+  &.scale-3 {
+    scale: 1.5;
+  }
+  &.scale-4 {
+    scale: 1.8;
+  }
+  &.scale-5 {
+    scale: 2;
+  }
+
+  h1 {
+    color: #f4e205;
+    text-shadow:
+      var(--textshadow) 0px 0px 0px,
+      var(--textshadow) 0.669131px 0.743145px 0px,
+      var(--textshadow) 1.33826px 1.48629px 0px,
+      var(--textshadow) 2.00739px 2.22943px 0px,
+      var(--textshadow) 2.67652px 2.97258px 0px,
+      var(--textshadow) 3.34565px 3.71572px 0px,
+      var(--textshadow) 4.01478px 4.45887px 0px,
+      var(--textshadow) 4.68391px 5.20201px 0px;
+    font-family: fantasy;
+    font-weight: bold;
+    letter-spacing: 10px;
+    padding-left: 6px;
+    font-size: 2em;
+    height: 5%;
+
+    > span {
+      position: relative;
+      z-index: 1;
+
+      .close {
+        background-image: url(@/assets/close.png);
+        background-color: black;
+        cursor: pointer;
+        position: absolute;
+        top: 0px;
+        right: -50px;
+        width: 30px;
+        height: 30px;
+        background-size: 30px;
+        border-radius: 10px;
+      }
+      .close:hover {
+        opacity: 0.7;
+      }
+    }
+  }
+
+  @media only screen and (max-width: 360px) {
+    font-size: 9px;
+  }
 }
 
 .input-group {
@@ -302,6 +328,10 @@ export default {
 .input-group label {
   width: 90px;
   text-align: left;
+
+  @media only screen and (max-width: 360px) {
+    width: 50px;
+  }
 }
 .input-group input,
 .input-group > textarea {
@@ -310,6 +340,11 @@ export default {
   color: white;
   padding: 4px 10px;
   width: 180px;
+
+  @media only screen and (max-width: 360px) {
+    width: 150px;
+    font-size: 12px;
+  }
 }
 .input-group > input:disabled {
   background-color: dimgrey;
@@ -323,6 +358,10 @@ export default {
   text-align: left;
   font-size: 9px;
   padding-top: 4px;
+
+  @media only screen and (max-width: 360px) {
+    margin-left: auto;
+  }
 }
 .input-group > small input {
   width: 70px;
@@ -350,10 +389,14 @@ export default {
 .content {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-around;
+  justify-content: center;
   height: 95%;
   padding: 0px 20px;
   overflow: auto;
+
+  > * {
+    margin: 0px 10px;
+  }
 }
 
 .form_toggle {
@@ -375,6 +418,10 @@ export default {
   cursor: pointer;
   user-select: none;
   width: auto;
+
+  @media only screen and (max-width: 360px) {
+    padding: 4px 18px;
+  }
 }
 .form_toggle .item-2 label {
   border-right: 1px solid #f4e205;
@@ -388,60 +435,79 @@ export default {
   display: block;
   margin-left: 200px;
   margin-top: 10px;
+
+  @media only screen and (max-width: 360px) {
+    margin-left: auto;
+  }
 }
 
 .avatar {
   position: relative;
   margin-bottom: 50px;
-  background-size: cover;
-  background-position: center;
   width: 100%;
   max-width: 200px;
-  max-height: 300px;
-  border: 2px solid #f4e205;
-}
-.avatar-bg {
-  display: none;
-  position: absolute;
-  top: 0px;
-  z-index: -1;
-  max-width: 100%;
-  max-height: 100%;
-  height: 100%;
-  margin-bottom: 0px;
-  background-size: cover;
-  background-position: center;
+  min-height: 300px;
+
+  .money {
+    color: gold;
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+
+    > label {
+      color: white;
+      padding-bottom: 4px;
+    }
+    > div {
+      font-size: 18px;
+      font-weight: bold;
+    }
+  }
+  .avatar-img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-height: 300px;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #f4e205;
+
+    .no-avatar-msg {
+      padding-top: 20px;
+    }
+  }
+
+  .gallery-btn {
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+    height: 30px;
+    width: 90%;
+    margin: 5%;
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  .generate-btn {
+    position: absolute;
+    bottom: 60px;
+    margin: 0px;
+    width: 90%;
+    left: 5%;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: left;
+    background-color: gold;
+    border-color: gold;
+  }
+  .generate-btn .price {
+    text-align: right;
+  }
 }
 .content .input-form {
+  z-index: 1;
   max-width: 300px;
-  min-height: 400px;
-}
-
-.avatar .gallery-btn {
-  position: absolute;
-  left: 0px;
-  bottom: 0px;
-  height: 30px;
-  width: 90%;
-  margin: 5%;
-  font-size: 10px;
-  font-weight: bold;
-}
-
-.avatar .generate-btn {
-  position: absolute;
-  bottom: 60px;
-  margin: 0px;
-  width: 90%;
-  left: 5%;
-  font-size: 10px;
-  font-weight: bold;
-  text-align: left;
-  background-color: gold;
-  border-color: gold;
-}
-.avatar .generate-btn .price {
-  text-align: right;
+  min-height: 450px;
 }
 
 #app.portrait-view {
@@ -455,11 +521,70 @@ export default {
     padding: 0px 50px;
   }
   .avatar {
+    z-index: 0;
+    position: absolute;
+    top: 0px;
+    height: 100%;
     background: none;
     border: none;
     margin-bottom: 0px;
     max-width: 100%;
+
+    .money {
+      z-index: 1;
+      position: absolute;
+      top: 80px;
+      justify-content: center;
+      background-image: url(@/assets/clear-grey-back.png);
+
+      > label {
+        width: auto;
+        padding-right: 20px;
+      }
+    }
+
+    .avatar-img {
+      border: none;
+      height: 100%;
+      max-height: 100%;
+
+      .no-avatar-msg {
+        padding-top: 110px;
+        width: 50%;
+        padding-left: 50%;
+
+        @media only screen and (max-width: 360px) and (min-height: 600px) {
+          padding-top: 60px;
+          width: 100%;
+          padding-left: 0px;
+        }
+      }
+    }
+
+    .gallery-btn {
+      position: absolute;
+      bottom: auto;
+      top: 110px;
+      left: 50%;
+      width: 40%;
+
+      @media only screen and (max-width: 360px) and (min-height: 600px) {
+        top: 140px;
+        left: 0px;
+        width: 90%;
+      }
+    }
+    .generate-btn {
+      top: 110px;
+      bottom: auto;
+      width: 45%;
+
+      @media only screen and (max-width: 360px) and (min-height: 600px) {
+        width: 90%;
+      }
+    }
   }
+
   .avatar-bg {
     display: block;
   }
@@ -471,6 +596,11 @@ export default {
   }
   .content .input-form {
     background-image: url(@/assets/clear-grey-back.png);
+    min-height: 300px;
+
+    @media only screen and (max-height: 600px) {
+      scale: 0.8;
+    }
   }
 }
 </style>
