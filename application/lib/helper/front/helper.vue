@@ -30,9 +30,7 @@
 
         <ul v-if="menu.showTutorials && inGame" class="tutorials">
           <li v-on:click.stop="action({ tutorial: 'game-tutorial-start' })">Стартовое приветствие игры</li>
-          <!-- <li v-on:click.stop="action({ tutorial: 'game-tutorial-links', step: 'planeControls' })">
-            Контроллеры игрового поля
-          </li> -->
+          <li v-on:click.stop="action({ tutorial: 'game-tutorial-gameControls' })">Управление игровым полем</li>
         </ul>
         <ul v-if="menu.showTutorials && !inGame" class="tutorials">
           <li v-on:click.stop="action({ tutorial: 'lobby-tutorial-start' })">Стартовое приветствие</li>
@@ -166,6 +164,7 @@ export default {
         } else pos = pos.desktop;
       }
 
+      this.$set(this.helperClassMap, 'dialog-hidden', false);
       this.$set(this.helperClassMap, 'dialog-active', text || img ? true : false);
       this.$set(this.helperClassMap, 'fullscreen', fullscreen);
       this.$set(this.dialogClassMap, 'super-pos', false);
@@ -191,10 +190,13 @@ export default {
 
       let actionsData = {};
       if (actions) {
-        if (actions.before) actionsData = new Function('return ' + actions.before)()(this) || {};
+        if (actions.before) {
+          actionsData = new Function('return ' + actions.before)()(this) || {};
+        }
       }
       const { skipStep } = actionsData;
       if (skipStep) {
+        this.$set(this.helperClassMap, 'dialog-hidden', true);
         const skipButton = buttons.find((button) => button.step);
         this.action(skipButton);
         return;
@@ -205,7 +207,7 @@ export default {
       });
       if (active) {
         if (typeof active === 'string') active = { selector: active };
-        let { selector, update, customClass } = active;
+        let { selector, update, customClass, style } = active;
 
         this.$nextTick(() => {
           // если в beforeAction проводились манипуляции с dom, то селектор отработает только в nextTick
@@ -288,7 +290,7 @@ export default {
           break;
         case 'tutorials':
           this.menu = {
-            text: 'Выберите на нужное обучение, чтобы запустить его повторно:',
+            text: 'Нажмите на нужное обучение в списке, чтобы запустить его повторно:',
             showTutorials: true,
             buttons: [
               { text: 'Назад в меню', action: 'init' },
@@ -306,16 +308,28 @@ export default {
           break;
       }
     },
-    showTutorial({ tutorial, code }) {
+    showTutorial({ tutorial, code, simple = true }) {
       if (this.helperDialogActive) return; // другое обучение уже активировано
       if (!tutorial) return;
       api.action
         .call({
           path: 'lib.helper.api.action',
-          args: [{ tutorial, usedLink: code }],
+          args: [{ tutorial, usedLink: simple ? code : undefined }],
         })
         .catch(prettyAlert);
       return;
+    },
+    updateLinksCoordinates() {
+      this.$set(
+        this,
+        'helperLinksBounds',
+        Object.fromEntries(
+          this.helperLinksEntries.map(([code, link]) => [
+            code,
+            this.$root.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
+          ])
+        )
+      );
     },
   },
   mounted() {
@@ -335,35 +349,17 @@ export default {
     };
 
     this.mutationObserver = new MutationObserver(function (mutationsList, observer) {
-      for (const mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-        } else if (mutation.type === 'attributes') {
-          // лежит тут как пример
-          // if (mutation.attributeName === 'markup-onload') {
-          //   const funcName = mutation.target.getAttribute('markup-onload');
-          //   if (window[funcName]) window[funcName](mutation.target);
-          // }
-        }
-      }
-
-      self.$set(
-        self,
-        'helperLinksBounds',
-        Object.fromEntries(
-          self.helperLinksEntries.map(([code, link]) => [
-            code,
-            self.$root.$el.querySelector(link.selector)?.getBoundingClientRect() || null,
-          ])
-        )
-      );
+      self.updateLinksCoordinates();
     });
-
     this.mutationObserver.observe(document.querySelector('body'), {
       attributes: true,
       // attributeFilter: [/* 'markup-code',  */ 'markup-onload'],
       childList: true,
       subtree: true,
       attributeOldValue: true,
+    });
+    document.addEventListener('transitionend', () => {
+      self.updateLinksCoordinates();
     });
   },
   async beforeDestroy() {
@@ -468,7 +464,11 @@ export default {
   top: 110%;
   bottom: auto;
 }
-.helper.dialog-active > .helper-guru {
+.helper.dialog-active > .helper-guru,
+.helper.dialog-active > .helper-link {
+  display: none;
+}
+.helper.dialog-hidden {
   display: none;
 }
 
@@ -591,8 +591,8 @@ export default {
   display: flex;
   flex-wrap: wrap;
 }
-#lobby.mobile-view .helper-dialog > .content,
-#lobby.mobile-view .helper-menu > .content {
+.mobile-view .helper-dialog > .content,
+.mobile-view .helper-menu > .content {
   padding: 10px 20px 24px 10px;
   min-height: 60px;
   background: black;
@@ -603,6 +603,9 @@ export default {
 }
 .helper-menu > .content {
   min-height: 50px;
+}
+.mobile-view.landscape-view .helper-dialog {
+  max-width: 50%;
 }
 
 .helper-dialog > .content > .text {
@@ -664,8 +667,8 @@ export default {
   width: 64px;
   height: 64px;
 }
-#lobby.mobile-view .helper-dialog > .helper-avatar,
-#lobby.mobile-view .helper-menu > .helper-avatar {
+.mobile-view .helper-dialog > .helper-avatar,
+.mobile-view .helper-menu > .helper-avatar {
   width: 40px;
   height: 40px;
 }
@@ -715,9 +718,5 @@ body[tutorial-active] #app:after {
 .mobile-view .helper-link {
   width: 30px;
   height: 30px;
-}
-
-#lobby.mobile-view.landscape-view .helper-dialog {
-  width: 50%;
 }
 </style>

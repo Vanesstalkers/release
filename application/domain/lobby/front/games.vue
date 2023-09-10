@@ -165,8 +165,14 @@ export default {
 .game-item {
   @include flex($justify: space-between);
   margin: 4px auto;
-	min-height: 30px;
-	max-width: 300px;
+  min-height: 30px;
+  max-width: 300px;
+}
+.mobile-view .game-item {
+  justify-content: center;
+  > * {
+    margin: 4px 10px;
+  }
 }
 
 @media only screen and (max-width: 360px) {

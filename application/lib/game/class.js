@@ -82,7 +82,7 @@
       }
     }
 
-    logs(data) {
+    logs(data, { consoleMsg } = {}) {
       if (!data) return this.#logs;
 
       if (typeof data === 'string') data = { msg: data };
@@ -97,6 +97,7 @@
 
       const id = (Date.now() + Math.random()).toString().replace('.', '_');
       this.#logs[id] = data;
+      if (consoleMsg) console.log(data.msg);
     }
     async showLogs({ userId, sessionId, lastItemTime }) {
       let logs = this.logs();

@@ -72,7 +72,7 @@
           }"
         >
           <div v-if="!userData.avatarCode" class="no-avatar-msg">Аватар не выбран</div>
-          <button class="action-btn generate-btn" @click="generate" :disable="disableGenerateBtn">
+          <button class="action-btn generate-btn" @click="generate" :disabled="disableGenerateBtn">
             <div><font-awesome-icon :icon="['far', 'star']" /> Сгенерировать персональные аватарки</div>
             <div class="price">&#8381; 1.000.000</div>
           </button>
@@ -107,12 +107,12 @@ export default {
       userInfo: this.userData.info,
       disableLoginInput: true,
       disablePasswordInput: true,
-      disableGenerateBtn: true,
+      disableGenerateBtn: false,
     };
   },
   watch: {
     'userData.avatars.code': function () {
-      this.disableGenerateBtn = false;
+      // this.disableGenerateBtn = false;
       // !!! тут надо свернуть Fancybox (если открыт)
     },
   },
@@ -184,11 +184,14 @@ export default {
         .catch(prettyAlert);
     },
     generate() {
-      this.disableGenerateBtn = true;
+      // this.disableGenerateBtn = true;
       api.action
         .call({
           path: 'lib.user.api.generateAvatar',
           args: [],
+        })
+        .then(()=>{
+          prettyAlert({ message: 'Началась генерация. Это займет некоторое время.' });
         })
         .catch(prettyAlert);
     },

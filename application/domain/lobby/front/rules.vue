@@ -72,33 +72,14 @@ export default {
   components: {
     PerfectScrollbar,
   },
-  props: {
-    games: Object,
-  },
+  props: {},
   data() {
-    return {
-      menuGameItems: {},
-      menuOpened: false,
-      activeRating: null,
-    };
+    return {};
   },
   watch: {},
   computed: {
     state() {
       return this.$root.state || {};
-    },
-    gameList() {
-      return Object.entries(this.games).map(([code, game]) => ({
-        ...game,
-        code,
-        rankingList: Object.entries(game.rankingMap).map(([code, ranking]) => ({ ...ranking, code })),
-      }));
-    },
-    activeRatingTitle() {
-      return this.activeRating?.title || 'Выберите рейтинг, который хотели бы посмотреть';
-    },
-    activeRatingHeaders() {
-      return [{ code: 'idx' }, { code: 'player' }].concat(this.activeRating?.headers || []);
     },
   },
   methods: {
@@ -193,94 +174,4 @@ export default {
 };
 </script>
 <style src="vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css" />
-<style lang="scss">
-.rankings {
-  overflow: hidden !important;
-}
-.rankings > * {
-  height: 100%;
-}
-.rankings > .title {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  height: auto;
-  padding: 6px 20px;
-}
-.rankings .title {
-  color: #f4e205;
-  font-weight: bold;
-  white-space: pre-wrap;
-  cursor: pointer;
-  width: 100%;
-  text-align: center;
-  padding: 8px 0px;
-}
-.rankings > .title:hover {
-  opacity: 0.7;
-}
-.rankings > .menu {
-  width: 100%;
-  left: 0px;
-  top: 0px;
-  text-align: left;
-  padding: 6px 20px;
-  z-index: 1;
-}
-.rankings > .menu h4 {
-  cursor: pointer;
-  color: #f4e205;
-}
-.rankings > .menu h4:hover {
-  opacity: 0.7;
-}
-.rankings > .menu ul {
-  text-align: left;
-  list-style-type: square;
-}
-.rankings > .menu ul > li {
-  cursor: pointer;
-}
-.rankings > .menu ul > li:hover {
-  opacity: 0.7;
-}
-
-.rankings > .content {
-  width: calc(100% - 20px);
-  height: calc(100% - 30px);
-  margin: 4px 10px;
-  margin-top: 30px;
-}
-.rankings > .content table {
-  min-width: 400px;
-  margin-bottom: 10px;
-}
-.rankings > .content table th {
-  white-space: nowrap;
-  font-size: 10px;
-}
-.rankings > .content table th[code='player'] {
-  width: 100%;
-}
-.rankings > .content table tr.iam {
-  color: #f4e205;
-  font-weight: bold;
-}
-.rankings > .content table td[code='idx'] {
-  white-space: nowrap;
-}
-.rankings > .content table tr.iam.no-games > td[code='player'] {
-  position: relative;
-}
-.rankings > .content table tr.iam.no-games > td[code='player']:after {
-  content: 'в эту игру еще не играли';
-  position: absolute;
-  left: 100%;
-  white-space: nowrap;
-  text-align: left;
-  font-style: italic;
-  font-size: 10px;
-  line-height: 13px;
-  color: #aaa;
-}
-</style>
+<style lang="scss"></style>

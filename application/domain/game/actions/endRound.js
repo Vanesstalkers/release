@@ -32,10 +32,13 @@
         userId: prevPlayer.userId,
       });
     } else {
-      this.logs({
-        msg: `Игрок {{player}} закончил раунд №${round}.`,
-        userId: prevPlayer.userId,
-      });
+      this.logs(
+        {
+          msg: `Игрок {{player}} закончил раунд №${round}.`,
+          userId: prevPlayer.userId,
+        },
+        { consoleMsg: true }
+      );
     }
   }
 

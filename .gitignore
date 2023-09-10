@@ -7,3 +7,5 @@ node_modules
 .DS_Store
 application/static/img/workers/*
 !application/static/img/workers/_default/
+application/config/telegram.js
+application/config/midjourney.js

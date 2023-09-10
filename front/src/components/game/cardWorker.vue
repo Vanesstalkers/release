@@ -73,7 +73,9 @@ export default {
     },
     customStyle() {
       const style = {};
-      style.backgroundImage = `url(${this.state.serverOrigin}/img/workers/${this.player.avatarCode}.png)`;
+      const defaultImage = `_default/male_empty`;
+      const avatarCode = this.player.avatarCode || defaultImage;
+      style.backgroundImage = `url(${this.state.serverOrigin}/img/workers/${avatarCode}.png)`;
       return style;
     },
     choiceEnabled() {

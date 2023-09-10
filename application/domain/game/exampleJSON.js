@@ -8,7 +8,7 @@
       planesAtStart: 3, // изначальное количество блоков на поле
       planesNeedToStart: 3, // нужно для начала игры (будут добавляться игроками)
       planesToChoosee: 2, // блоков на выбор игроку для добавления на поле
-      allowedAutoCardPlayRoundStart: false,
+      allowedAutoCardPlayRoundStart: true,
       singlePlayer: true,
       cardsToRemove: ['audit', 'coffee', 'weekend'],
       autoFinishAfterRoundsOverdue: 10,

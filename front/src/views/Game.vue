@@ -13,7 +13,7 @@
       :contentClass="['gui-small']"
       :wrapperStyle="{ zIndex: 1 }"
     >
-      <div style="display: flex">
+      <div class="game-controls" style="display: flex">
         <div
           :class="['chat', 'gui-btn', showChat ? 'active' : '', unreadMessages ? 'unread-messages' : '']"
           v-on:click="toggleChat"
@@ -98,11 +98,11 @@
     </div>
 
     <GUIWrapper
+      class="game-info"
       :pos="['top', 'right']"
       :offset="{
         right: state.isLandscape ? (state.isMobile ? 80 : [110, 110, 130, 200, 270, 340][state.guiScale]) : 0,
       }"
-      :wrapperClass="['game-info']"
     >
       <div class="wrapper">
         <div class="game-status-label">
@@ -126,7 +126,7 @@
       </div>
     </GUIWrapper>
 
-    <GUIWrapper :pos="['bottom', 'right']" :wrapperClass="['session-player']">
+    <GUIWrapper class="session-player" :pos="['bottom', 'right']">
       <player
         :playerId="gameState.sessionPlayerId"
         :customClass="[`scale-${state.guiScale}`]"
@@ -135,13 +135,13 @@
       />
     </GUIWrapper>
     <GUIWrapper
+      class="players"
       :pos="state.isMobile && state.isPortrait ? ['bottom', 'right'] : ['bottom', 'left']"
       :offset="
         state.isMobile && state.isPortrait
           ? { bottom: 10 + 10 + 180 * 0.6 + ((sessionUserCardDeckLength || 1) - 1) * 20 }
           : {}
       "
-      :wrapperClass="['players']"
       :contentClass="['gui-small']"
     >
       <player
@@ -466,10 +466,12 @@ export default {
       this.showMoveControls = false;
       this.showChat = false;
       if (this.showLog) return (this.showLog = false);
+      this.showLog = true;
       await api.action
         .call({ path: 'lib.game.api.showLogs', args: [{ lastItemTime: Object.values(this.logs).pop()?.time }] })
         .then(() => {
-          this.showLog = true;
+          // если делать присвоение здесь, то будет сбрасываться tutorial-active на кнопке
+          // this.showLog = true;
         })
         .catch(prettyAlert);
     },
@@ -754,6 +756,10 @@ export default {
   opacity: 0.7;
 }
 
+.game-controls.tutorial-active {
+  box-shadow: rgb(244, 226, 5) 0px 0px 20px 20px;
+}
+
 .gameplane-controls {
   position: absolute;
   top: 0px;
@@ -762,7 +768,6 @@ export default {
   width: 200px;
   margin-left: auto;
   padding: 5px;
-  border-radius: 50%;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
@@ -809,8 +814,7 @@ export default {
   background-image: url(../assets/reset.png);
 }
 .gameplane-controls.tutorial-active {
-  box-shadow: 0 0 40px 40px #fff;
-  border-radius: 50%;
+  box-shadow: 0 0 40px 40px #f4e205;
 }
 
 .gui-btn {
@@ -826,7 +830,7 @@ export default {
   cursor: pointer;
 }
 .gui-btn.active {
-  border-color: green;
+  background-color: #00000055;
 }
 .gui-btn:hover {
   opacity: 0.7;
@@ -846,6 +850,9 @@ export default {
 }
 .mobile-view .gui-btn.move {
   background-image: url(../assets/move-mobile.png);
+}
+.gui-btn.tutorial-active {
+  box-shadow: 0 0 20px 20px #f4e205;
 }
 
 .chat-content {

@@ -355,7 +355,8 @@ export default {
       left: 100%;
       top: 150px;
       width: 90%;
-      &.pinned, &.tutorial-active {
+      &.pinned,
+      &.tutorial-active {
         left: 0px;
         top: 0px;
         width: 100%;

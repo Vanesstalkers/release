@@ -1,5 +1,10 @@
 ({
   steps: {
+    gameControls: {
+      pos: 'bottom-left',
+      text: 'Вы можете управлять положением и размером игрового поля с помощью кнопок в верхнем левом углу экрана.',
+      active: '.gameplane-controls',
+    },
     planeControls: {
       pos: 'bottom-left',
       text: 'Вы можете управлять положением и размером игрового поля с помощью кнопок в верхнем левом углу экрана.',
@@ -48,13 +53,13 @@
     },
 
     cardActive: {
-      pos: 'bottom-right',
+      pos: 'bottom-left',
       text: 'Это карты событий, которые доступных для розыгрыша или уже были разыграны. Если нажать на иконку с восклицательным знаком на карте, то можно получить подсказку.',
       active: '[code="Deck[card_active]"]',
       buttons: [{ text: 'Спасибо', action: 'exit' }],
     },
     leaveGame: {
-      pos: 'top-right',
+      pos: 'top-left',
       text: 'Для выхода из игры необходимо нажать эту кнопку, либо выбрать соответствующий пункт в меню.',
       active: '.leave-game-btn',
       buttons: [{ text: 'Спасибо', action: 'exit' }],

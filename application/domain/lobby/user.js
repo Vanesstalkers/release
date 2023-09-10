@@ -17,10 +17,21 @@
     if (!helper && !finishedTutorials[lobbyStartTutorialName]) {
       const tutorial = lib.helper.getTutorial(lobbyStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
+      helper = lib.utils.structuredClone(helper, { convertFuncToString: true });
       helperLinks = {
         ...{
-          menuTop: { selector: '.menu-item.top > label', tutorial: 'lobby-tutorial-links', type: 'lobby' },
-          menuChat: { selector: '.menu-item.chat > label', tutorial: 'lobby-tutorial-links', type: 'lobby' },
+          menuTop: {
+            selector: '.menu-item.top > label',
+            tutorial: 'lobby-tutorial-menuTop',
+            simple: false,
+            type: 'lobby',
+          },
+          menuChat: {
+            selector: '.menu-item.chat > label',
+            tutorial: 'lobby-tutorial-menuChat',
+            simple: false,
+            type: 'lobby',
+          },
         },
         ...helperLinks,
       };
@@ -61,23 +72,25 @@
       helper = null;
     }
 
-    const gameStartTutorialName = isSinglePlayer ? 'game-tutorial-start' : 'game-tutorial-startSingle';
+    const gameStartTutorialName = 'game-tutorial-start';
     if (!helper && !finishedTutorials[gameStartTutorialName]) {
       const tutorial = lib.helper.getTutorial(gameStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
+      helper = lib.utils.structuredClone(helper, { convertFuncToString: true });
       helperLinks = {
         ...{
-          planeControls: {
-            selector: '.gameplane-controls',
-            tutorial: 'game-tutorial-links',
+          gameControls: {
+            selector: '.game-controls',
+            tutorial: 'game-tutorial-gameControls',
             type: 'game',
             pos: { top: false, left: false },
+            simple: false,
           },
           handPlanes: {
-            selector: '.session-player .hand-planes',
+            selector: '.session-player .player.iam.active .hand-planes',
             tutorial: 'game-tutorial-links',
             type: 'game',
-            pos: { top: true, left: true },
+            pos: { top: true, right: true },
           },
           cardActive: {
             selector: '[code="Deck[card_active]"] .card-event',
@@ -137,7 +150,9 @@
     rankings[gameType].totalTime = totalTime + roundCount;
     rankings[gameType].avrTime = Math.floor(rankings[gameType].totalTime / rankings[gameType].win);
 
-    const tutorial = lib.utils.structuredClone(lib.helper.getTutorial('game-tutorial-finished'));
+    const tutorial = lib.utils.structuredClone(lib.helper.getTutorial('game-tutorial-finished'), {
+      convertFuncToString: true,
+    });
     let incomeText = `${income.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₽`;
     if (penaltySum > 0)
       incomeText += ` (с учетом штрафа ${penaltySum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}₽)`;

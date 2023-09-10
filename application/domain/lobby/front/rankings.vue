@@ -3,12 +3,15 @@
     <div class="rankings">
       <div v-if="!menuOpened" class="title" v-on:click="menuOpened = true">
         <font-awesome-icon :icon="['fas', 'chart-simple']" size="xl" :style="{ paddingRight: '4px' }" />
-        {{ activeRatingTitle }}
+        <span>
+          {{ activeRatingTitle }}
+        </span>
       </div>
       <div v-if="menuOpened" class="menu">
         Выбор рейтинга:
         <div v-for="game in gameList" :key="game.title" class="menu-game-item">
           <h4
+            class="toggle-game"
             v-on:click="
               toggleMenuGameItem({
                 gameCode: game.code,
@@ -21,6 +24,7 @@
           <ul v-if="menuGameItems[game.code]?.open">
             <li v-for="ranking in game.rankingList" :key="ranking.title">
               <span
+                class="toggle-ranking"
                 v-on:click="
                   menuOpened = false;
                   activeRating = {
@@ -72,7 +76,7 @@ export default {
   data() {
     return {
       menuGameItems: {},
-      menuOpened: false,
+      menuOpened: true,
       activeRating: null,
     };
   },
@@ -82,7 +86,7 @@ export default {
       return this.$root.state || {};
     },
     gameList() {
-      return Object.entries(this.games).map(([code, game]) => ({
+      return Object.entries(this.games || {}).map(([code, game]) => ({
         ...game,
         code,
         rankingList: Object.entries(game.rankingMap).map(([code, ranking]) => ({ ...ranking, code })),
@@ -139,91 +143,114 @@ export default {
 <style lang="scss">
 .rankings {
   overflow: hidden !important;
-}
-.rankings > * {
-  height: 100%;
-}
-.rankings > .title {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  height: auto;
-  padding: 6px 20px;
-}
-.rankings .title {
-  color: #f4e205;
-  font-weight: bold;
-  white-space: pre-wrap;
-  cursor: pointer;
-  width: 100%;
-  text-align: center;
-  padding: 8px 0px;
-}
-.rankings > .title:hover {
-  opacity: 0.7;
-}
-.rankings > .menu {
-  width: 100%;
-  left: 0px;
-  top: 0px;
-  text-align: left;
-  padding: 6px 20px;
-  z-index: 1;
-}
-.rankings > .menu h4 {
-  cursor: pointer;
-  color: #f4e205;
-}
-.rankings > .menu h4:hover {
-  opacity: 0.7;
-}
-.rankings > .menu ul {
-  text-align: left;
-  list-style-type: square;
-}
-.rankings > .menu ul > li {
-  cursor: pointer;
-}
-.rankings > .menu ul > li:hover {
-  opacity: 0.7;
-}
 
-.rankings > .content {
-  width: calc(100% - 20px);
-  height: calc(100% - 30px);
-  margin: 4px 10px;
-  margin-top: 30px;
-}
-.rankings > .content table {
-  min-width: 400px;
-  margin-bottom: 10px;
-}
-.rankings > .content table th {
-  white-space: nowrap;
-  font-size: 10px;
-}
-.rankings > .content table th[code='player'] {
-  width: 100%;
-}
-.rankings > .content table tr.iam {
-  color: #f4e205;
-  font-weight: bold;
-}
-.rankings > .content table td[code='idx'] {
-  white-space: nowrap;
-}
-.rankings > .content table tr.iam.no-games > td[code='player'] {
-  position: relative;
-}
-.rankings > .content table tr.iam.no-games > td[code='player']:after {
-  content: 'в эту игру еще не играли';
-  position: absolute;
-  left: 100%;
-  white-space: nowrap;
-  text-align: left;
-  font-style: italic;
-  font-size: 10px;
-  line-height: 13px;
-  color: #aaa;
+  > * {
+    height: 100%;
+
+    &.title {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      height: auto;
+      width: 100%;
+      color: #f4e205;
+      font-weight: bold;
+      white-space: pre-wrap;
+      text-align: center;
+      padding: 8px 0px;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.7;
+      }
+
+      > span {
+        &.tutorial-active {
+          box-shadow: 0px 5px 20px 20px white;
+        }
+      }
+    }
+
+    &.menu {
+      width: 100%;
+      left: 0px;
+      top: 0px;
+      text-align: left;
+      padding: 6px 20px;
+      z-index: 1;
+
+      h4 {
+        cursor: pointer;
+        color: #f4e205;
+
+        &:hover {
+          opacity: 0.7;
+        }
+      }
+
+      ul {
+        text-align: left;
+        list-style-type: square;
+
+        li {
+          cursor: pointer;
+
+          &:hover {
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+  }
+
+  .content {
+    width: calc(100% - 20px);
+    height: calc(100% - 30px);
+    margin: 4px 10px;
+    margin-top: 30px;
+
+    table {
+      min-width: 400px;
+      margin-bottom: 10px;
+
+      th {
+        white-space: nowrap;
+        font-size: 10px;
+
+        &[code='player'] {
+          width: 100%;
+        }
+      }
+
+      td[code='idx'] {
+        white-space: nowrap;
+      }
+
+      tr.iam {
+        color: #f4e205;
+        font-weight: bold;
+
+        &.no-games > td[code='player'] {
+          position: relative;
+
+          &:after {
+            content: 'в эту игру еще не играли';
+            position: absolute;
+            left: 100%;
+            white-space: nowrap;
+            text-align: left;
+            font-style: italic;
+            font-size: 10px;
+            line-height: 13px;
+            color: #aaa;
+          }
+        }
+
+        &.tutorial-active {
+          box-shadow: 0px 0px 20px 5px #f4e205;
+        }
+      }
+    }
+  }
 }
 </style>

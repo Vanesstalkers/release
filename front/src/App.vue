@@ -29,9 +29,24 @@ export default {
   data() {
     return { fullscreen: false, error: '' };
   },
+  watch: {
+    'userData.avatars.code': function () {
+      prettyAlert({ message: 'Новые аватары подготовлены и добавлены в галерею. Перейдите в профиль для просмотра.' });
+    },
+  },
   computed: {
     state() {
       return this.$root.state || {};
+    },
+    state() {
+      return this.$root.state || {};
+    },
+    store() {
+      return this.state.store || {};
+    },
+    userData() {
+      const currentUserData = this.store.user?.[this.state.currentUser];
+      return { id: this.state.currentUser, ...(currentUserData || {}) };
     },
     viewLoaded() {
       return this.$root.state.viewLoaded;

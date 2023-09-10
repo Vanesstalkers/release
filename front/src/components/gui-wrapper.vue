@@ -1,5 +1,5 @@
 <template>
-  <div class="gui-wrapper scroll-off" :class="wrapperClass" :style="wrapperCustomStyle">
+  <div class="gui-wrapper scroll-off" :style="wrapperCustomStyle">
     <div :class="['gui-resizeable', `scale-${state.guiScale}`, ...contentClass]" :style="contentCustomStyle">
       <slot></slot>
     </div>
@@ -17,7 +17,6 @@ export default {
     pos: Array,
     offset: Object,
     wrapperStyle: Object,
-    wrapperClass: Array,
     contentClass: {
       type: Array,
       default: () => [],

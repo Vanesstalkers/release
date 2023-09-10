@@ -346,7 +346,7 @@
           return;
         } else throw 'player.timerEndTime === NaN';
       }
-      console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
+      // console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
       if (player.timerEndTime < Date.now()) {
         this.checkStatus({ cause: 'PLAYER_TIMER_END' });
         await this.saveChanges();

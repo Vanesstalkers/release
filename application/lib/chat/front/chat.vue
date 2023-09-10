@@ -315,6 +315,10 @@ export default {
   flex-wrap: wrap;
   border-bottom: 2px solid #f4e205;
   padding: 10px;
+
+  &.tutorial-active {
+    box-shadow: inset 0 0 20px 10px #f4e205;
+  }
 }
 .chat-channels {
   width: 50%;
@@ -323,6 +327,10 @@ export default {
   color: #f4e205;
   background: black;
   border: 1px solid #f4e205;
+
+  &.tutorial-active {
+    box-shadow: 0 0 20px 10px #f4e205;
+  }
 }
 .user-list-label {
   width: 50%;
@@ -405,6 +413,11 @@ export default {
   margin-top: -10px;
   z-index: 2;
   box-shadow: inset 0px 0px 2px 2px #f4e205;
+
+  &.tutorial-active {
+    box-shadow: inset 0 0 20px 10px #f4e205;
+  }
+
   .info {
     padding: 8px;
   }

@@ -434,7 +434,7 @@
         : draftUsersTop
             .sort(sortFunc)
             .map(({ userId }) => userId)
-            .splice(0, 3);
+            .splice(0, 5);
 
       this.set({
         rankings: {
