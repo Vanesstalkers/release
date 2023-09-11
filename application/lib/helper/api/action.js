@@ -8,7 +8,6 @@ async (context, { action, step, tutorial: tutorialName, usedLink, isMobile }) =>
     if (currentTutorial.active) throw new Error('Другое обучение уже активно в настоящий момент.');
 
     const tutorial = lib.helper.getTutorial(tutorialName);
-    if (usedLink && !step) step = usedLink;
     const helper = step
       ? Object.entries(tutorial).find(([key]) => key === step)[1]
       : Object.values(tutorial).find(({ initialStep }) => initialStep);

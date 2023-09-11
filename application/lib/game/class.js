@@ -97,7 +97,7 @@
 
       const id = (Date.now() + Math.random()).toString().replace('.', '_');
       this.#logs[id] = data;
-      if (consoleMsg) console.log(data.msg);
+      if (consoleMsg) console.info(data.msg);
     }
     async showLogs({ userId, sessionId, lastItemTime }) {
       let logs = this.logs();

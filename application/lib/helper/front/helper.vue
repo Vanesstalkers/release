@@ -314,7 +314,7 @@ export default {
       api.action
         .call({
           path: 'lib.helper.api.action',
-          args: [{ tutorial, usedLink: simple ? code : undefined }],
+          args: [{ tutorial, step: simple ? code : undefined, usedLink: code }],
         })
         .catch(prettyAlert);
       return;
