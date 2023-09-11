@@ -24,7 +24,14 @@
     <helper :showProfile="showProfile" />
 
     <div class="menu-item-list">
-      <div :class="['menu-item', pinned.info ? 'pinned' : '', 'info', !state.isMobile ? 'preview' : '']">
+      <div
+        :class="[
+          'menu-item',
+          pinned.info ? 'pinned' : '',
+          'info',
+          !state.isMobile && pinned.info === null ? 'preview' : '',
+        ]"
+      >
         <label v-on:click="pinMenuItem('info')">
           УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
         </label>
@@ -95,7 +102,7 @@
     <div class="main-logo">
       <div class="contact-icons-wrapper">
         <a href="https://t.me/smartgamesstudio" target="_black" class="telegram-link"> </a>
-        <a href="https://t.me/smartgamesstudio" target="_black" class="vk-link"> </a>
+        <a href="https://vk.com/smartgames.studio" target="_black" class="vk-link"> </a>
       </div>
     </div>
 
@@ -150,7 +157,7 @@ export default {
         showMask: '',
       },
       pinnedItemsLoaded: false,
-      pinned: { chat: false, list: false, top: false, game: false, info: false },
+      pinned: { chat: false, list: false, top: false, game: false, info: null },
     };
   },
   watch: {

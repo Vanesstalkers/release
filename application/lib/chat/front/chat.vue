@@ -302,8 +302,10 @@ export default {
       }
     },
     checkUnreadItems() {
-      if(this.isVisible) this.lastViewTime = Date.now();
-      let count = this.isPersonalChannel ? 0 : this.getChat.filter(({ time }) => time > this.lastViewTime).length;
+      if (this.isVisible) this.lastViewTime = Date.now();
+      let count = this.isPersonalChannel
+        ? 0
+        : this.getChat.filter(({ time, event }) => !event && time > this.lastViewTime).length;
       count += this.personalUnreadItems;
       this.hasUnreadMessages(count);
     },
