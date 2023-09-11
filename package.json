@@ -43,6 +43,7 @@
   "main": "server.js",
   "types": "types/global.d.ts",
   "scripts": {
+    "buildAll": "cd front && npm ci && npm run build && cd .. && npm ci",
     "test": "npm run lint && npm run types && node test/system.js",
     "types": "tsc",
     "lint": "eslint . && prettier -c \"**/*.js\" \"**/*.json\" \"**/*.md\" \"**/*.yml\" \"**/*.ts\"",

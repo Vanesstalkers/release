@@ -18,7 +18,7 @@
       <label class="user-list-label"> Игроки онлайн ({{ guestsCount + userList.length }})</label>
       <div class="user-list">
         <span v-if="guestsCount">Гость ({{ guestsCount }})</span>
-        <span v-for="user in userList" :key="user.id" @click="openPersonalChat(user)">
+        <span v-for="user in userList" :key="user.id" @click="openPersonalChat(user)" :iam="user.iam">
           <span v-if="user.unreadItems" class="unread-items-count">
             <span v-if="user.unreadItems <= 9">
               {{ ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'][user.unreadItems - 1] }}
@@ -93,9 +93,24 @@ export default {
       userName: '',
       chatMsgText: '',
       disableSendMsgBtn: 0,
+      personalUnreadItems: 0,
+      lastViewTime: Date.now(),
     };
   },
-  watch: {},
+  watch: {
+    personalUnreadItems: function () {
+      this.checkUnreadItems();
+    },
+    itemsCount: function () {
+      this.checkUnreadItems();
+    },
+    isVisible: function (check) {
+      if (check) {
+        this.lastViewTime = Date.now();
+        this.hasUnreadMessages(0 + this.personalUnreadItems);
+      }
+    },
+  },
   computed: {
     state() {
       return this.$root.state || {};
@@ -163,13 +178,16 @@ export default {
     items() {
       return this.activeChannelData.items || {};
     },
+    itemsCount() {
+      return Object.keys(this.items).length;
+    },
     isPersonalChannel() {
       return this.activeChannelData.personal;
     },
     userList() {
       const users = Object.entries(this.users)
         .filter(([id, user]) => user && user.name && user.online)
-        .map(([id, user]) => Object.assign(user, { id }))
+        .map(([id, user]) => Object.assign(user, { id, iam: this.state.currentUser === id }))
         .filter(({ id }) => id);
       let unreadItems = 0;
       for (const [channelId, channel] of this.personalChatList) {
@@ -182,7 +200,7 @@ export default {
           if (user && user.unreadItems) delete user.unreadItems;
         }
       }
-      this.hasUnreadMessages(unreadItems);
+      this.$set(this, 'personalUnreadItems', unreadItems);
       return users;
     },
     guestsCount() {
@@ -275,12 +293,19 @@ export default {
         .catch((err) => {
           this.restoreMsgBtn();
         });
+      this.lastViewTime = Date.now() + 1000;
     },
     restoreMsgBtn() {
       if (this.disableSendMsgBtn > 0) {
         this.disableSendMsgBtn--;
         setTimeout(this.restoreMsgBtn, 1000);
       }
+    },
+    checkUnreadItems() {
+      if(this.isVisible) this.lastViewTime = Date.now();
+      let count = this.isPersonalChannel ? 0 : this.getChat.filter(({ time }) => time > this.lastViewTime).length;
+      count += this.personalUnreadItems;
+      this.hasUnreadMessages(count);
     },
   },
   async created() {},
@@ -343,12 +368,21 @@ export default {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row-reverse;
-}
-.user-list > span {
-  border: 1px solid #f4e205;
-  border-radius: 2px;
-  padding: 2px 4px;
-  margin: 2px;
+  > span {
+    border: 1px solid #f4e205;
+    border-radius: 2px;
+    padding: 2px 4px;
+    margin: 2px;
+    cursor: pointer;
+  }
+  > span:not([iam]):hover {
+    opacity: 0.7;
+  }
+  > span[iam] {
+    background: #f4e205;
+    color: black;
+    cursor: default;
+  }
 }
 
 .user-list .unread-items-count {
