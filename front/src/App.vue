@@ -31,7 +31,11 @@ export default {
   },
   watch: {
     'userData.avatars.code': function () {
-      prettyAlert({ message: 'Новые аватары подготовлены и добавлены в галерею. Перейдите в профиль для просмотра.' });
+      // !!! перенести в generateAvatar с добавлением кнопки перехода в профиль
+      prettyAlert(
+        { message: 'Новые аватары подготовлены и добавлены в галерею. Перейдите в профиль для просмотра.' },
+        { hideTime: 0 }
+      );
     },
   },
   computed: {

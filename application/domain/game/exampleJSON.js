@@ -1,8 +1,8 @@
 ({
   'single-blitz': {
     settings: {
-      timer: 30,
-      timerReleasePremium: 10,
+      timer: 60,
+      timerReleasePremium: 20,
       playerHandStart: 3,
       playerHandLimit: 3,
       planesAtStart: 3, // изначальное количество блоков на поле
@@ -30,8 +30,8 @@
   },
   'duel-blitz': {
     settings: {
-      timer: 30,
-      timerReleasePremium: 10,
+      timer: 60,
+      timerReleasePremium: 20,
       playerHandStart: 3,
       playerHandLimit: 3,
       planesAtStart: 1, // изначальное количество блоков на поле
@@ -62,8 +62,8 @@
   },
   'ffa-blitz': {
     settings: {
-      timer: 30,
-      timerReleasePremium: 10,
+      timer: 60,
+      timerReleasePremium: 20,
       playerHandStart: 2,
       playerHandLimit: 2,
       planesAtStart: 0, // изначальное количество блоков на поле

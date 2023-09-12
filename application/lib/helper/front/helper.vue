@@ -341,11 +341,18 @@ export default {
       this.alert = null;
       this.hideAlert = null;
     };
-    window.prettyAlert = ({ message, stack } = {}) => {
+    window.prettyAlert = ({ message, stack } = {}, { hideTime = 5 } = {}) => {
       if (message === 'Forbidden') message += ` (попробуйте обновить страницу)`;
       self.alert = message;
       self.hideAlert = stack;
       if (self.hideAlert) this.showHideAlert = false;
+      
+      if (hideTime > 0) {
+        setTimeout(() => {
+          self.alert = null;
+          self.hideAlert = null;
+        }, hideTime * 1000);
+      }
     };
 
     this.mutationObserver = new MutationObserver(function (mutationsList, observer) {

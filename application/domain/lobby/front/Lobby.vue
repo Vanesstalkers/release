@@ -754,7 +754,8 @@ $textshadow: rgb(42, 22, 23);
 }
 #lobby > .auth > .form > button {
   margin: 10px;
-  background-color: #f4e205;
+  background: transparent;
+  color: #f4e205;
   border: 2px solid #f4e205;
   cursor: pointer;
 }
@@ -762,8 +763,8 @@ $textshadow: rgb(42, 22, 23);
   opacity: 0.7;
 }
 #lobby > .auth > .form > button.new {
-  background: transparent;
-  color: #f4e205;
+  background-color: #f4e205;
+  color: black;
 }
 #lobby > .auth > .form > .err {
   color: orangered;
