@@ -12,13 +12,19 @@
       super(storeData, gameObjectData);
     }
 
-    async create({ type, subtype } = {}) {
-      const gameJSON = domain.game.exampleJSON[subtype];
-      if (!gameJSON) throw new Error(`Not found initial game data (type='${type}', subtype='${subtype}').`);
+    async create({ deckType, gameType, gameConfig, gameTimer } = {}) {
+      const gameJSON = domain.game.exampleJSON[gameType];
+      if (!gameJSON) throw new Error(`Not found initial game data (deckType='${deckType}', gameType='${gameType}').`);
       const gameData = lib.utils.structuredClone(gameJSON);
       gameData.addTime = Date.now();
-      gameData.type = type;
-      gameData.subtype = subtype;
+      gameData.deckType = deckType;
+      gameData.gameType = gameType;
+      if (gameConfig === 'blitz') gameData.settings.roundStartCardAddToPlayerHand = true;
+      else gameData.settings.roundStartCardAddToPlayerHand = false;
+      if (gameConfig === 'hardcore') gameData.settings.allowedAutoCardPlayRoundStart = true;
+      else gameData.settings.allowedAutoCardPlayRoundStart = false;
+      if (gameTimer) gameData.settings.timer = gameTimer;
+
       this.fromJSON(gameData, { newGame: true });
       delete this._id; // удаляем _id от gameObject, чтобы он не попал в БД
 

@@ -30,7 +30,6 @@
   }
 
   async create({ code }) {
-
     const rankings = {
       release: {
         title: 'Релиз',
@@ -358,14 +357,14 @@
     await this.saveChanges();
   }
   async addGame(gameData) {
-    const { creator, id: gameId, type, subtype } = gameData;
-    const gameConfig = domain.game.exampleJSON[subtype];
+    const { creator, id: gameId, deckType, gameType, gameConfig, gameTimer } = gameData;
+    const gameSettings = domain.game.exampleJSON[gameType];
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
 
-    if (gameConfig.playerList.length > 1)
+    if (gameSettings.playerList.length > 1)
       await this.notifyWatchers({
-        msg: `Нужны игроки в новую игру (${subtype})`,
+        msg: `Нужны игроки в новую игру (${gameType})`,
         tgUsername: creator.tgUsername,
       });
   }

@@ -16,6 +16,10 @@
       for (const dice of targetPlayerHand.getObjects({ className: 'Dice' })) {
         dice.set({ visible: true });
         game.markNew(dice); // у других игроков в хранилище нет данных об этом dice
+        if (dice.sideList) {
+          game.markNew(dice.sideList[0]);
+          game.markNew(dice.sideList[1]);
+        }
       }
       targetPlayerHand.set({ itemMap: targetPlayerHand.itemMap }); // инициирует рассылку изменений с пересчетом видимости
 

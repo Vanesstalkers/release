@@ -13,6 +13,7 @@
         'avatarCode',
         'avatars',
         'lobbyPinnedItems',
+        'lobbyGameConfigs',
         'currentTutorial',
         'helper',
         'helperLinks',

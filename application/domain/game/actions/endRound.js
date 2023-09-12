@@ -11,6 +11,7 @@
       // конфиги
       autoFinishAfterRoundsOverdue,
       playerHandLimit,
+      roundStartCardAddToPlayerHand,
       allowedAutoCardPlayRoundStart,
     },
   } = this;
@@ -68,6 +69,7 @@
   // player которому передают ход
   const activePlayer = this.changeActivePlayer({ player: forceActivePlayer });
   const playerHand = activePlayer.getObjectByCode('Deck[domino]');
+  const playerCardHand = activePlayer.getObjectByCode('Deck[card]');
   const gameDominoDeck = this.getObjectByCode('Deck[domino]');
   const cardDeckDrop = this.getObjectByCode('Deck[card_drop]');
   const cardDeckActive = this.getObjectByCode('Deck[card_active]');
@@ -147,7 +149,9 @@
   const newRoundLogEvents = [];
   newRoundLogEvents.push(`Начало раунда №${newRoundNumber}.`);
 
-  const card = this.run('smartMoveRandomCard', { target: cardDeckActive });
+  const card = this.run('smartMoveRandomCard', {
+    target: roundStartCardAddToPlayerHand ? playerCardHand : cardDeckActive,
+  });
   if (card && allowedAutoCardPlayRoundStart === true) {
     card.play();
     newRoundLogEvents.push(`Активировано ежедневное событие "${card.title}".`);

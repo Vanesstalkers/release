@@ -170,15 +170,16 @@ export default {
       return this.$root.state || {};
     },
     store() {
-      return this.state.store || {};
+      const store = this.state.store || {};
+
+      // не придумал другого способа как предустановить pinneItems с учетом синхронной подгрузки userData
+      this.preparePinnedItems(store.user?.[this.state.currentUser]);
+
+      return store;
     },
     userData() {
-      const currentUserData = this.store.user?.[this.state.currentUser];
-      if (currentUserData && currentUserData.lobbyPinnedItems && !this.pinnedItemsLoaded) {
-        this.$set(this, 'pinned', currentUserData.lobbyPinnedItems);
-        this.pinnedItemsLoaded = true;
-      }
-      return { id: this.state.currentUser, ...(currentUserData || {}) };
+      const currentUserData = this.store.user?.[this.state.currentUser] || {};
+      return { id: this.state.currentUser, ...currentUserData };
     },
     lobby() {
       return this.store.lobby?.[this.state.currentLobby] || {};
@@ -224,6 +225,12 @@ export default {
     show(mask) {
       if (mask === '' && this.state.isMobile) return;
       this.bg.showMask = mask;
+    },
+    preparePinnedItems(userData = {}) {
+      if (this.pinnedItemsLoaded) return;
+      if (!userData?.lobbyPinnedItems) return;
+      this.$set(this, 'pinned', userData.lobbyPinnedItems);
+      this.pinnedItemsLoaded = true;
     },
     pinMenuItem(code) {
       this.pinned[code] = !this.pinned[code];

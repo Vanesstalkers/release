@@ -39,7 +39,7 @@
             </div>
           </div>
         </div>
-        <div v-if="(iam || gameState.viewerMode) && !hasPlaneInHand" class="hand-cards-list">
+        <perfect-scrollbar v-if="(iam || gameState.viewerMode) && !hasPlaneInHand" class="hand-cards-list">
           <div v-for="deck in cardDecks" :key="deck._id" class="hand-cards">
             <card
               v-for="id in Object.keys(deck.itemMap)"
@@ -49,7 +49,7 @@
               :isSelected="id === gameState.selectedCard"
             />
           </div>
-        </div>
+        </perfect-scrollbar>
       </div>
       <div class="workers">
         <card-worker :playerId="playerId" :viewerId="viewerId" :iam="iam" :showControls="showControls" />
@@ -60,6 +60,7 @@
 
 <script>
 import { inject } from 'vue';
+import { PerfectScrollbar } from 'vue2-perfect-scrollbar';
 
 import plane from './plane.vue';
 import dice from './dice.vue';
@@ -68,6 +69,7 @@ import cardWorker from './cardWorker.vue';
 
 export default {
   components: {
+    PerfectScrollbar,
     plane,
     dice,
     card,
@@ -184,6 +186,9 @@ export default {
 
 .hand-cards-list {
   width: auto;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-top: 150px;
 }
 .hand-cards {
   display: flex;
