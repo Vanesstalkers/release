@@ -25,7 +25,12 @@
       <perfect-scrollbar>
         <div v-for="game in lobbyGameList" :key="game._id" class="game-item">
           Раунд: ( {{ game.round }} ) Игроков: ( {{ game.joinedPlayers }} )
-          <span v-if="!game.waitForPlayer" :style="{ color: '#f4e205' }">Идёт игра</span>
+          <span v-if="!game.waitForPlayer" :style="{ color: '#f4e205' }">
+            <button class="lobby-btn join-btn" v-on:click="joinGame({ gameId: game.id, viewerMode: true })">
+              <font-awesome-icon :icon="['fas', 'eye']" />
+              Посмотреть
+            </button></span
+          >
           <button v-if="game.waitForPlayer" class="lobby-btn join-btn" v-on:click="joinGame({ gameId: game.id })">
             Присоединиться
           </button>
@@ -92,14 +97,14 @@ export default {
         })
         .catch(prettyAlert);
     },
-    async joinGame({ gameId }) {
+    async joinGame({ gameId, viewerMode }) {
       const avatars = this.lobby.avatars[this.userData.gender];
       const avatarCode = avatars[Math.floor(Math.random() * avatars.length)];
 
       await api.action
         .call({
           path: 'lib.game.api.join',
-          args: [{ gameId, avatarCode }],
+          args: [{ gameId, avatarCode, viewerMode }],
         })
         .catch(prettyAlert);
     },

@@ -238,7 +238,7 @@ export default {
         let actionsData = {};
         if (actions) {
           if (actions[action]) {
-            actionsData = new Function('return ' + actions[action])()(this) || {};
+            actionsData = await new Function('return ' + actions[action])()(this) || {};
             const { exit = true } = actionsData;
             if (exit) action = 'exit';
           }

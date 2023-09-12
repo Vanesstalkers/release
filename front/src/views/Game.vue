@@ -129,6 +129,7 @@
     <GUIWrapper class="session-player" :pos="['bottom', 'right']">
       <player
         :playerId="gameState.sessionPlayerId"
+        :viewerId="gameState.sessionViewerId"
         :customClass="[`scale-${state.guiScale}`]"
         :iam="true"
         :showControls="showPlayerControls"
@@ -199,6 +200,8 @@ export default {
     const gameState = reactive({
       gameId: '',
       sessionPlayerId: '',
+      sessionViewerId: '',
+      viewerMode: false,
       serverTimeDiff: 0,
       pickedDiceId: '',
       selectedDiceSideId: '',
@@ -273,10 +276,13 @@ export default {
       return this.state.store.lobby?.[this.state.currentLobby] || {};
     },
     chatUsers() {
-      return Object.values(this.store.player).reduce((obj, player) => {
-        const user = this.lobby.users?.[player.userId];
-        return Object.assign(obj, { [player.userId]: user });
-      }, {});
+      return Object.values(this.store.player)
+        .concat(Object.values(this.store.viewer || {}))
+        .reduce((obj, { userId, isViewer }) => {
+          let user = { ...this.lobby.users?.[userId] };
+          if (isViewer) user.name += ' (наблюдатель)';
+          return Object.assign(obj, { [userId]: user });
+        }, {});
     },
     logs() {
       return this.game.logs || {};
@@ -303,6 +309,7 @@ export default {
     },
     playerIds() {
       const ids = Object.keys(this.game.playerMap || {}).sort((id1, id2) => (id1 > id2 ? 1 : -1));
+      if (this.gameState.viewerMode) return ids;
       const curPlayerIdx = ids.indexOf(this.gameState.sessionPlayerId);
       const result = ids.slice(curPlayerIdx + 1).concat(ids.slice(0, curPlayerIdx));
       return result;
@@ -487,10 +494,12 @@ export default {
           path: 'lib.game.api.enter',
           args: [{ gameId: this.$route.params.id }],
         })
-        .then((data) => {
-          this.gameState.gameId = data.gameId;
-          this.gameState.sessionPlayerId = data.playerId;
-          this.$set(this.$root.state, 'serverTimeDiff', data.serverTime - Date.now());
+        .then(({ gameId, playerId, viewerId, serverTime }) => {
+          this.gameState.gameId = gameId;
+          this.gameState.sessionPlayerId = playerId;
+          this.gameState.sessionViewerId = viewerId;
+          this.gameState.viewerMode = viewerId ? true : false;
+          this.$set(this.$root.state, 'serverTimeDiff', serverTime - Date.now());
         })
         .catch((err) => {
           prettyAlert(err);

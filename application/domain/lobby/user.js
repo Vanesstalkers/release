@@ -4,6 +4,7 @@
       sessionId,
       userId: this.id(),
       name: this.name,
+      tgUsername: this.tgUsername,
     });
 
     let { currentTutorial = {}, helper = null, helperLinks = {}, finishedTutorials = {} } = this;
@@ -52,16 +53,15 @@
     });
   }
 
-  async joinGame({ gameId, playerId, gameType, isSinglePlayer }) {
+  async joinGame({ gameId, playerId, viewerId, gameType, isSinglePlayer }) {
     for (const session of this.sessions()) {
-      session.set({ gameId, playerId });
+      session.set({ gameId, playerId, viewerId });
       await session.saveChanges();
-      session.send('session/joinGame', { gameId, playerId });
+      session.send('session/joinGame', { gameId, playerId, viewerId });
     }
 
     this.set({
-      gameId,
-      playerId,
+      ...{ gameId, playerId, viewerId },
       ...(!this.rankings?.[gameType] ? { rankings: { [gameType]: {} } } : {}),
     });
 
@@ -73,7 +73,11 @@
     }
 
     const gameStartTutorialName = 'game-tutorial-start';
-    if (!helper && !finishedTutorials[gameStartTutorialName]) {
+    if (
+      !viewerId && // наблюдателям не нужно обучение
+      !helper && // нет активного обучения
+      !finishedTutorials[gameStartTutorialName] // обучение не было пройдено ранее
+    ) {
       const tutorial = lib.helper.getTutorial(gameStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
       helper = lib.utils.structuredClone(helper, { convertFuncToString: true });
@@ -118,18 +122,35 @@
   }
   async leaveGame() {
     const { gameId } = this;
-    this.set({ gameId: null, playerId: null });
+    this.set({ gameId: null, playerId: null, viewerId: null });
     await this.saveChanges();
 
     this.unsubscribe(`game-${gameId}`);
     for (const session of this.sessions()) {
       session.unsubscribe(`game-${gameId}`);
-      session.set({ gameId: null, playerId: null });
+      session.set({ gameId: null, playerId: null, viewerId: null });
       await session.saveChanges();
       session.send('session/leaveGame', {});
     }
   }
   async gameFinished({ gameId, gameType, playerEndGameStatus, fullPrice, roundCount, crutchCount }) {
+    if (this.viewerId) {
+      this.set({
+        helper: {
+          text: 'Игра закончена',
+          buttons: [{ text: 'Закончить игру', action: 'leaveGame' }],
+          actions: {
+            leaveGame: (async () => {
+              await api.action.call({ path: 'lib.game.api.leave', args: [] }).catch(prettyAlert);
+              return { exit: true };
+            }).toString(),
+          },
+        },
+      });
+      await this.saveChanges();
+      return;
+    }
+
     const endGameStatus = playerEndGameStatus[this.id()];
 
     const rankings = lib.utils.clone(this.rankings || {});

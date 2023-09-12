@@ -15,7 +15,7 @@
       access: data.access,
     });
   }
-  prepareBroadcastData({ data, player }) {
+  prepareBroadcastData({ data, player, viewerMode }) {
     let preparedData = {};
     const bFields = this.broadcastableFields();
     const fakeIdParent = this.id();
@@ -23,7 +23,7 @@
     const game = this.game();
     if (parent.matches({ className: 'Game' })) {
       for (const [key, value] of Object.entries(data)) {
-        if (key === 'itemMap' && !this.access[player?._id]) {
+        if (key === 'itemMap' && !this.access[player?._id] && !viewerMode) {
           const ids = {};
           for (const [idx, [id, val]] of Object.entries(value).entries()) {
             const updatedItemsEntries = Object.entries(this.#updatedItems[id] || {});
@@ -50,7 +50,7 @@
         if (key === 'itemMap') {
           const ids = {};
           for (const [idx, [id, val]] of Object.entries(value).entries()) {
-            if (parent === player) {
+            if (parent === player || viewerMode) {
               ids[id] = val;
             } else {
               const item = game.getObjectById(id); // ищем в game, потому что item мог быть перемещен
@@ -61,7 +61,7 @@
                     ids[fakeId] = null;
                   } else if (action === 'removeVisible') {
                     ids[id] = null;
-                  } else if (item.visible) {
+                  } else if (item.visible || viewerMode) {
                     ids[id] = val;
                     ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
                   } else {
@@ -72,7 +72,7 @@
                 // первичная рассылка из addSubscriber
                 const fakeId = item.fakeId[fakeIdParent];
                 if (!fakeId) throw '!fakeId';
-                if (item.visible) {
+                if (item.visible || viewerMode) {
                   ids[id] = val;
                   ids[fakeId] = null; // если не удалить, то будет задвоение внутри itemMap на фронте
                 } else {

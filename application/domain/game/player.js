@@ -30,7 +30,7 @@
       availableZones: [],
     });
   }
-  prepareBroadcastData({ data, player }) {
+  prepareBroadcastData({ data, player, viewerMode }) {
     const bFields = this.broadcastableFields();
     let visibleId = this._id;
     let preparedData;

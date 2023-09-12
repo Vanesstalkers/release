@@ -5,7 +5,7 @@
 
     this.set({ value: data.value });
   }
-  prepareBroadcastData({ data, player }) {
+  prepareBroadcastData({ data, player, viewerMode }) {
     let visibleId = this._id;
     let preparedData = {};
     const bFields = this.broadcastableFields();
@@ -13,7 +13,7 @@
     const dice = this.getParent();
     const diceParent = dice.getParent();
     if (diceParent.matches({ className: 'Deck' })) {
-      if (!diceParent.access[player?._id] && !dice.visible) {
+      if (!diceParent.access[player?._id] && !dice.visible && !viewerMode) {
         fake = true;
         visibleId = this.fakeId[diceParent.id()];
       }

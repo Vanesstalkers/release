@@ -92,7 +92,7 @@ export default {
       return this.sessionPlayerIsActive() && this.dice.activeEvent;
     },
     hide() {
-      return this.inHand && !this.iam && !this.dice.visible;
+      return this.inHand && !this.iam && !this.dice.visible && !this.gameState.viewerMode;
     },
     replaceAllowed() {
       return this.dice.placedAtRound !== this.currentRound();

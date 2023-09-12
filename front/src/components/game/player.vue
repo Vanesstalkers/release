@@ -1,5 +1,8 @@
 <template>
-  <div v-if="player._id" :class="['player', ...customClass, iam ? 'iam' : '', player.active ? 'active' : '']">
+  <div
+    v-if="player._id || viewer._id"
+    :class="['player', ...customClass, iam ? 'iam' : '', player.active ? 'active' : '']"
+  >
     <div class="inner-content">
       <div class="player-hands">
         <div v-if="hasPlaneInHand" class="hand-planes">
@@ -36,7 +39,7 @@
             </div>
           </div>
         </div>
-        <div v-if="iam && !hasPlaneInHand" class="hand-cards-list">
+        <div v-if="(iam || gameState.viewerMode) && !hasPlaneInHand" class="hand-cards-list">
           <div v-for="deck in cardDecks" :key="deck._id" class="hand-cards">
             <card
               v-for="id in Object.keys(deck.itemMap)"
@@ -49,7 +52,7 @@
         </div>
       </div>
       <div class="workers">
-        <card-worker :playerId="playerId" :iam="iam" :showControls="showControls" />
+        <card-worker :playerId="playerId" :viewerId="viewerId" :iam="iam" :showControls="showControls" />
       </div>
     </div>
   </div>
@@ -73,6 +76,7 @@ export default {
   props: {
     customClass: Array,
     playerId: String,
+    viewerId: String,
     iam: Boolean,
     showControls: Boolean,
   },
@@ -90,7 +94,10 @@ export default {
       return this.getStore();
     },
     player() {
-      return this.store.player?.[this.playerId];
+      return this.store.player?.[this.playerId] || {};
+    },
+    viewer() {
+      return this.store.viewer?.[this.viewerId] || {};
     },
     dominoDecks() {
       return (

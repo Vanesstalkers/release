@@ -7,20 +7,29 @@ async (context, { gameId }) => {
 
     const gameLoaded = await db.redis.hget('games', gameId);
     if (!gameLoaded) {
-      user.set({ gameId: null, playerId: null });
+      user.set({ gameId: null, playerId: null, viewerId: null });
       await user.saveChanges();
       throw new Error('Игра была отменена');
     }
 
     user.subscribe(`game-${gameId}`, { rule: 'actions-only' });
-    session.subscribe(`game-${gameId}`, { rule: 'vue-store', userId: user.id() });
+    session.subscribe(`game-${gameId}`, {
+      rule: 'vue-store',
+      userId: user.id(),
+      viewerMode: user.viewerId ? true : false,
+    });
     session.onClose.push(async () => {
       // проверка на последнего игрока не нужна, потому что игра автоматически завершится через allowedAutoCardPlayRoundStart раундов
 
       session.unsubscribe(`game-${gameId}`);
     });
 
-    return { status: 'ok', gameId, playerId: user.playerId };
+    return {
+      status: 'ok',
+      gameId,
+      playerId: user.playerId,
+      viewerId: user.viewerId,
+    };
   } catch (err) {
     console.log(err);
     context.client.emit('session/error', { message: err.message, stack: err.stack });

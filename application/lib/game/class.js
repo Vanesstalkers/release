@@ -92,7 +92,7 @@
         const player = data.userId
           ? this.getObjects({ className: 'Player' }).find(({ userId }) => userId === data.userId)
           : this.getActivePlayer();
-        data.msg = data.msg.replace(/{{player}}/g, `"${player.userName}"`);
+        if (player?.userName) data.msg = data.msg.replace(/{{player}}/g, `"${player.userName}"`);
       }
 
       const id = (Date.now() + Math.random()).toString().replace('.', '_');
@@ -148,8 +148,30 @@
         });
       }
     }
-    async playerLeave({ userId }) {
-      if (this.status !== 'FINISHED') {
+    async viewerJoin({ userId, userName, userAvatarCode }) {
+      try {
+        if (this.status === 'FINISHED') throw new Error('Игра уже завершена.');
+
+        const viewer = new domain.game.Viewer({ userId }, { parent: this });
+        viewer.set({ userId, userName, avatarCode: userAvatarCode });
+        this.logs({ msg: `Наблюдатель присоединился к игре.` });
+
+        await this.saveChanges();
+
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', {
+          gameId: this.id(),
+          viewerId: viewer.id(),
+          gameType: this.type,
+          isSinglePlayer: this.isSinglePlayer(),
+        });
+      } catch (exception) {
+        lib.store.broadcaster.publishAction(`user-${userId}`, 'broadcastToSessions', {
+          data: { message: exception.message, stack: exception.stack },
+        });
+      }
+    }
+    async playerLeave({ userId, viewerId }) {
+      if (this.status !== 'FINISHED' && !viewerId) {
         this.logs({ msg: `Игрок {{player}} вышел из игры.`, userId });
         try {
           this.endGame({ canceledByUser: userId });
@@ -297,7 +319,7 @@
       }
     }
 
-    prepareBroadcastData({ data = {}, userId }) {
+    prepareBroadcastData({ data = {}, userId, viewerMode }) {
       const result = {};
       const player = this.getPlayerByUserId(userId);
 
@@ -312,7 +334,11 @@
           } else {
             const obj = this.getObjectById(id);
             if (obj && typeof obj.prepareBroadcastData === 'function') {
-              const { visibleId, preparedData } = obj.prepareBroadcastData({ data: changes, player });
+              const { visibleId, preparedData } = obj.prepareBroadcastData({
+                data: changes,
+                player,
+                viewerMode,
+              });
               result[col][visibleId] = preparedData;
               if (typeof obj.broadcastDataAfterHandler === 'function') {
                 this.#broadcastDataAfterHandlers[id] = obj.broadcastDataAfterHandler.bind(obj);
@@ -356,11 +382,13 @@
       if (broadcastObject) this.#broadcastObject = {};
     }
     broadcastDataVueStoreRuleHandler(data, { accessConfig }) {
-      const { userId } = accessConfig;
-      return {
-        ...data,
-        ...(data.store ? { store: this.prepareBroadcastData({ userId, data: data.store }) } : {}),
-      };
+      const { userId, viewerMode } = accessConfig;
+      const storeData = data.store
+        ? {
+            store: this.prepareBroadcastData({ userId, viewerMode, data: data.store }),
+          }
+        : {};
+      return { ...data, ...storeData };
     }
     async removeGame() {
       await db.redis.hdel('games', this.id());

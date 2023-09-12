@@ -40,14 +40,14 @@
   customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, '' + data[0] + data[1]);
   }
-  prepareBroadcastData({ data, player }) {
+  prepareBroadcastData({ data, player, viewerMode }) {
     let visibleId = this._id;
     let preparedData = {};
     const bFields = this.broadcastableFields();
     let fake = false;
     const parent = this.getParent();
     if (parent.matches({ className: 'Deck' })) {
-      if (!parent.access[player?._id] && !this.visible) {
+      if (!parent.access[player?._id] && !this.visible && !viewerMode) {
         fake = true;
         visibleId = this.fakeId[parent.id()];
         preparedData = {};

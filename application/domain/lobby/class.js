@@ -30,36 +30,6 @@
   }
 
   async create({ code }) {
-    const users = {/* 
-      1: {
-        rankings: {
-          release: { games: 100, money: 100000, win: 55, crutch: 1, penalty: 1000, totalTime: 3000, avrTime: 30 },
-          car: { games: 100, money: 100000, win: 55 },
-          bank: { games: 100, money: 100000, win: 55 },
-        },
-      },
-      2: {
-        rankings: {
-          release: { games: 20, money: 50000, win: 19, crutch: 10, penalty: 10000, totalTime: 1000, avrTime: 29 },
-          car: { games: 99, money: 10000, win: 45 },
-          bank: { games: 99, money: 10000, win: 45 },
-        },
-      },
-      3: {
-        rankings: {
-          release: { games: 50, money: 15000, win: 22, crutch: 2, penalty: 3000, totalTime: 5000, avrTime: 35 },
-          car: { games: 98, money: 1000, win: 35 },
-          bank: { games: 98, money: 1000, win: 35 },
-        },
-      },
-      4: {
-        rankings: {
-          release: { games: 1, money: 500, win: 0, crutch: 0, penalty: 0, totalTime: 0, avrTime: 0 },
-          car: { games: 97, money: 100, win: 25 },
-          bank: { games: 97, money: 100, win: 25 },
-        },
-      },
-     */};
 
     const rankings = {
       release: {
@@ -150,7 +120,7 @@
       .map((fileName) => `${defFemaleCode}/${node.path.parse(fileName).name}`);
     const avatars = { male: maleCodeList, female: femaleCodeList };
 
-    await super.create({ code, users, rankings, avatars });
+    await super.create({ code, users: {}, rankings, avatars });
 
     this.checkRatings();
     await this.saveChanges();
@@ -228,7 +198,7 @@
         : {}),
     };
   }
-  async userEnter({ sessionId, userId, name }) {
+  async userEnter({ sessionId, userId, name, tgUsername }) {
     let user = this.users[userId];
     if (!user) {
       this.set({ users: { [userId]: {} } });
@@ -262,6 +232,8 @@
     user.events.enter = chatEventId;
     this.set({ users: { [userId]: { online: true } } });
     await this.saveChanges();
+
+    await this.notifyWatchers({ msg: 'Подключился новый игрок', tgUsername });
   }
   async userLeave({ sessionId, userId }) {
     const user = this.users[userId];
@@ -360,6 +332,12 @@
     await this.saveChanges();
     await this.telegramBot().sendMessage(telegramId, `Отслеживание включено`);
   }
+  async notifyWatchers({ msg, tgUsername }) {
+    for (const [username, { chatId }] of Object.entries(this.watchers)) {
+      if (username === tgUsername) continue;
+      await this.telegramBot()?.sendMessage(chatId, msg);
+    }
+  }
 
   // !!! нужно решить, как организовать связку chat+lobby (в частности, решить где должна быть эта функция)
   async delayedChatEvent({ userId, targetId, chatEvent }) {
@@ -385,13 +363,11 @@
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
 
-    if (gameConfig.playerList.length > 1) {
-      const { tgUsername } = creator;
-      for (const [username, { chatId }] of Object.entries(this.watchers)) {
-        if (username === tgUsername) continue;
-        await this.telegramBot().sendMessage(chatId, `Нужны игроки в новую игру (${subtype})`);
-      }
-    }
+    if (gameConfig.playerList.length > 1)
+      await this.notifyWatchers({
+        msg: `Нужны игроки в новую игру (${subtype})`,
+        tgUsername: creator.tgUsername,
+      });
   }
   async gameFinished({ gameId, gameType }) {
     this.unsubscribe(`game-${gameId}`);

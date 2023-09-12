@@ -166,7 +166,7 @@
     if (!data) return this.#broadcastableFields;
     this.#broadcastableFields = data;
   }
-  prepareBroadcastData({ data, player }) {
+  prepareBroadcastData({ data, player, viewerMode }) {
     let visibleId = this._id;
     let preparedData;
     if (!this.#broadcastableFields) {

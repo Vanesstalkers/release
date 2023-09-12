@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="player._id"
+    v-if="player._id || viewer._id"
     :id="player._id"
     :class="[
       'card-worker',
@@ -32,6 +32,7 @@ import { inject } from 'vue';
 export default {
   props: {
     playerId: String,
+    viewerId: String,
     iam: Boolean,
     showControls: Boolean,
   },
@@ -69,12 +70,15 @@ export default {
           }
         }, 1000);
       }
-      return player;
+      return player || {};
+    },
+    viewer() {
+      return this.store.viewer?.[this.viewerId] || {};
     },
     customStyle() {
       const style = {};
       const defaultImage = `_default/male_empty`;
-      const avatarCode = this.player.avatarCode || defaultImage;
+      const avatarCode = this.player.avatarCode || this.viewer.avatarCode || defaultImage;
       style.backgroundImage = `url(${this.state.serverOrigin}/img/workers/${avatarCode}.png)`;
       return style;
     },
@@ -103,7 +107,7 @@ export default {
       return this.showControls && this.iam && this.sessionPlayerIsActive();
     },
     showLeaveBtn() {
-      return this.game.status === 'FINISHED' && this.iam;
+      return (this.game.status === 'FINISHED' && this.iam) || this.viewerId;
     },
   },
   methods: {
