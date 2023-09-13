@@ -4,7 +4,6 @@
     :id="plane._id"
     :class="[
       'plane',
-      'scroll-off',
       activeEvent ? 'active-event' : '',
       ...plane.customClass,
       ...Object.values(customClass),

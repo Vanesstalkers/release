@@ -39,13 +39,8 @@
             </div>
           </div>
         </div>
-        <perfect-scrollbar
-          v-if="(iam || gameState.viewerMode) && !hasPlaneInHand"
-          class="hand-cards-list"
-          :options="{ suppressScrollX: true }"
-          ref="scrollbar"
-        >
-          <div v-for="deck in cardDecks" :key="deck._id" class="hand-cards">
+        <div v-if="(iam || gameState.viewerMode) && !hasPlaneInHand" class="hand-cards-list" ref="scrollbar">
+          <div v-for="deck in cardDecks" :key="deck._id" class="hand-cards" :style="{ width: handCarsWidth }">
             <card
               v-for="id in Object.keys(deck.itemMap)"
               :key="id"
@@ -54,7 +49,7 @@
               :isSelected="id === gameState.selectedCard"
             />
           </div>
-        </perfect-scrollbar>
+        </div>
       </div>
       <div class="workers">
         <card-worker :playerId="playerId" :viewerId="viewerId" :iam="iam" :showControls="showControls" />
@@ -91,10 +86,9 @@ export default {
     return {};
   },
   watch: {
-    mainCardDeck: function () {
+    mainCardDeckItemsCount: function () {
       this.$nextTick(() => {
-        const scrollbar = this.$refs.scrollbar?.ps.element;
-        if (scrollbar) scrollbar.scrollTo({ top: 1000000 });
+        this.$refs.scrollbar.scrollTo({ top: 1000000 }); // просто высоты экрана может быть не достаточно при большом количестве карт в руке
       });
     },
   },
@@ -122,8 +116,8 @@ export default {
     cardDecks() {
       return this.deckIds.map((id) => this.store.deck?.[id]).filter((deck) => deck.type === 'card') || [];
     },
-    mainCardDeck() {
-      return this.cardDecks[0]?.itemMap;
+    mainCardDeckItemsCount() {
+      return Object.keys(this.cardDecks[0]?.itemMap || {}).length;
     },
     deckIds() {
       return Object.keys(this.player.deckMap || {});
@@ -139,6 +133,13 @@ export default {
     showDecks() {
       return this.sessionPlayerIsActive() && this.player.activeEvent?.showDecks;
     },
+    handCarsWidth() {
+      const cardWidth = 130;
+      const maxCardStack = 4;
+      return state.isMobile
+        ? `${cardWidth}px`
+        : `${Math.ceil(this.mainCardDeckItemsCount / maxCardStack) * cardWidth}px`;
+    },
   },
   methods: {},
   mounted() {
@@ -147,7 +148,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .player:not(.iam) {
   position: relative;
   margin-top: 10px;
@@ -199,16 +200,22 @@ export default {
   justify-content: flex-start;
   height: initial;
 }
-
-.hand-cards-list {
-  width: auto;
-  max-height: 200px;
-  overflow-y: auto;
-  padding-top: 150px;
+#game:not(.mobile-view) .hand-cards-list {
+  .hand-cards {
+    max-height: 250px;
+    flex-direction: column;
+  }
+}
+#game.mobile-view .hand-cards-list {
+  overflow: auto;
+  max-height: 400px;
+  .hand-cards {
+    margin-top: 130px;
+  }
 }
 #game.mobile-view.landscape-view .hand-cards-list {
   @media only screen and (max-height: 360px) {
-    max-height: 150px;
+    max-height: 300px;
   }
 }
 

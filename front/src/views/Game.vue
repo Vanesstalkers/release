@@ -284,7 +284,7 @@ export default {
         .concat(Object.values(this.store.viewer || {}))
         .reduce((obj, { userId, isViewer }) => {
           let user = { ...this.lobby.users?.[userId] };
-          if (isViewer) user.name += ' (наблюдатель)';
+          if (isViewer) user.name = `${user.name || 'Гость'} (наблюдатель)`;
           return Object.assign(obj, { [userId]: user });
         }, {});
     },
