@@ -93,8 +93,8 @@ export default {
   watch: {
     mainCardDeck: function () {
       this.$nextTick(() => {
-        const scrollbar = this.$refs.scrollbar.ps.element;
-        scrollbar.scrollTo({ top: 1000000 });
+        const scrollbar = this.$refs.scrollbar?.ps.element;
+        if (scrollbar) scrollbar.scrollTo({ top: 1000000 });
       });
     },
   },
