@@ -13,7 +13,7 @@
     ]"
     v-on:click="(e) => (activeEvent ? chooseDice() : pickDice())"
   >
-    <div v-if="!locked && !zone?.available" class="controls">
+    <div v-if="!locked && !zone?.available && !this.gameState.viewerMode" class="controls">
       <div :class="['control rotate', dice.deleted ? 'hidden' : '']" v-on:click.stop="rotateDice">
         <font-awesome-icon :icon="['fas', 'rotate']" size="2xl" style="color: #f4e205" />
       </div>
@@ -183,6 +183,9 @@ export default {
 .plane .domino-dice,
 .player.iam .hand-dices .domino-dice {
   cursor: pointer;
+}
+#game.viewer-mode .domino-dice {
+  cursor: default;
 }
 .domino-dice.locked {
   opacity: 0.5;
