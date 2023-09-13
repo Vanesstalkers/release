@@ -67,12 +67,16 @@
     if (data.playerMap) {
       data.playerList = [];
       for (const _id of Object.keys(data.playerMap)) data.playerList.push(this.store.player[_id]);
+    } else {
+      data.playerList = data.settings.playerList;
     }
     for (const item of data.playerList || []) this.run('addPlayer', item);
 
     if (data.deckMap) {
       data.deckList = [];
       for (const _id of Object.keys(data.deckMap)) data.deckList.push(this.store.deck[_id]);
+    } else {
+      data.deckList = data.settings.deckList;
     }
     for (const item of data.deckList || []) {
       const deckItemClass =

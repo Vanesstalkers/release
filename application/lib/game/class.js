@@ -13,16 +13,23 @@
     }
 
     async create({ deckType, gameType, gameConfig, gameTimer } = {}) {
-      const gameJSON = domain.game.exampleJSON[gameType];
-      if (!gameJSON) throw new Error(`Not found initial game data (deckType='${deckType}', gameType='${gameType}').`);
-      const gameData = lib.utils.structuredClone(gameJSON);
-      gameData.addTime = Date.now();
-      gameData.deckType = deckType;
-      gameData.gameType = gameType;
-      if (gameConfig === 'blitz') gameData.settings.roundStartCardAddToPlayerHand = true;
-      else gameData.settings.roundStartCardAddToPlayerHand = false;
-      if (gameConfig === 'hardcore') gameData.settings.allowedAutoCardPlayRoundStart = true;
-      else gameData.settings.allowedAutoCardPlayRoundStart = false;
+      const { structuredClone: clone } = lib.utils;
+
+      const gameTypeSettings = domain.game.exampleJSON[gameType];
+      const settingsJSON = gameTypeSettings?.[gameConfig];
+      if (!settingsJSON)
+        throw new Error(
+          `Not found initial game data (deckType='${deckType}', gameType='${gameType}', gameConfig='${gameConfig}').`
+        );
+
+      const settings = clone(gameTypeSettings.default || {});
+      Object.assign(settings, clone(settingsJSON));
+      const gameData = {
+        settings,
+        addTime: Date.now(),
+        deckType: deckType,
+        gameType: gameType,
+      };
       if (gameTimer) gameData.settings.timer = gameTimer;
 
       this.fromJSON(gameData, { newGame: true });

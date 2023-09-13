@@ -3,21 +3,21 @@
     <div class="new-game-controls">
       <div class="breadcrumbs">
         <span
-          :class="['select-btn', deckType ? 'active selected' : 'wait-for-select']"
+          :class="['select-btn', deckType ? 'active selected' : '']"
           @click="selectDeckType(null), selectGameType(null), selectGameConfig(null)"
         >
           {{ deckList[deckType] || 'Выбор колоды:' }}
         </span>
         <span
           v-if="deckType"
-          :class="['select-btn', gameType ? 'active selected' : 'wait-for-select']"
+          :class="['select-btn', gameType ? 'active selected' : '']"
           @click="selectGameType(null), selectGameConfig(null)"
         >
           {{ gameList[gameType] || 'Выбор типа игры:' }}
         </span>
         <span
           v-if="gameType"
-          :class="['select-btn', gameConfig ? 'active selected' : 'wait-for-select']"
+          :class="['select-btn', gameConfig ? 'active selected' : '']"
           @click="selectGameConfig(null)"
         >
           {{ gameConfig ? configList[gameConfig].title : 'Выбор режима:' }}
@@ -30,16 +30,16 @@
         <div class="select-btn wait-for-select disabled"><font-awesome-icon :icon="['fas', 'car']" />Авто</div>
         <div class="select-btn wait-for-select disabled"><font-awesome-icon :icon="['fas', 'money-bill']" />Банк</div>
       </div>
-      <div v-if="deckType === 'release' && !gameType" class="release-game">
-        <div class="select-btn wait-for-select" v-on:click="selectGameType('single-blitz')">
+      <div v-if="deckType === 'release' && !gameType" class="game-block release-game">
+        <div class="select-btn wait-for-select single" v-on:click="selectGameType('single')">
           <font-awesome-icon :icon="['fas', 'user']" size="2xl" />
           Фриланс
         </div>
-        <div class="select-btn wait-for-select" v-on:click="selectGameType('duel-blitz')">
+        <div class="select-btn wait-for-select duel" v-on:click="selectGameType('duel')">
           <font-awesome-icon :icon="['fas', 'user-group']" size="2xl" />
           Дуэль
         </div>
-        <div class="select-btn wait-for-select" v-on:click="selectGameType('ffa-blitz')">
+        <div class="select-btn wait-for-select ffa" v-on:click="selectGameType('ffa')">
           <font-awesome-icon :icon="['fas', 'users']" size="2xl" />
           Каждый за себя
         </div>
@@ -48,12 +48,12 @@
           Команды
         </div>
       </div>
-      <div v-if="deckType === 'release' && gameType && !gameConfig" class="release-game-config">
-        <div class="select-btn wait-for-select" v-on:click="selectGameConfig('blitz')">Блиц</div>
-        <div class="select-btn wait-for-select" v-on:click="selectGameConfig('standart')">Стандарт</div>
-        <div class="select-btn wait-for-select" v-on:click="selectGameConfig('hardcore')">Хардкор</div>
+      <div v-if="deckType === 'release' && gameType && !gameConfig" class="game-config-block release-game-config">
+        <div class="select-btn wait-for-select blitz" v-on:click="selectGameConfig('blitz')">Блиц</div>
+        <div class="select-btn wait-for-select standart" v-on:click="selectGameConfig('standart')">Стандарт</div>
+        <div class="select-btn wait-for-select hardcore" v-on:click="selectGameConfig('hardcore')">Хардкор</div>
       </div>
-      <div v-if="deckType === 'release' && gameType && gameConfig" class="release-game-start">
+      <div v-if="deckType === 'release' && gameType && gameConfig" class="game-start-block release-game-start">
         <span class="timer">
           <font-awesome-icon :icon="['fas', 'plus']" @click="updateGameTimer(15)" />
           {{ gameTimer }}
@@ -99,7 +99,7 @@ export default {
       deckType: null,
       deckList: { release: 'Релиз', auto: 'Авто', bank: 'Банк' },
       gameType: null,
-      gameList: { 'single-blitz': 'Фриланс', 'duel-blitz': 'Дуэль', 'ffa-blitz': 'Каждый за себя' },
+      gameList: { single: 'Фриланс', duel: 'Дуэль', ffa: 'Каждый за себя' },
       gameConfig: null,
       configList: {
         blitz: { title: 'Блиц' },
@@ -219,11 +219,16 @@ export default {
     text-align: center;
     padding: 10px 4px;
 
-    .wait-for-select {
+    .select-btn:not(.active) {
       border: none;
       cursor: default !important;
       &:hover {
         opacity: 1 !important;
+      }
+    }
+    .select-btn.active {
+      &:hover {
+        opacity: 0.7;
       }
     }
   }
@@ -270,6 +275,13 @@ export default {
         padding: 0px 2px;
         color: black;
         background: #f4e205;
+      }
+
+      &.tutorial-active {
+        box-shadow: none;
+        > svg {
+          box-shadow: 0 0 10px 10px #f4e205;
+        }
       }
     }
     .timer-label {
@@ -324,6 +336,10 @@ export default {
 
     &.wait-for-select:not(.disabled):hover {
       opacity: 0.7;
+    }
+
+    &.tutorial-active {
+      box-shadow: 0px 0px 20px 5px #f4e205;
     }
   }
 }

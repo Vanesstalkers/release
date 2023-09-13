@@ -51,6 +51,32 @@
     },
     planeControlsMouseMiddle: {
       pos: 'bottom-right',
+      text: 'Игровое поле можно перемешать.',
+      img: '/img/tutorial/touch-move.png',
+      actions: {
+        before: (self) => {
+          const { isMobile } = self.state;
+          const skipStep = isMobile ? false : true;
+          return { skipStep };
+        },
+      },
+      buttons: [{ text: 'Продолжай', step: 'planeControlsTouchMove' }],
+    },
+    planeControlsTouchMove: {
+      pos: 'bottom-right',
+      text: 'Также можно менять его масштаб.',
+      img: '/img/tutorial/touch-scroll.png',
+      actions: {
+        before: (self) => {
+          const { isMobile } = self.state;
+          const skipStep = isMobile ? false : true;
+          return { skipStep };
+        },
+      },
+      buttons: [{ text: 'Продолжай', step: 'planeControlsTouchScroll' }],
+    },
+    planeControlsTouchScroll: {
+      pos: 'bottom-right',
       text: 'Колесиком мыши можно приближать и удалять игровое поле.',
       img: '/img/tutorial/mouse-middle.png',
       actions: {

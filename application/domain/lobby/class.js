@@ -356,13 +356,14 @@
     });
     await this.saveChanges();
   }
-  async addGame(gameData) {
-    const { creator, id: gameId, deckType, gameType, gameConfig, gameTimer } = gameData;
-    const gameSettings = domain.game.exampleJSON[gameType];
+  async addGame({ creator, id: gameId, deckType, gameType, gameConfig, gameTimer }) {
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
 
-    if (gameSettings.playerList.length > 1)
+    const gameTypeSettings = domain.game.exampleJSON[gameType];
+    const gameSettings = gameTypeSettings?.[gameConfig];
+    const playerList = gameSettings.playerList || gameTypeSettings.default.playerList;
+    if (playerList.length > 1)
       await this.notifyWatchers({
         msg: `Нужны игроки в новую игру (${gameType})`,
         tgUsername: creator.tgUsername,
