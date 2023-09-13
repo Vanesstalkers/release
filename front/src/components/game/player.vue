@@ -39,7 +39,12 @@
             </div>
           </div>
         </div>
-        <perfect-scrollbar v-if="(iam || gameState.viewerMode) && !hasPlaneInHand" class="hand-cards-list">
+        <perfect-scrollbar
+          v-if="(iam || gameState.viewerMode) && !hasPlaneInHand"
+          class="hand-cards-list"
+          :options="{ suppressScrollX: true }"
+          ref="scrollbar"
+        >
           <div v-for="deck in cardDecks" :key="deck._id" class="hand-cards">
             <card
               v-for="id in Object.keys(deck.itemMap)"
@@ -85,6 +90,14 @@ export default {
   data() {
     return {};
   },
+  watch: {
+    mainCardDeck: function () {
+      this.$nextTick(() => {
+        const scrollbar = this.$refs.scrollbar.ps.element;
+        scrollbar.scrollTo({ top: 1000000 });
+      });
+    },
+  },
   setup() {
     return inject('gameGlobals');
   },
@@ -108,6 +121,9 @@ export default {
     },
     cardDecks() {
       return this.deckIds.map((id) => this.store.deck?.[id]).filter((deck) => deck.type === 'card') || [];
+    },
+    mainCardDeck() {
+      return this.cardDecks[0]?.itemMap;
     },
     deckIds() {
       return Object.keys(this.player.deckMap || {});
@@ -190,6 +206,12 @@ export default {
   overflow-y: auto;
   padding-top: 150px;
 }
+#game.mobile-view.landscape-view .hand-cards-list {
+  @media only screen and (max-height: 360px) {
+    max-height: 150px;
+  }
+}
+
 .hand-cards {
   display: flex;
   flex-wrap: wrap;
@@ -209,6 +231,11 @@ export default {
   width: 0px;
   height: 150px;
   position: relative;
+}
+#game.viewer-mode .hand-dices-list > .hand-dices-list-content {
+  z-index: 1;
+  transform: scale(0.7);
+  transform-origin: bottom left;
 }
 .hand-dices {
   display: flex;

@@ -6,14 +6,14 @@
           :class="['select-btn', deckType ? 'active selected' : '']"
           @click="selectDeckType(null), selectGameType(null), selectGameConfig(null)"
         >
-          {{ deckList[deckType] || 'Выбор колоды:' }}
+          {{ deckList[deckType]?.title || 'Выбор колоды:' }}
         </span>
         <span
           v-if="deckType"
           :class="['select-btn', gameType ? 'active selected' : '']"
           @click="selectGameType(null), selectGameConfig(null)"
         >
-          {{ gameList[gameType] || 'Выбор типа игры:' }}
+          {{ gameList[gameType]?.title || 'Выбор типа игры:' }}
         </span>
         <span
           v-if="gameType"
@@ -25,23 +25,24 @@
       </div>
       <div v-if="!deckType" class="game-types">
         <div class="select-btn wait-for-select" @click="selectDeckType('release')">
-          <font-awesome-icon :icon="['fas', 'microchip']" /> Релиз
+          <font-awesome-icon :icon="deckList.release.icon" /> {{ deckList.release.title }}
         </div>
-        <div class="select-btn wait-for-select disabled"><font-awesome-icon :icon="['fas', 'car']" />Авто</div>
-        <div class="select-btn wait-for-select disabled"><font-awesome-icon :icon="['fas', 'money-bill']" />Банк</div>
+        <div class="select-btn wait-for-select disabled">
+          <font-awesome-icon :icon="deckList.auto.icon" /> {{ deckList.auto.title }}
+        </div>
+        <div class="select-btn wait-for-select disabled">
+          <font-awesome-icon :icon="deckList.bank.icon" />{{ deckList.bank.title }}
+        </div>
       </div>
       <div v-if="deckType === 'release' && !gameType" class="game-block release-game">
         <div class="select-btn wait-for-select single" v-on:click="selectGameType('single')">
-          <font-awesome-icon :icon="['fas', 'user']" size="2xl" />
-          Фриланс
+          <font-awesome-icon :icon="gameList.single.icon" /> {{ gameList.single.title }}
         </div>
         <div class="select-btn wait-for-select duel" v-on:click="selectGameType('duel')">
-          <font-awesome-icon :icon="['fas', 'user-group']" size="2xl" />
-          Дуэль
+          <font-awesome-icon :icon="gameList.duel.icon" /> {{ gameList.duel.title }}
         </div>
         <div class="select-btn wait-for-select ffa" v-on:click="selectGameType('ffa')">
-          <font-awesome-icon :icon="['fas', 'users']" size="2xl" />
-          Каждый за себя
+          <font-awesome-icon :icon="gameList.ffa.icon" /> {{ gameList.ffa.title }}
         </div>
         <div class="select-btn disabled">
           <font-awesome-icon :icon="['fas', 'dice-four']" size="2xl" style="color: #fff" />
@@ -67,13 +68,28 @@
     <div>
       <perfect-scrollbar>
         <div v-for="game in lobbyGameList" :key="game._id" class="game-item">
-          Раунд: ( {{ game.round }} ) Игроков: ( {{ game.joinedPlayers }} )
+          <div>
+            <div>
+              <span v-if="game.waitForPlayer">Игроков: {{ game.joinedPlayers }}</span>
+              <span v-if="!game.waitForPlayer">Идет {{ game.round }} раунд</span>
+            </div>
+            <div class="game-config-info">
+              <span>
+                <font-awesome-icon :icon="deckList[game.deckType].icon" />
+                <font-awesome-icon :icon="gameList[game.gameType].icon" />
+                {{ configList[game.gameConfig].title }}
+              </span>
+              <span style="margin-left: 10px">
+                <font-awesome-icon :icon="['fas', 'stopwatch']" /> {{ game.gameTimer }} сек
+              </span>
+            </div>
+          </div>
           <span v-if="!game.waitForPlayer" :style="{ color: '#f4e205' }">
             <button class="lobby-btn join-btn" v-on:click="joinGame({ gameId: game.id, viewerMode: true })">
               <font-awesome-icon :icon="['fas', 'eye']" />
               Посмотреть
-            </button></span
-          >
+            </button>
+          </span>
           <button v-if="game.waitForPlayer" class="lobby-btn join-btn" v-on:click="joinGame({ gameId: game.id })">
             Присоединиться
           </button>
@@ -97,9 +113,18 @@ export default {
     return {
       gameConfigsLoaded: false,
       deckType: null,
-      deckList: { release: 'Релиз', auto: 'Авто', bank: 'Банк' },
+      deckList: {
+        release: { title: 'РЕЛИЗ', icon: ['fas', 'microchip'] },
+        auto: { title: 'АВТО', icon: ['fas', 'car'] },
+        bank: { title: 'БАНК', icon: ['fas', 'money-bill'] },
+      },
       gameType: null,
-      gameList: { single: 'Фриланс', duel: 'Дуэль', ffa: 'Каждый за себя' },
+      gameList: {
+        single: { title: 'Фриланс', icon: ['fas', 'user'] },
+        duel: { title: 'Дуэль', icon: ['fas', 'user-group'] },
+        ffa: { title: 'Каждый за себя', icon: ['fas', 'users'] },
+      },
+
       gameConfig: null,
       configList: {
         blitz: { title: 'Блиц' },
@@ -243,7 +268,8 @@ export default {
     .select-btn {
       text-align: center;
       svg {
-        width: 26px;
+        width: 10px;
+        margin-right: 4px;
       }
     }
   }
@@ -348,7 +374,16 @@ export default {
   @include flex($justify: space-between);
   margin: 4px auto;
   min-height: 30px;
-  max-width: 300px;
+  max-width: 400px;
+
+  .game-config-info {
+    color: #f4e205;
+    display: flex;
+    justify-content: space-between;
+    > svg {
+      margin-left: 0px 4px;
+    }
+  }
 }
 .mobile-view .game-item {
   justify-content: center;

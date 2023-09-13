@@ -50,6 +50,8 @@
     this.logs(data.logs);
     this.deckType = data.deckType;
     this.gameType = data.gameType;
+    this.gameConfig = data.gameConfig;
+    this.gameTimer = data.gameTimer;
     this.addTime = data.addTime;
     this.settings = data.settings;
     this.status = data.status || 'WAIT_FOR_PLAYERS';
@@ -176,7 +178,11 @@
     return Object.keys(this.crutchMap || {}).length;
   }
   getFullPrice() {
-    return this.getObjects({ className: 'Plane', directParent: this }).reduce((sum, plane) => sum + plane.price, 0);
+    const planes = this.getObjects({ className: 'Plane', directParent: this });
+    const baseSum = planes.reduce((sum, plane) => sum + plane.price, 0);
+    const timerMod = 30 / this.gameTimer;
+    const configMod = { blitz: 0.5, standart: 0.75, hardcore: 1 }[this.gameConfig];
+    return Math.floor(baseSum * timerMod * configMod);
   }
   /**
    * Проверяет и обновляет статус игры, если это необходимо

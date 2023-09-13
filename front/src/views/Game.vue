@@ -2,7 +2,11 @@
   <div
     v-if="gameDataLoaded"
     id="game"
-    :class="[state.isMobile ? 'mobile-view' : '', state.isLandscape ? 'landscape-view' : 'portrait-view']"
+    :class="[
+      state.isMobile ? 'mobile-view' : '',
+      state.isLandscape ? 'landscape-view' : 'portrait-view',
+      gameState.viewerMode ? 'viewer-mode' : '',
+    ]"
     @wheel.prevent="zoomGamePlane"
   >
     <tutorial :inGame="true" class="scroll-off" />
@@ -288,9 +292,13 @@ export default {
       return this.game.logs || {};
     },
     fullPrice() {
-      return Object.keys(this.game.planeMap)
+      const { gameTimer, gameConfig } = this.game;
+      const baseSum = Object.keys(this.game.planeMap)
         .map((planeId) => this.store.plane?.[planeId] || {})
         .reduce((sum, plane) => sum + plane.price, 0);
+      const timerMod = 30 / gameTimer;
+      const configMod = { blitz: 0.5, standart: 0.75, hardcore: 1 }[gameConfig];
+      return Math.floor(baseSum * timerMod * configMod);
     },
     statusLabel() {
       switch (this.game.status) {

@@ -169,6 +169,7 @@
       penaltySum = 100 * crutchCount * 1000;
       income = fullPrice * 1000 - penaltySum;
       rankings[gameType].money = money + income;
+      if(income < 0) income = 0; // в рейтинги отрицательный результата пишем
       rankings[gameType].penalty = penalty + penaltySum;
       rankings[gameType].crutch = crutch + crutchCount;
       rankings[gameType].win = win + 1;

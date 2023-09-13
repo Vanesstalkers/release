@@ -27,8 +27,7 @@
       const gameData = {
         settings,
         addTime: Date.now(),
-        deckType: deckType,
-        gameType: gameType,
+        ...{ deckType, gameType, gameConfig, gameTimer },
       };
       if (gameTimer) gameData.settings.timer = gameTimer;
 
@@ -152,7 +151,7 @@
         lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', {
           gameId: this.id(),
           playerId: player.id(),
-          gameType: this.type,
+          gameType: this.deckType,
           isSinglePlayer: this.isSinglePlayer(),
         });
       } catch (exception) {
@@ -174,7 +173,7 @@
         lib.store.broadcaster.publishAction(`user-${userId}`, 'joinGame', {
           gameId: this.id(),
           viewerId: viewer.id(),
-          gameType: this.type,
+          gameType: this.deckType,
           isSinglePlayer: this.isSinglePlayer(),
         });
       } catch (exception) {
@@ -224,7 +223,7 @@
       this.checkCrutches();
       this.broadcastAction('gameFinished', {
         gameId: this.id(),
-        gameType: this.type,
+        gameType: this.deckType,
         playerEndGameStatus,
         fullPrice: this.getFullPrice(),
         roundCount: this.round,
