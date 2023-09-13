@@ -26,44 +26,66 @@
     games: {
       pos: {
         desktop: 'bottom-left',
-        mobile: 'bottom-right', //{ landscape: 'bottom-right', portrait: 'top-right' },
+        mobile: 'bottom-right',
       },
       text: 'В разделе "Правила игр" список всех игр на сайте. Можно скачать правила в pdf-формате, а также посмотреть все карты каждой колоды.',
-      active: '.menu-item.list',
+      actions: {
+        before: (self) => {
+          const $rootEl = self.$root.$el;
+          $rootEl.querySelector('.menu-item.list > label')?.click();
+        },
+      },
       buttons: [{ text: 'Дальше', step: 'rates' }],
     },
     rates: {
       pos: {
         desktop: 'bottom-left',
-        mobile: 'bottom-right', //{ landscape: 'bottom-right', portrait: 'top-right' },
+        mobile: 'bottom-right',
       },
       text: 'В разделе "Зал славы" рейтинги достижений всех игроков. Вы также найдете там и статистику по своим играм.',
-      active: '.menu-item.top',
+      actions: {
+        before: (self) => {
+          const $rootEl = self.$root.$el;
+          $rootEl.querySelector('.menu-item.list > label')?.click();
+          $rootEl.querySelector('.menu-item.top > label')?.click();
+        },
+      },
       buttons: [{ text: 'Дальше', step: 'chat' }],
     },
     chat: {
       pos: {
         desktop: 'bottom-right',
-        mobile: 'bottom-right', //{ landscape: 'bottom-right', portrait: 'top-right' },
+        mobile: 'bottom-right',
       },
       text: 'В чате можно общаться с игроками, которые сейчас на портале. В том числе можно написать кому-то личное сообщение.',
-      active: '.menu-item.chat',
+      actions: {
+        before: (self) => {
+          const $rootEl = self.$root.$el;
+          $rootEl.querySelector('.menu-item.top > label')?.click();
+          $rootEl.querySelector('.menu-item.chat > label')?.click();
+        },
+      },
       buttons: [{ text: 'Дальше', step: 'playground' }],
     },
     playground: {
       pos: {
         desktop: 'bottom-right',
-        mobile: 'bottom-right', //{ landscape: 'bottom-right', portrait: 'top-right' },
+        mobile: 'bottom-right',
       },
       text: '"Игровая комната" предназначена для поиска подходящей игры, если вы желаете присоединиться к кому либо, либо начать новую партию.',
-      active: '.menu-item.game',
+      actions: {
+        before: (self) => {
+          const $rootEl = self.$root.$el;
+          $rootEl.querySelector('.menu-item.chat > label')?.click();
+          $rootEl.querySelector('.menu-item.game > label')?.click();
+        },
+      },
       buttons: [{ text: 'Дальше', step: 'exit' }],
     },
     exit: {
       superPos: true,
       actions: {
         _prepare: (step, { isMobile }) => {
-          // const replaceText = isMobile ? 'правом верхнем' : 'левом нижнем';
           const replaceText = 'левом нижнем';
           step.text = step.text.replace('[[menu-position]]', replaceText);
         },

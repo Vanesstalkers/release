@@ -320,8 +320,7 @@ export default {
     overflow: auto;
   }
 }
-.menu-item.pinned > div,
-.menu-item.tutorial-active > div {
+.menu-item.pinned > div {
   max-height: none !important;
 }
 
@@ -488,8 +487,7 @@ $textshadow: rgb(42, 22, 23);
   top: 70%;
   left: 45%;
 }
-.menu-item.game.pinned,
-.menu-item.game.tutorial-active {
+.menu-item.game.pinned {
   top: 45%;
   left: 45%;
 }
@@ -517,8 +515,7 @@ $textshadow: rgb(42, 22, 23);
   top: -16px;
   color: #0078d7;
 }
-.menu-item.chat.pinned,
-.menu-item.chat.tutorial-active {
+.menu-item.chat.pinned {
   top: 10%;
   left: 10%;
 }
@@ -531,8 +528,7 @@ $textshadow: rgb(42, 22, 23);
   top: 35%;
   left: 40%;
 }
-.menu-item.top.pinned,
-.menu-item.top.tutorial-active {
+.menu-item.top.pinned {
   top: 10%;
   left: 40%;
 }
@@ -544,8 +540,7 @@ $textshadow: rgb(42, 22, 23);
   top: 45%;
   left: 80%;
 }
-.menu-item.list.pinned,
-.menu-item.list.tutorial-active {
+.menu-item.list.pinned {
   top: 20%;
   left: 80%;
 }
@@ -716,8 +711,7 @@ $textshadow: rgb(42, 22, 23);
   color: #f4e205;
 }
 
-.menu-item.pinned .chat-controls,
-.menu-item.tutorial-active .chat-controls {
+.menu-item.pinned .chat-controls {
   display: flex !important;
 }
 

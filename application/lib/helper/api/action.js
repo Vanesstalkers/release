@@ -36,7 +36,7 @@ async (context, { action, step, tutorial: tutorialName, usedLink, isMobile }) =>
       if (prepareStep) prepareStep(nextStep, { isMobile });
 
       if (nextStep) {
-        user.set({ helper: nextStep }, { reset: ['helper'] }); // reset обязателен, так как набор ключей в каждом helper-step может быть разный
+        user.set({ helper: nextStep }, { reset: ['helper', 'helper.actions'] }); // reset обязателен, так как набор ключей в каждом helper-step может быть разный
         user.set({ currentTutorial: { step } });
       } else {
         user.set({
