@@ -33,7 +33,7 @@
         ]"
       >
         <label v-on:click="pinMenuItem('info')">
-          УСЛУГИ СТУДИИ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+          УСЛУГИ СТУДИИ <font-awesome-icon :icon="['fas', 'circle-xmark']" size="2xs" />
         </label>
 
         <perfect-scrollbar class="menu-item-content">
@@ -59,19 +59,19 @@
       </div>
       <div :class="['menu-item', pinned.game ? 'pinned' : '', 'game']">
         <label v-on:click="pinMenuItem('game')">
-          ИГРОВАЯ КОМНАТА <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+          ИГРОВАЯ КОМНАТА <font-awesome-icon :icon="['fas', 'circle-xmark']" size="2xs" />
         </label>
         <games class="menu-item-content" />
       </div>
       <div :class="['menu-item', pinned.list ? 'pinned' : '', 'list']">
         <label v-on:click="pinMenuItem('list')">
-          ПРАВИЛА ИГР <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+          ПРАВИЛА ИГР <font-awesome-icon :icon="['fas', 'circle-xmark']" size="2xs" />
         </label>
         <rules class="menu-item-content" />
       </div>
       <div :class="['menu-item', pinned.chat ? 'pinned' : '', 'chat']">
         <label v-on:click="pinMenuItem('chat')">
-          ОБЩЕНИЕ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+          ОБЩЕНИЕ <font-awesome-icon :icon="['fas', 'circle-xmark']" size="2xs" />
           <small v-if="unreadMessages > 0">есть новые сообщения</small>
         </label>
         <chat
@@ -91,7 +91,7 @@
       </div>
       <div :class="['menu-item', pinned.top ? 'pinned' : '', 'top']">
         <label v-on:click="pinMenuItem('top')">
-          ЗАЛ СЛАВЫ <font-awesome-icon icon="fa-solid fa-thumbtack" class="fa-xs" />
+          ЗАЛ СЛАВЫ <font-awesome-icon :icon="['fas', 'circle-xmark']" size="2xs" />
         </label>
         <rankings class="menu-item-content" :games="lobby.rankings" />
       </div>
@@ -435,10 +435,16 @@ $textshadow: rgb(42, 22, 23);
   display: none;
   padding: 10px;
   position: absolute;
+  top: 0px;
   right: 100%;
   color: #f4e205;
+  box-shadow: 0px 0px 10px 2px rgb(0, 0, 0);
+  background-color: black;
+	border-radius: 50%;
+	padding: 0px;
+	margin: 10px;
 }
-.menu-item:hover > label > svg {
+.menu-item.pinned > label > svg {
   display: inline-block;
 }
 
