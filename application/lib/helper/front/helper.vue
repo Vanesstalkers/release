@@ -153,7 +153,6 @@ export default {
   },
   methods: {
     async update() {
-
       let { text, img, active, pos, superPos = false, fullscreen = false, actions, buttons } = this.helperData;
       if (!pos) pos = 'bottom-right'; // тут может быть null
       if (typeof pos === 'object') {

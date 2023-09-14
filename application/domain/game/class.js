@@ -8,6 +8,7 @@
     });
     this.preventSaveFields(['availableZones']);
 
+    // !!! подумать, как лучше это организовать
     this.events({
       handlers: {
         addPlane: function () {

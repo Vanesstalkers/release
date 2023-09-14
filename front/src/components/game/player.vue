@@ -88,7 +88,9 @@ export default {
   watch: {
     mainCardDeckItemsCount: function () {
       this.$nextTick(() => {
-        this.$refs.scrollbar.scrollTo({ top: 1000000 }); // просто высоты экрана может быть не достаточно при большом количестве карт в руке
+        const scrollbar = this.$refs.scrollbar;
+        if(!scrollbar) return; // !!! тут соперник - нужно поправить логику
+        scrollbar.scrollTo({ top: 1000000 }); // просто высоты экрана может быть не достаточно при большом количестве карт в руке
       });
     },
   },
