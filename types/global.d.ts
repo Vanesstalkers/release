@@ -9,7 +9,8 @@ import * as _metasql from 'metasql';
 import { Database } from 'metasql';
 
 import { Database as MongoDB } from '../application/db/mongo/types';
-import * as _game from '../application/domain/game/types';
+import * as _game from '../application/lib/game/types';
+import * as _game_release from '../application/domain/game/types';
 
 declare global {
   namespace metarhia {
@@ -18,10 +19,12 @@ declare global {
 
   namespace api {}
 
-  namespace lib {}
+  namespace lib {
+    const game: typeof _game;
+  }
 
   namespace domain {
-    const game: typeof _game;
+    const game: typeof _game_release;
   }
 
   namespace db {

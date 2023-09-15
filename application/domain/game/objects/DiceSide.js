@@ -1,4 +1,4 @@
-(class DiceSide extends lib.game.gameObject {
+(class DiceSide extends lib.game.GameObject {
   constructor(data, { parent }) {
     super(data, { col: 'diceside', parent });
     this.broadcastableFields(['_id', 'value', 'eventData', 'activeEvent']);

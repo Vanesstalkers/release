@@ -1,10 +1,13 @@
 (class Game extends lib.game.class() {
-  constructor(data = {}) {
+  constructor() {
     super();
     Object.assign(this, {
       ...lib.chat['@class'].decorate(),
-      ...domain.game['@hasDeck'].decorate(),
-      ...domain.game['@hasPlane'].decorate(),
+      ...lib.game.decorators['@hasDeck'].decorate(),
+      ...lib.game.decorators['@hasCardEvents'].decorate({
+        additionalCardEvents: { replaceDice: [], addPlane: [] },
+      }),
+      ...domain.game.decorators['@hasPlane'].decorate(),
     });
     this.preventSaveFields(['availableZones']);
 
@@ -46,7 +49,7 @@
     return action.call(this, data);
   }
 
-  fromJSON(data, { newGame } = {}) {
+  fillData(data, { newGame } = {}) {
     if (data.store) this.store = data.store;
     this.logs(data.logs);
     this.deckType = data.deckType;
@@ -58,13 +61,7 @@
     this.status = data.status || 'WAIT_FOR_PLAYERS';
     this.round = data.round || 0;
     if (data.activeEvent) this.activeEvent = data.activeEvent;
-    this.cardEvents = data.cardEvents || {
-      endRound: [],
-      timerOverdue: [],
-      replaceDice: [],
-      addPlane: [],
-      eventTrigger: [],
-    };
+    if (data.cardEvents) this.cardEvents = data.cardEvents;
     this.availablePorts = data.availablePorts || [];
 
     if (data.playerMap) {
@@ -83,18 +80,23 @@
     }
     for (const item of data.deckList || []) {
       const deckItemClass =
-        item.type === 'domino' ? domain.game.Dice : item.type === 'plane' ? domain.game.Plane : domain.game.Card;
+        item.type === 'domino'
+          ? domain.game.objects.Dice
+          : item.type === 'plane'
+          ? domain.game.objects.Plane
+          : lib.game.objects.Card;
 
       if (item.access === 'all') item.access = this.playerMap;
       this.addDeck(item, { deckItemClass });
     }
     if (newGame) {
-      const cardsJSON = domain.game.cardsJSON.filter((card) => !this.settings.cardsToRemove.includes(card.name));
+      let { cards, dices, planes } = domain.game.configs;
+      cards = cards.filter((card) => !this.settings.cardsToRemove.includes(card.name));
 
       for (const [deckCode, json] of [
-        ['Deck[domino]', domain.game.dicesJSON],
-        ['Deck[card]', cardsJSON],
-        ['Deck[plane]', domain.game.planesJSON],
+        ['Deck[domino]', dices],
+        ['Deck[card]', cards],
+        ['Deck[plane]', planes],
       ]) {
         const deck = this.getObjectByCode(deckCode);
         const items = lib.utils.structuredClone(json);
@@ -120,39 +122,6 @@
     return this;
   }
 
-  addCardEvent({ event, source }) {
-    if (!this.cardEvents[event]) this.set({ cardEvents: { [event]: [] } });
-    this.set({
-      cardEvents: {
-        [event]: this.cardEvents[event].concat(source.id()),
-      },
-    });
-  }
-  deleteCardEvent({ event, source }) {
-    if (!this.cardEvents[event]) throw new Error(`cardEvent not found (code=${this.code}, event=${event})`);
-    this.set({
-      cardEvents: {
-        [event]: this.cardEvents[event].filter((id) => id !== source._id),
-      },
-    });
-  }
-  /**
-   * События карт
-   */
-  emitCardEvents(event, data) {
-    if (!this.cardEvents[event]) throw new Error(`cardEvent not found (code=${this.code}, event=${event})`);
-    for (const sourceId of this.cardEvents[event]) {
-      const source = this.getObjectById(sourceId);
-      const { saveEvent, timerOverdueOff } = source.emit(event, data) || {};
-      if (!saveEvent) this.deleteCardEvent({ event, source });
-      if (timerOverdueOff) this.deleteCardEvent({ event: 'timerOverdue', source });
-    }
-  }
-  clearCardEvents() {
-    for (const event of Object.keys(this.cardEvents)) {
-      this.set({ cardEvents: { [event]: [] } });
-    }
-  }
   checkCrutches() {
     let updatedMap = {};
     for (const diceSideId of Object.keys(this.crutchMap || {})) {
@@ -333,46 +302,5 @@
         }
         break;
     }
-  }
-
-  onTimerRestart({ timerId, data: { time = this.settings.timer, extraTime = 0 } = {} }) {
-    const player = this.getActivePlayer();
-    if (extraTime) {
-      player.set({ timerEndTime: (player.timerEndTime || 0) + extraTime * 1000 });
-    } else {
-      player.set({ timerEndTime: Date.now() + time * 1000 });
-    }
-    player.set({ timerUpdateTime: Date.now() });
-    if (!player.timerEndTime) throw 'player.timerEndTime === NaN';
-  }
-  async onTimerTick({ timerId, data: { time = null } = {} }) {
-    try {
-      const player = this.getActivePlayer();
-      if (!player.timerEndTime) {
-        if (this.status === 'FINISHED') {
-          // тут некорректное завершение таймера игры
-          // остановка таймера должна была отработать в endGame
-          // бросать endGameException нельзя, потому что в removeGame будет вызов saveChanges, который попытается сделать broadcastData, но channel к этому моменту будет уже удален
-          lib.timers.timerDelete(this);
-          return;
-        } else throw 'player.timerEndTime === NaN';
-      }
-      // console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
-      if (player.timerEndTime < Date.now()) {
-        this.checkStatus({ cause: 'PLAYER_TIMER_END' });
-        await this.saveChanges();
-      }
-    } catch (exception) {
-      if (exception instanceof lib.game.endGameException) {
-        await this.removeGame();
-      } else throw exception;
-    }
-  }
-  onTimerDelete({ timerId }) {
-    const player = this.getActivePlayer();
-    player.set({
-      timerEndTime: null,
-      timerUpdateTime: Date.now(),
-    });
   }
 });

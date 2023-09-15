@@ -1,4 +1,4 @@
-(class Deck extends lib.game.gameObject {
+(class Deck extends lib.game.GameObject {
   itemMap = {};
   #updatedItems = {};
   #itemClass;
@@ -124,17 +124,8 @@
     if (!game.checkChangesDisabled()) {
       // фейковые изменения (скорее всего расчет доступных зон) - данные для фронта обновлять не нужно
 
-      game.markNew(item);
-      if (item.sideList) {
-        game.markNew(item.sideList[0]);
-        game.markNew(item.sideList[1]);
-      }
-
+      item.markNew();
       item.updateFakeId({ parentId });
-      if (item.sideList) {
-        item.sideList[0].updateFakeId({ parentId });
-        item.sideList[1].updateFakeId({ parentId });
-      }
       this.markItemUpdated({ item, action: 'add' });
     }
 

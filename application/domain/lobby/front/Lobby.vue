@@ -256,7 +256,11 @@ export default {
       this.profileActive = false;
     },
     hasUnreadMessages(count = 0) {
-      this.unreadMessages = count;
+      if (this.unreadMessages === 0 && count > 0) {
+        prettyAlert({
+          message: 'У вас новое сообщение в чате',
+        });
+      }
     },
   },
   async created() {},
@@ -376,7 +380,7 @@ export default {
         label {
           display: initial;
           white-space: nowrap;
-          left: 5%;
+          left: 20%;
         }
         .menu-item-content {
           width: 185%;
@@ -440,9 +444,13 @@ $textshadow: rgb(42, 22, 23);
   color: #f4e205;
   box-shadow: 0px 0px 10px 2px rgb(0, 0, 0);
   background-color: black;
-	border-radius: 50%;
-	padding: 0px;
-	margin: 10px;
+  border-radius: 50%;
+  padding: 0px;
+  margin: 10px;
+
+  :hover {
+    opacity: 0.7;
+  }
 }
 .menu-item.pinned > label > svg {
   display: inline-block;
@@ -477,6 +485,9 @@ $textshadow: rgb(42, 22, 23);
 }
 .menu-item.info > label > svg {
   color: crimson;
+  width: 18px;
+	height: 18px;
+	margin-top: 4px;
 }
 .menu-item.info.preview:not(.pinned) > div {
   height: 180px;

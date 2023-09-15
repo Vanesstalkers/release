@@ -35,16 +35,14 @@
   dice.set({ placedAtRound: this.round });
 
   // у других игроков в хранилище нет данных об этом dice
-  this.markNew(dice);
-  this.markNew(dice.sideList[0]);
-  this.markNew(dice.sideList[1]);
+  dice.markNew();
 
   const releaseInitiated = zone.checkForRelease();
   if (releaseInitiated) {
     const playerCardDeck = player.getObjectByCode('Deck[card]');
     this.run('smartMoveRandomCard', { target: playerCardDeck });
     lib.timers.timerRestart(this, { extraTime: this.settings.timerReleasePremium });
-    this.logs(`Игрок {{player}} инициировал РЕЛИЗ, за что получает дополнительную карту события в руку.`);
+    this.logs(`Игрок {{player}} инициировал РЕЛИЗ, за что получает дополнительную карту-события в руку.`);
   }
 
   const notReplacedDeletedDices = deletedDices.filter((dice) => !dice.getParent().getNotDeletedItem());

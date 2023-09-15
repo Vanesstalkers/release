@@ -66,7 +66,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .card-event {
   position: relative;
   border: 1px solid;
@@ -81,6 +81,10 @@ export default {
   box-shadow: inset 0px 20px 20px 0px black;
   background-image: url(../../../public/img/cards/release/back-side.jpg);
   background-color: grey;
+
+  &.tutorial-active {
+    box-shadow: 0 0 10px 10px #f4e205 !important;
+  }
 }
 .card-event.selected {
   z-index: 1;

@@ -1,8 +1,6 @@
-(class Plane extends lib.game.gameObject {
+(class Plane extends lib.game.GameObject {
   zoneMap = {};
   portMap = {};
-  width = 500;
-  height = 250;
 
   constructor(data, { parent }) {
     super(data, { col: 'plane', parent });
@@ -23,22 +21,22 @@
 
     this.set({
       price: data.price,
-      width: data.width || this.width,
-      height: data.height || this.height,
-      release: data.release || false,
+      width: data.width,
+      height: data.height,
       left: data.left || 0,
       top: data.top || 0,
       rotation: data.rotation || 0,
+      release: data.release || false,
       customClass: data.customClass || [],
+      cardPlane: data.cardPlane || false,
     });
-    if (this.isCardPlane()) this.set({ width: 120, height: 180 });
 
     if (data.zoneMap) {
       data.zoneList = [];
       for (const _id of Object.keys(data.zoneMap)) data.zoneList.push(this.getStore().zone[_id]);
     }
     for (const item of data.zoneList || []) {
-      const zone = new domain.game.Zone(item, { parent: this });
+      const zone = new domain.game.objects.Zone(item, { parent: this });
       this.set({ zoneMap: { [zone._id]: {} } });
     }
     if (data.zoneLinks) {
@@ -74,7 +72,7 @@
   }
 
   isCardPlane() {
-    return this.customClass.includes('card-plane');
+    return this.cardPlane;
   }
 
   getCodePrefix() {
@@ -82,7 +80,7 @@
   }
 
   addPort(data) {
-    const port = new domain.game.Port(data, { parent: this });
+    const port = new domain.game.objects.Port(data, { parent: this });
     this.set({ portMap: { [port._id]: {} } });
   }
   getZone() {

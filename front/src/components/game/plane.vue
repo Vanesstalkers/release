@@ -2,12 +2,7 @@
   <div
     v-if="plane._id"
     :id="plane._id"
-    :class="[
-      'plane',
-      activeEvent ? 'active-event' : '',
-      ...plane.customClass,
-      ...Object.values(customClass),
-    ]"
+    :class="['plane', activeEvent ? 'active-event' : '', ...plane.customClass, ...Object.values(customClass)]"
     :style="customStyle"
     v-on:click.stop="(e) => (activeEvent ? choosePlane() : selectPlane(e))"
     :code="plane.code"
@@ -147,7 +142,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .plane {
   position: relative;
   position: absolute;
@@ -155,6 +150,11 @@ export default {
   height: 250px;
   margin-bottom: 10px;
   transform-origin: 0 0;
+
+  &.tutorial-active {
+    z-index: -1!important;
+    box-shadow: 0 0 10px 10px #f4e205 !important;
+  }
 }
 .plane.active-event {
   box-shadow: 0 0 20px 8px yellow !important;
@@ -235,13 +235,13 @@ export default {
 .plane > .price {
   display: none;
   color: gold;
-	font-size: 54px;
-	position: absolute;
-	z-index: 2;
-	top: 0px;
-	left: 0px;
+  font-size: 54px;
+  position: absolute;
+  z-index: 2;
+  top: 0px;
+  left: 0px;
   background: #00000090;
-	padding: 8px 20px;
-	border-top-left-radius: 20px;
+  padding: 8px 20px;
+  border-top-left-radius: 20px;
 }
 </style>

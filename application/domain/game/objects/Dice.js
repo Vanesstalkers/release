@@ -1,4 +1,4 @@
-(class Dice extends lib.game.gameObject {
+(class Dice extends lib.game.GameObject {
   constructor(data, { parent }) {
     super(data, { col: 'dice', parent });
     this.broadcastableFields([
@@ -23,22 +23,39 @@
       const store = this.game().getStore();
       this.set({
         sideList: [
-          new domain.game.DiceSide(store.diceside[data.sideList[0]._id], { parent: this }),
-          new domain.game.DiceSide(store.diceside[data.sideList[1]._id], { parent: this }),
+          new domain.game.objects.DiceSide(store.diceside[data.sideList[0]._id], { parent: this }),
+          new domain.game.objects.DiceSide(store.diceside[data.sideList[1]._id], { parent: this }),
         ],
       });
     } else {
       this.set({
         sideList: [
-          new domain.game.DiceSide({ _code: 1, value: data[0] }, { parent: this }),
-          new domain.game.DiceSide({ _code: 2, value: data[1] }, { parent: this }),
+          new domain.game.objects.DiceSide({ _code: 1, value: data[0] }, { parent: this }),
+          new domain.game.objects.DiceSide({ _code: 2, value: data[1] }, { parent: this }),
         ],
       });
       if (Math.random() > 0.5) this.sideList.reverse(); // code останется в первичном виде
     }
   }
+
   customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, '' + data[0] + data[1]);
+  }
+  markNew(config) {
+    super.markNew(config);
+    if (!this.sideList) return; // при создании объекта markNew из GameObject отрабатывает раньше добавления sideList
+    this.sideList[0].markNew(config);
+    this.sideList[1].markNew(config);
+  }
+  markDelete(config) {
+    super.markDelete(config);
+    this.sideList[0].markDelete(config);
+    this.sideList[1].markDelete(config);
+  }
+  updateFakeId(config) {
+    super.updateFakeId(config);
+    this.sideList[0].updateFakeId(config);
+    this.sideList[1].updateFakeId(config);
   }
   prepareBroadcastData({ data, player, viewerMode }) {
     let visibleId = this._id;
@@ -77,7 +94,7 @@
       this.set({ visible: null });
       this.updateParent(target);
       if (target.getParent() === this.game()) {
-        this.game().markDelete(this); // удаляем локальную информацию о dice (с реальным _id)
+        this.markDelete(); // удаляем локальную информацию о dice (с реальным _id)
       }
     } else {
       currentParent.addItem(this);

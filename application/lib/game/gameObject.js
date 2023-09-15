@@ -15,7 +15,9 @@
     if (!this._id) this._id = data._id || db.mongo.ObjectID().toString();
     if (_col) this._col = _col;
     this.fakeId = data.fakeId || {};
+    // индикатор наличия активного события (может быть с вложенными данными)
     if (data.activeEvent) this.activeEvent = data.activeEvent;
+    // статичный объект для любых временных данных событий
     this.eventData = data.eventData || {};
 
     this.setParent(parent);
@@ -39,7 +41,7 @@
     } else {
       const game = parent.game();
       this.game(game);
-      if (newObject) game.markNew(this, { saveToDB: true });
+      if (newObject) this.markNew({ saveToDB: true });
       if (!game.store[this._col]) game.store[this._col] = {};
       game.store[this._col][this._id] = this;
     }
@@ -64,6 +66,26 @@
       config: { deleteNull: true, ...config }, // удаляем ключи с null-значением
     });
   }
+
+  markNew({ saveToDB = false } = {}) {
+    const game = this.game();
+    const { _col: col, _id: id } = this;
+    if (saveToDB) {
+      game.setChanges({ store: { [col]: { [id]: this } } });
+    } else {
+      game.addBroadcastObject({ col, id });
+    }
+  }
+  markDelete({ saveToDB = false } = {}) {
+    const game = this.game();
+    const { _col: col, _id: id } = this;
+    if (saveToDB) {
+      this.setChanges({ store: { [col]: { [id]: null } } });
+    } else {
+      game.deleteBroadcastObject({ col, id });
+    }
+  }
+
   default_customObjectCode({ codeTemplate, replacementFragment }, data) {
     return codeTemplate.replace(replacementFragment, data._code);
   }
@@ -162,6 +184,11 @@
   getFlattenStore() {
     return Object.values(this.getStore()).reduce((obj, item) => ({ ...obj, ...item }), {});
   }
+  /**
+   * Возвращает или сохраняет список полей, которые можно публиковать
+   * @param {string[]} [data] массив полей для публикации
+   * @returns {string[]}
+   */
   broadcastableFields(data) {
     if (!data) return this.#broadcastableFields;
     this.#broadcastableFields = data;

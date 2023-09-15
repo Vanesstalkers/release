@@ -2,13 +2,16 @@
   init: function ({ game, player }) {
     const deck = game.getObjectByCode('Deck[domino]');
 
-    const newPlayerHand = player.addDeck({
-      type: 'domino',
-      subtype: 'teamlead',
-      itemType: 'any',
-      settings: { itemsUsageLimit: 1, itemsStartCount: 5 },
-      access: { [player._id]: {} },
-    });
+    const newPlayerHand = player.addDeck(
+      {
+        type: 'domino',
+        subtype: 'teamlead',
+        itemType: 'any',
+        settings: { itemsUsageLimit: 1, itemsStartCount: 5 },
+        access: { [player._id]: {} },
+      },
+      { deckItemClass: domain.game.objects.Dice }
+    );
     deck.moveRandomItems({ count: newPlayerHand.settings.itemsStartCount, target: newPlayerHand });
   },
   handlers: {

@@ -1,5 +1,5 @@
 () =>
-  class Game extends lib.store.class(lib.game.gameObject, { broadcastEnabled: true }) {
+  class Game extends lib.store.class(lib.game.GameObject, { broadcastEnabled: true }) {
     #logs = {};
     store = {};
     playerMap = {};
@@ -15,7 +15,7 @@
     async create({ deckType, gameType, gameConfig, gameTimer } = {}) {
       const { structuredClone: clone } = lib.utils;
 
-      const gameTypeSettings = domain.game.exampleJSON[gameType];
+      const gameTypeSettings = domain.game.configs.games[gameType];
       const settingsJSON = gameTypeSettings?.[gameConfig];
       if (!settingsJSON)
         throw new Error(
@@ -31,7 +31,7 @@
       };
       if (gameTimer) gameData.settings.timer = gameTimer;
 
-      this.fromJSON(gameData, { newGame: true });
+      this.fillData(gameData, { newGame: true });
       delete this._id; // удаляем _id от gameObject, чтобы он не попал в БД
 
       await super.create({ ...this });
@@ -52,7 +52,7 @@
           if (dbData === null) {
             throw 'not_found';
           } else {
-            this.fromJSON(dbData);
+            this.fillData(dbData);
             if (!this.id() && initStore) {
               this.initStore(dbData._id);
               if (!this.channel()) this.initChannel();
@@ -75,23 +75,6 @@
         },
         { json: true }
       );
-    }
-
-    markNew(obj, { saveToDB = false } = {}) {
-      if (saveToDB) {
-        this.setChanges({ store: { [obj._col]: { [obj._id]: obj } } });
-      } else {
-        if (!this.#broadcastObject[obj._col]) this.#broadcastObject[obj._col] = {};
-        this.#broadcastObject[obj._col][obj._id] = true;
-      }
-    }
-    markDelete(obj, { saveToDB = false } = {}) {
-      if (saveToDB) {
-        this.setChanges({ store: { [obj._col]: { [obj._id]: null } } });
-      } else {
-        if (!this.#broadcastObject[obj._col]) this.#broadcastObject[obj._col] = {};
-        this.#broadcastObject[obj._col][obj._id] = null;
-      }
     }
 
     logs(data, { consoleMsg } = {}) {
@@ -164,7 +147,7 @@
       try {
         if (this.status === 'FINISHED') throw new Error('Игра уже завершена.');
 
-        const viewer = new domain.game.Viewer({ userId }, { parent: this });
+        const viewer = new lib.game.objects.Viewer({ userId }, { parent: this });
         viewer.set({ userId, userName, avatarCode: userAvatarCode });
         this.logs({ msg: `Наблюдатель присоединился к игре.` });
 
@@ -363,6 +346,15 @@
       return result;
     }
 
+    addBroadcastObject({ col, id }) {
+      if (!this.#broadcastObject[col]) this.#broadcastObject[col] = {};
+      this.#broadcastObject[col][id] = true;
+    }
+    deleteBroadcastObject({ col, id }) {
+      if (!this.#broadcastObject[col]) this.#broadcastObject[col] = {};
+      this.#broadcastObject[col][id] = null;
+    }
+
     /**
      * Дополнительные обработчики для store.broadcastData
      */
@@ -408,5 +400,46 @@
       await this.saveChanges();
       this.broadcastData({ logs: this.logs() });
       this.remove();
+    }
+
+    onTimerRestart({ timerId, data: { time = this.settings.timer, extraTime = 0 } = {} }) {
+      const player = this.getActivePlayer();
+      if (extraTime) {
+        player.set({ timerEndTime: (player.timerEndTime || 0) + extraTime * 1000 });
+      } else {
+        player.set({ timerEndTime: Date.now() + time * 1000 });
+      }
+      player.set({ timerUpdateTime: Date.now() });
+      if (!player.timerEndTime) throw 'player.timerEndTime === NaN';
+    }
+    async onTimerTick({ timerId, data: { time = null } = {} }) {
+      try {
+        const player = this.getActivePlayer();
+        if (!player.timerEndTime) {
+          if (this.status === 'FINISHED') {
+            // тут некорректное завершение таймера игры
+            // остановка таймера должна была отработать в endGame
+            // бросать endGameException нельзя, потому что в removeGame будет вызов saveChanges, который попытается сделать broadcastData, но channel к этому моменту будет уже удален
+            lib.timers.timerDelete(this);
+            return;
+          } else throw 'player.timerEndTime === NaN';
+        }
+        // console.log('setInterval', player.timerEndTime - Date.now()); // временно оставил для отладки (все еще появляются setInterval NaN - отловить не смог)
+        if (player.timerEndTime < Date.now()) {
+          this.checkStatus({ cause: 'PLAYER_TIMER_END' });
+          await this.saveChanges();
+        }
+      } catch (exception) {
+        if (exception instanceof lib.game.endGameException) {
+          await this.removeGame();
+        } else throw exception;
+      }
+    }
+    onTimerDelete({ timerId }) {
+      const player = this.getActivePlayer();
+      player.set({
+        timerEndTime: null,
+        timerUpdateTime: Date.now(),
+      });
     }
   };

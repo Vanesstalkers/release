@@ -53,12 +53,6 @@
     this.emitCardEvents('timerOverdue');
   }
 
-  // activeEvent обнулится в emitCardEvents
-  if (this.activeEvent)
-    throw new Error(
-      this.activeEvent.errorMsg || 'Игрок не может совершить это действие, пока не завершит активное событие.'
-    );
-
   // ЛОГИКА ОКОНЧАНИЯ ТЕКУЩЕГО РАУНДА
 
   this.emitCardEvents('endRound');

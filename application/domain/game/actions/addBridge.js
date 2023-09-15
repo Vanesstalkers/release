@@ -1,6 +1,6 @@
 (function (data) {
   const store = this.getStore();
-  const bridge = new domain.game.Bridge(data, { parent: this });
+  const bridge = new domain.game.objects.Bridge(data, { parent: this });
   this.set({ bridgeMap: { [bridge._id]: {} } });
 
   if (data.zoneMap) {
@@ -8,7 +8,7 @@
     for (const _id of Object.keys(data.zoneMap)) data.zoneList.push(store.zone[_id]);
   }
   for (const item of data.zoneList || []) {
-    const zone = new domain.game.Zone(item, { parent: bridge });
+    const zone = new domain.game.objects.Zone(item, { parent: bridge });
     bridge.set({ zoneMap: { [zone._id]: {} } });
   }
 

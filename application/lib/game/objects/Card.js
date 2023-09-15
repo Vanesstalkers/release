@@ -1,4 +1,4 @@
-(class Card extends lib.game.gameObject {
+(class Card extends lib.game.GameObject {
   constructor(data, { parent }) {
     super(data, { col: 'card', parent });
     this.broadcastableFields(['_id', 'name', 'played', 'eventData']);
@@ -10,6 +10,10 @@
     });
     this.events(domain.cardEvent[this.name]);
   }
+  /**
+   * Перемещает карту к новому держателю (колоду)
+   * @param {GameObject} target - колода для перемещения
+   */
   moveToTarget(target) {
     const currentParent = this.getParent();
     currentParent.removeItem(this); // сначала удаляем

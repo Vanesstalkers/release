@@ -1,4 +1,4 @@
-(class Bridge extends lib.game.gameObject {
+(class Bridge extends lib.game.GameObject {
   zoneMap = {};
   width = 0;
   height = 0;

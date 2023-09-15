@@ -9,6 +9,7 @@
       _code: code,
       price: 50,
       release: true,
+      ...{ cardPlane: true, width: 120, height: 180 },
       customClass: ['card-plane', 'card-event', 'card-event-req_legal'],
       zoneLinks: {},
       zoneList: [],

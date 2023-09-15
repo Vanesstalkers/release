@@ -1,4 +1,4 @@
-(class Port extends lib.game.gameObject {
+(class Port extends lib.game.GameObject {
   static DIRECTIONS = {
     top: {
       oppositeDirection: 'bottom',

@@ -1,11 +1,10 @@
 <template>
-  <div :class="['shown-profile', `scale-${state.guiScale}`]" :style="{ color: 'white' }">
+  <div :class="['shown-profile', `scale-${state.guiScale}`]">
     <H1>
-      <span>
-        Профиль игрока
-        <div class="close" v-on:click.stop="closeProfile" />
-      </span>
+      <span> Профиль игрока </span>
+      <div class="close" v-on:click.stop="closeProfile" />
     </H1>
+
 
     <div class="content">
       <div class="input-form">
@@ -190,7 +189,7 @@ export default {
           path: 'lib.user.api.generateAvatar',
           args: [],
         })
-        .then(()=>{
+        .then(() => {
           prettyAlert({ message: 'Началась генерация. Это займет некоторое время.' });
         })
         .catch(prettyAlert);
@@ -221,7 +220,6 @@ export default {
           },
           Images: {
             content: (_ref, slide) => {
-              console.log('slide=', slide);
               const slideClass = slide.newAvatar ? 'new' : '';
               const slideLabel = slide.newAvatar ? '<label>Новый</label>' : '';
               return `<picture>${slideLabel}<img src="${slide.src}" class="${slideClass}" alt="" /></picture>`;
@@ -236,6 +234,7 @@ export default {
                   const slideIdx = instance.carousel.page;
                   const slideData = instance.userSlides[slideIdx];
                   choose(slideData);
+                  Fancybox.close();
                 },
               },
             },
@@ -261,22 +260,37 @@ export default {
   z-index: 9999;
   width: 100%;
   height: 100%;
+  padding: 0px;
+  margin: 0px;
   top: 0px;
   left: 0px;
   background-image: url(@/assets/clear-black-back.png);
+  color: white;
 
   transform-origin: top center;
   &.scale-2 {
     scale: 1.2;
+    h1 .close {
+      right: 10%;
+    }
   }
   &.scale-3 {
     scale: 1.5;
+    h1 .close {
+      right: 20%;
+    }
   }
   &.scale-4 {
     scale: 1.8;
+    h1 .close {
+      right: 30%;
+    }
   }
   &.scale-5 {
     scale: 2;
+    h1 .close {
+      right: 30%;
+    }
   }
 
   h1 {
@@ -293,27 +307,27 @@ export default {
     font-family: fantasy;
     font-weight: bold;
     letter-spacing: 10px;
-    padding-left: 6px;
     font-size: 2em;
     height: 5%;
 
     > span {
       position: relative;
       z-index: 1;
+    }
 
-      .close {
-        background-image: url(@/assets/close.png);
-        background-color: black;
-        cursor: pointer;
-        position: absolute;
-        top: 0px;
-        right: -50px;
-        width: 30px;
-        height: 30px;
-        background-size: 30px;
-        border-radius: 10px;
-      }
-      .close:hover {
+    .close {
+      z-index: 1;
+      background-image: url(@/assets/close.png);
+      background-color: black;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      background-size: 30px;
+      border-radius: 10px;
+      &:hover {
         opacity: 0.7;
       }
     }

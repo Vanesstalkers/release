@@ -1,92 +1,87 @@
+import * as _Game from 'application/lib/game/types';
+import { GameObject, GameObjectData, GameObjectConfig, objects as _objects } from 'application/lib/game/types';
 import { ObjectId } from 'mongodb';
 
-/* type ScalarValue = string | number | undefined;
-
-export interface GameClass {
-  host: string;
-  port: number;
-  database: string;
-  user: string;
-  password: string;
-  logger: { db: Function; debug: Function };
-}
- */
-
-/**
- *
- */
-interface GameObjectData {
-  /**
-   * ObjectID-идентификатор
-   */
-  _id: ObjectId;
-}
-interface GameObjectConfig {
-  col: string;
-  parent: GameObject;
+export default class Game extends _Game {
+  checkStatus(data: { cause: string }): void;
 }
 
-export class GameObject {
-  /**
-   * ObjectID-идентификатор
-   */
-  _id: ObjectId;
-  col: string;
-  constructor(data: GameObjectData, config: GameObjectConfig);
-  getParent(): GameObject;
+interface PlaneData extends GameObjectData {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  price: number;
+}
+interface PortData extends GameObjectData {
+  left: number;
+  top: number;
+  direct: PortDirections;
+}
+type PortDirections = 'bottom' | 'top' | 'left' | 'right';
+interface PortDirectionData {
+  oppositeDirection: PortDirections[];
+  nextDirection: PortDirections[];
+  bridge: { vertical: boolean; reverse: boolean };
+}
+interface ZoneData extends GameObjectData {
+  left: number;
+  top: number;
+  vertical: boolean;
+  double: boolean;
+}
+interface ZoneSideData extends GameObjectData {
+  value: number;
+  links: { [key: string]: string };
+  expectedValues: { [key: string]: boolean };
+}
+interface DiceData extends GameObjectData {
+  deleted: boolean;
+  visible: boolean;
+  locked: boolean;
+  placedAtRound: number;
+}
+interface DiceSideData extends GameObjectData {
+  value: number;
 }
 
-class HasDeckClass {
-  addDeck(): GameObject;
+export namespace objects {
+  class Player extends _objects.Player {}
+  class Plane extends GameObject {
+    constructor(data: PlaneData, config: GameObjectConfig);
+    getPosition(): { left: number; right: number; top: number; bottom: number };
+  }
+  class Port extends GameObject {
+    constructor(data: PortData, config: GameObjectConfig);
+    static DIRECTIONS: { [key: PortDirections]: PortDirectionData };
+    getDirect(): PortDirectionData;
+    updateDirect(direct: PortDirections): boolean | PortDirectionData;
+  }
+  class Zone extends GameObject {
+    constructor(data: ZoneData, config: GameObjectConfig);
+    sideList: ZoneSide[];
+    itemMap: { [key: string]: object };
+    /**
+     * устанавливает value зоны в соответствии с размещенным в нем dice
+     */
+    updateValues: void;
+  }
+  class ZoneSide extends GameObject {
+    constructor(data: ZoneSideData, config: GameObjectConfig);
+    /**
+     * (используется в zone.checkIsAvailable)
+     */
+    updateExpectedValues: void;
+  }
+  class Dice extends GameObject {
+    constructor(data: DiceData, config: GameObjectConfig);
+    sideList: DiceSide[];
+    moveToTarget(target: objects.Deck | objects.Zone): boolean;
+  }
+  class DiceSide extends GameObject {
+    constructor(data: DiceSideData, config: GameObjectConfig);
+  }
+  class Bridge extends _objects.Player {}
+  class Deck extends _objects.Deck {}
+  class Card extends _objects.Card {}
 }
-
-interface CardData extends GameObjectData {
-  /**
-   * 123123213
-   */
-  name: string;
-}
-export class Card extends HasDeckClass extends GameObject {
-  constructor(data: CardData, config: GameObjectConfig);
-  moveToTarget(target: object): object;
-}
-/* 
-export class Query {
-  constructor(
-    db: Database,
-    table: string,
-    fields: Array<string>,
-    ...where: Array<object>
-  );
-  order(field: string | Array<string>): Query;
-  desc(field: string | Array<string>): Query;
-  limit(count: number): Query;
-  offset(count: number): Query;
-  then(resolve: (rows: Array<object>) => void, reject: Function): void;
-  toString(): string;
-  toObject(): QueryObject;
-  static from(db: Database, metadata: QueryObject): Query;
-}
-
-interface QueryObject {
-  table: string;
-  fields: string | Array<string>;
-  where?: Array<object>;
-  options: Array<object>;
-}
-
-export class Modify {
-  constructor(db: Database, sql: string, args: Array<string>);
-  returning(field: string | Array<string>): Modify;
-  then(resolve: (rows: Array<object>) => void, reject: Function): void;
-  toString(): string;
-  toObject(): ModifyObject;
-  static from(db: Database, metadata: ModifyObject): Modify;
-}
-
-interface ModifyObject {
-  sql: string;
-  args: Array<string>;
-  options: Array<object>;
-}
- */

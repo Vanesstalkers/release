@@ -102,6 +102,7 @@ export default {
       helperClassMap: {},
       dialogStyle: {},
       dialogClassMap: {},
+      resetLinks: Date.now(),
     };
   },
   watch: {
@@ -238,7 +239,7 @@ export default {
         let actionsData = {};
         if (actions) {
           if (actions[action]) {
-            actionsData = await new Function('return ' + actions[action])()(this) || {};
+            actionsData = (await new Function('return ' + actions[action])()(this)) || {};
             const { exit = true } = actionsData;
             if (exit) action = 'exit';
           }
@@ -259,9 +260,10 @@ export default {
           text: 'Чем могу помочь?',
           bigControls: true,
           buttons: [
-            { text: 'Спасибо, ничего не нужно', action: 'exit', exit: true },
-            { text: 'Покажи доступные обучения', action: 'tutorials' },
             { text: 'Закончить игру', action: 'leaveGame' },
+            { text: 'Покажи доступные обучения', action: 'tutorials' },
+            { text: 'Активировать подсказки', action: 'restoreLinks' },
+            { text: 'Спасибо, ничего не нужно', action: 'exit', exit: true },
           ],
         };
       } else {
@@ -269,9 +271,10 @@ export default {
           text: 'Чем могу помочь?',
           bigControls: true,
           buttons: [
-            { text: 'Спасибо, ничего не нужно', action: 'exit', exit: true },
             { text: 'Открой мой профиль', action: 'profile' },
+            { text: 'Активировать подсказки', action: 'restoreLinks' },
             { text: 'Покажи доступные обучения', action: 'tutorials' },
+            { text: 'Спасибо, ничего не нужно', action: 'exit', exit: true },
           ],
         };
       }
@@ -287,6 +290,18 @@ export default {
         case 'profile':
           this.menu = null;
           this.showProfile();
+          break;
+        case 'restoreLinks':
+          await api.action
+            .call({
+              path: 'lib.helper.api.restoreLinks',
+              args: [{ inGame: this.inGame }],
+            })
+            .then((data) => {
+              console.log('this.resetLinks');
+              this.$set(this, 'resetLinks', Date.now());
+            })
+            .catch(prettyAlert);
           break;
         case 'tutorials':
           this.menu = {
@@ -346,7 +361,7 @@ export default {
       self.alert = message;
       self.hideAlert = stack;
       if (self.hideAlert) this.showHideAlert = false;
-      
+
       if (hideTime > 0) {
         setTimeout(() => {
           self.alert = null;
@@ -486,8 +501,15 @@ export default {
   width: 600px;
   left: 20px;
   bottom: 100px;
+  max-width: 50%;
+}
+.mobile-view .helper-menu {
+  bottom: 70px;
+}
+.mobile-view.portrait-view .helper-menu {
   max-width: 100%;
 }
+
 #lobby .helper-menu {
   transform-origin: left bottom;
 }
@@ -501,18 +523,19 @@ export default {
 }
 .helper-menu.scale-2 {
   scale: 1;
+  bottom: 140px;
 }
 .helper-menu.scale-3 {
   scale: 1.5;
-  bottom: 140px;
+  bottom: 200px;
 }
 .helper-menu.scale-4 {
   scale: 2;
-  bottom: 190px;
+  bottom: 250px;
 }
 .helper-menu.scale-5 {
   scale: 2.5;
-  bottom: 250px;
+  bottom: 380px;
 }
 .mobile-view .helper-menu {
   scale: 1;
@@ -523,9 +546,14 @@ export default {
   right: auto;
 }
 
+.helper-menu > .content > .tutorials {
+  margin-bottom: 0px;
+}
 .helper-menu > .content > .tutorials > * {
   cursor: pointer;
   padding: 0px 20px;
+  text-align: left;
+  padding-bottom: 6px;
 }
 .helper-menu > .content > .tutorials > *:hover {
   opacity: 0.7;
@@ -600,8 +628,9 @@ export default {
 }
 .mobile-view .helper-dialog > .content,
 .mobile-view .helper-menu > .content {
-  padding: 10px 20px 24px 10px;
-  min-height: 60px;
+  font-size: 10px;
+  padding: 10px 20px 14px 10px;
+  min-height: 40px;
   background: black;
 }
 .helper-dialog > .content.nowrap,
@@ -645,9 +674,9 @@ export default {
   cursor: pointer;
 }
 
-#lobby.mobile-view .helper-dialog > .content > .controls > button,
-#lobby.mobile-view .helper-menu > .content > .controls > button {
-  padding: 10px 10px;
+.mobile-view .helper-dialog > .content > .controls > button,
+.mobile-view .helper-menu > .content > .controls > button {
+  padding: 4px 10px;
   font-size: 10px;
 }
 

@@ -200,7 +200,7 @@ export default {
       if (!this.deckType || !this.gameType || !this.gameConfig) prettyAlert({ message: 'game config not set' });
       await api.action
         .call({
-          path: 'domain.game.api.new',
+          path: 'lib.game.api.new',
           args: [
             {
               deckType: this.deckType,

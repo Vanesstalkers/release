@@ -32,7 +32,8 @@
       actions: {
         before: (self) => {
           const $rootEl = self.$root.$el;
-          $rootEl.querySelector('.menu-item.list > label')?.click();
+          let $item = $rootEl.querySelector('.menu-item.list.pinned');
+          if (!$item) $rootEl.querySelector('.menu-item.list > label')?.click();
         },
       },
       buttons: [{ text: 'Дальше', step: 'rates' }],
@@ -46,8 +47,10 @@
       actions: {
         before: (self) => {
           const $rootEl = self.$root.$el;
-          $rootEl.querySelector('.menu-item.list > label')?.click();
-          $rootEl.querySelector('.menu-item.top > label')?.click();
+          let $item = $rootEl.querySelector('.menu-item.list.pinned');
+          if ($item) $rootEl.querySelector('.menu-item.list > label')?.click();
+          $item = $rootEl.querySelector('.menu-item.top.pinned');
+          if (!$item) $rootEl.querySelector('.menu-item.top > label')?.click();
         },
       },
       buttons: [{ text: 'Дальше', step: 'chat' }],
@@ -61,8 +64,10 @@
       actions: {
         before: (self) => {
           const $rootEl = self.$root.$el;
-          $rootEl.querySelector('.menu-item.top > label')?.click();
-          $rootEl.querySelector('.menu-item.chat > label')?.click();
+          let $item = $rootEl.querySelector('.menu-item.top.pinned');
+          if ($item) $rootEl.querySelector('.menu-item.top > label')?.click();
+          $item = $rootEl.querySelector('.menu-item.chat.pinned');
+          if (!$item) $rootEl.querySelector('.menu-item.chat > label')?.click();
         },
       },
       buttons: [{ text: 'Дальше', step: 'playground' }],
@@ -76,8 +81,10 @@
       actions: {
         before: (self) => {
           const $rootEl = self.$root.$el;
-          $rootEl.querySelector('.menu-item.chat > label')?.click();
-          $rootEl.querySelector('.menu-item.game > label')?.click();
+          let $item = $rootEl.querySelector('.menu-item.chat.pinned');
+          if ($item) $rootEl.querySelector('.menu-item.chat > label')?.click();
+          $item = $rootEl.querySelector('.menu-item.game.pinned');
+          if (!$item) $rootEl.querySelector('.menu-item.game > label')?.click();
         },
       },
       buttons: [{ text: 'Дальше', step: 'exit' }],

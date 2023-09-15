@@ -89,7 +89,7 @@ export default {
     mainCardDeckItemsCount: function () {
       this.$nextTick(() => {
         const scrollbar = this.$refs.scrollbar;
-        if(!scrollbar) return; // !!! тут соперник - нужно поправить логику
+        if (!scrollbar) return; // !!! тут соперник - нужно поправить логику
         scrollbar.scrollTo({ top: 1000000 }); // просто высоты экрана может быть не достаточно при большом количестве карт в руке
       });
     },
@@ -197,6 +197,12 @@ export default {
   position: relative;
   height: 0px;
   width: 100%;
+
+  .hand-cards-list {
+    &.tutorial-active {
+      box-shadow: 0 0 10px 10px #f4e205 !important;
+    }
+  }
 }
 #game.mobile-view.portrait-view .player-hands {
   justify-content: flex-start;

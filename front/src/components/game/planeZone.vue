@@ -6,7 +6,7 @@
       color: 'white',
       fontSize: '10px',
     }"
-    :class="['zone', zone.vertical ? 'vertical' : '', zone.available ? 'available' : '']"
+    :class="['zone', zone.vertical ? 'vertical' : '', zone.double ? 'double' : '', zone.available ? 'available' : '']"
     v-on:click="putDice"
   >
     <div class="wraper">
@@ -75,7 +75,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .zone {
   position: absolute;
   height: 73px;
@@ -84,6 +84,10 @@ export default {
   white-space: pre;
   background: url(../../assets/clear-black-back.png);
   background: black;
+
+  &.tutorial-active {
+    box-shadow: 0 0 10px 10px #f4e205;
+  }
 }
 .zone.vertical {
   height: 142px;

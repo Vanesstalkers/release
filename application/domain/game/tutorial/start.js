@@ -37,7 +37,7 @@
       buttons: [{ text: 'Дальше', step: 'deckCard' }],
     },
     deckCard: {
-      text: 'Это счетчик оставшихся в колоде карт событий.',
+      text: 'Это счетчик оставшихся в колоде карт-событий.',
       active: { selector: '[code="Deck[card]"]', customClass: 'rounded' },
       buttons: [{ text: 'Дальше', step: 'deckCardDrop' }],
     },

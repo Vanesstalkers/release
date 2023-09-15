@@ -232,7 +232,7 @@
     this.set({ users: { [userId]: { online: true } } });
     await this.saveChanges();
 
-    await this.notifyWatchers({ msg: 'Подключился новый игрок', tgUsername });
+    await this.notifyWatchers({ msg: `Подключился новый игрок (${name || 'Гость'})`, tgUsername });
   }
   async userLeave({ sessionId, userId }) {
     const user = this.users[userId];
@@ -360,7 +360,7 @@
     this.subscribe(`game-${gameId}`, { rule: 'custom', pathRoot: 'domain', path: 'lobby.rules.gameSub' });
     await this.saveChanges();
 
-    const gameTypeSettings = domain.game.exampleJSON[gameType];
+    const gameTypeSettings = domain.game.configs.games[gameType];
     const gameSettings = gameTypeSettings?.[gameConfig];
     const playerList = gameSettings.playerList || gameTypeSettings.default.playerList;
     if (playerList.length > 1)

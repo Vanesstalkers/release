@@ -165,12 +165,16 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .domino-dice {
   width: 100%;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
+
+  &.tutorial-active {
+    box-shadow: 0 0 10px 10px #f4e205 !important;
+  }
 }
 .domino-dice.deleted {
   transform: scale(0.5);

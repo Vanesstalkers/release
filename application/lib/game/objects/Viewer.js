@@ -1,4 +1,4 @@
-(class Viewer extends lib.game.gameObject {
+(class Viewer extends lib.game.GameObject {
   constructor(data, { parent }) {
     super(data, { col: 'viewer', parent });
     this.broadcastableFields(['_id', 'userId', 'isViewer', 'avatarCode']);

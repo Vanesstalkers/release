@@ -1,4 +1,4 @@
-(class ZoneSide extends lib.game.gameObject {
+(class ZoneSide extends lib.game.GameObject {
   constructor(data, { parent }) {
     super(data, { col: 'zoneside', parent });
     this.broadcastableFields(['_id', 'code', 'value', 'links']);
@@ -14,7 +14,6 @@
     this.set({ links: { [link._id]: link.code } });
   }
   /**
-   * 
    * (используется в zone.checkIsAvailable)
    */
   updateExpectedValues() {

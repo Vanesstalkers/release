@@ -1,6 +1,14 @@
 (class LobbyUser extends lib.user.class() {
   async enterLobby({ sessionId, lobbyId }) {
-    lib.store.broadcaster.publishAction(`lobby-${lobbyId}`, 'userEnter', {
+    const {
+      helper: { getTutorial },
+      utils: { structuredClone: clone },
+      store: {
+        broadcaster: { publishAction },
+      },
+    } = lib;
+
+    publishAction(`lobby-${lobbyId}`, 'userEnter', {
       sessionId,
       userId: this.id(),
       name: this.name,
@@ -14,41 +22,19 @@
       helper = null;
     }
 
-    const lobbyStartTutorialName = 'lobby-tutorial-start';
-    if (!helper && !finishedTutorials[lobbyStartTutorialName]) {
-      const tutorial = lib.helper.getTutorial(lobbyStartTutorialName);
+    const tutorialName = 'lobby-tutorial-start';
+    if (!helper && !finishedTutorials[tutorialName]) {
+      const tutorial = getTutorial(tutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
-      helper = lib.utils.structuredClone(helper, { convertFuncToString: true });
-      helperLinks = {
-        ...{
-          menuTop: {
-            selector: '.menu-item.top > label',
-            tutorial: 'lobby-tutorial-menuTop',
-            simple: false,
-            type: 'lobby',
-          },
-          menuChat: {
-            selector: '.menu-item.chat > label',
-            tutorial: 'lobby-tutorial-menuChat',
-            simple: false,
-            type: 'lobby',
-          },
-          menuGame: {
-            selector: '.menu-item.game > label',
-            tutorial: 'lobby-tutorial-menuGame',
-            simple: false,
-            type: 'lobby',
-          },
-        },
-        ...helperLinks,
-      };
-      this.set({
-        currentTutorial: { active: lobbyStartTutorialName },
-        helper,
-        helperLinks,
-      });
+      helper = clone(helper, { convertFuncToString: true });
+      currentTutorial = { active: tutorialName };
     }
-
+    helperLinks = {
+      ...domain.lobby.tutorial.getHelperLinks(),
+      ...helperLinks,
+    };
+    
+    this.set({ currentTutorial, helper, helperLinks });
     await this.saveChanges();
   }
   leaveLobby({ sessionId, lobbyId }) {
@@ -60,6 +46,11 @@
   }
 
   async joinGame({ gameId, playerId, viewerId, gameType, isSinglePlayer }) {
+    const {
+      helper: { getTutorial },
+      utils: { structuredClone: clone },
+    } = lib;
+
     for (const session of this.sessions()) {
       session.set({ gameId, playerId, viewerId });
       await session.saveChanges();
@@ -84,46 +75,17 @@
       !helper && // нет активного обучения
       !finishedTutorials[gameStartTutorialName] // обучение не было пройдено ранее
     ) {
-      const tutorial = lib.helper.getTutorial(gameStartTutorialName);
+      const tutorial = getTutorial(gameStartTutorialName);
       helper = Object.values(tutorial).find(({ initialStep }) => initialStep);
-      helper = lib.utils.structuredClone(helper, { convertFuncToString: true });
-      helperLinks = {
-        ...{
-          gameControls: {
-            selector: '.game-controls',
-            tutorial: 'game-tutorial-gameControls',
-            type: 'game',
-            pos: { top: false, left: false },
-            simple: false,
-          },
-          handPlanes: {
-            selector: '.session-player .player.iam.active .hand-planes',
-            tutorial: 'game-tutorial-links',
-            type: 'game',
-            pos: { top: true, right: true },
-          },
-          cardActive: {
-            selector: '[code="Deck[card_active]"] .card-event',
-            tutorial: 'game-tutorial-links',
-            type: 'game',
-            pos: { top: false, left: true },
-          },
-          leaveGame: {
-            selector: '.leave-game-btn',
-            tutorial: 'game-tutorial-links',
-            type: 'game',
-            pos: { top: true, left: true },
-          },
-        },
-        ...helperLinks,
-      };
-      this.set({
-        currentTutorial: { active: gameStartTutorialName },
-        helper,
-        helperLinks,
-      });
+      helper = clone(helper, { convertFuncToString: true });
+      currentTutorial = { active: gameStartTutorialName };
     }
-
+    helperLinks = {
+      ...domain.game.tutorial.getHelperLinks(),
+      ...helperLinks,
+    };
+    
+    this.set({ currentTutorial, helper, helperLinks });
     await this.saveChanges();
   }
   async leaveGame() {
@@ -140,6 +102,11 @@
     }
   }
   async gameFinished({ gameId, gameType, playerEndGameStatus, fullPrice, roundCount, crutchCount }) {
+    const {
+      helper: { getTutorial },
+      utils: { structuredClone: clone },
+    } = lib;
+
     if (this.viewerId) {
       this.set({
         helper: {
@@ -159,7 +126,7 @@
 
     const endGameStatus = playerEndGameStatus[this.id()];
 
-    const rankings = lib.utils.clone(this.rankings || {});
+    const rankings = clone(this.rankings || {});
     if (!rankings[gameType]) rankings[gameType] = {};
     const { games = 0, win = 0, money = 0, crutch = 0, penalty = 0, totalTime = 0 } = rankings[gameType];
 
@@ -169,7 +136,7 @@
       penaltySum = 100 * crutchCount * 1000;
       income = fullPrice * 1000 - penaltySum;
       rankings[gameType].money = money + income;
-      if(income < 0) income = 0; // в рейтинги отрицательный результата пишем
+      if (income < 0) income = 0; // в рейтинги отрицательный результата пишем
       rankings[gameType].penalty = penalty + penaltySum;
       rankings[gameType].crutch = crutch + crutchCount;
       rankings[gameType].win = win + 1;
@@ -178,7 +145,7 @@
     rankings[gameType].totalTime = totalTime + roundCount;
     rankings[gameType].avrTime = Math.floor(rankings[gameType].totalTime / rankings[gameType].win);
 
-    const tutorial = lib.utils.structuredClone(lib.helper.getTutorial('game-tutorial-finished'), {
+    const tutorial = clone(getTutorial('game-tutorial-finished'), {
       convertFuncToString: true,
     });
     let incomeText = `${income.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₽`;

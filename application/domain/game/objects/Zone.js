@@ -1,29 +1,30 @@
-(class Zone extends lib.game.gameObject {
+(class Zone extends lib.game.GameObject {
   itemMap = {};
 
   constructor(data, { parent }) {
     super(data, { col: 'zone', parent });
-    this.broadcastableFields(['_id', 'sideList', 'itemMap', 'left', 'top', 'vertical']);
+    this.broadcastableFields(['_id', 'sideList', 'itemMap', 'left', 'top', 'vertical', 'double']);
 
     this.set({
       left: data.left || 0,
       top: data.top || 0,
       vertical: data.vertical,
+      double: data.double,
     });
 
     if (data.sideList) {
       const store = this.game().getStore();
       this.set({
         sideList: [
-          new domain.game.ZoneSide(store.zoneside[data.sideList[0]._id], { parent: this }),
-          new domain.game.ZoneSide(store.zoneside[data.sideList[1]._id], { parent: this }),
+          new domain.game.objects.ZoneSide(store.zoneside[data.sideList[0]._id], { parent: this }),
+          new domain.game.objects.ZoneSide(store.zoneside[data.sideList[1]._id], { parent: this }),
         ],
       });
     } else {
       this.set({
         sideList: [
-          new domain.game.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
-          new domain.game.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
+          new domain.game.objects.ZoneSide({ _code: 1, value: data[0] }, { parent: this }),
+          new domain.game.objects.ZoneSide({ _code: 2, value: data[1] }, { parent: this }),
         ],
       });
     }
@@ -48,7 +49,7 @@
   } // иначе подставится метод из Deck
 
   getItemClass() {
-    return domain.game.Dice;
+    return domain.game.objects.Dice;
   }
   addItem(item) {
     const itemClass = this.getItemClass();
