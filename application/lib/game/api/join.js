@@ -14,7 +14,7 @@ async (context, { gameId, avatarCode, viewerMode = false }) => {
   const action = viewerMode ? 'viewerJoin' : 'playerJoin';
   lib.store.broadcaster.publishAction(`game-${gameId}`, action, {
     userId,
-    userAvatarCode: user.avatarCode || avatarCode,
+    avatarCode: user.avatarCode || avatarCode,
     userName: user.name || user.login,
   });
   return { status: 'ok' };

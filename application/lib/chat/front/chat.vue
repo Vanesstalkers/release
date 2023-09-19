@@ -311,7 +311,9 @@ export default {
     },
   },
   async created() {},
-  async mounted() {},
+  async mounted() {
+    // !!! добавить event key Enter
+  },
   async beforeDestroy() {},
 };
 </script>

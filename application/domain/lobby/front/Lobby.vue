@@ -157,7 +157,7 @@ export default {
         showMask: '',
       },
       pinnedItemsLoaded: false,
-      pinned: { chat: false, list: false, top: false, game: false, info: null },
+      pinned: { chat: false, list: false, top: false, game: false, info: false },
     };
   },
   watch: {

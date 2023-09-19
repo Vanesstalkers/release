@@ -18,9 +18,9 @@ async (context, { action, step, tutorial: tutorialName, usedLink, isMobile }) =>
     if (prepareStep) prepareStep(nextStep, { isMobile });
     user.set({ helper: nextStep });
     user.set({ currentTutorial: { active: tutorialName } });
-    if (usedLink){
-      // если запущена игра, то давать прибавку к таймеру
+    if (usedLink) {
       user.set({ helperLinks: { [usedLink]: { used: true } } });
+      // !!! если запущена игра, то давать прибавку к таймеру
     }
   } else if (currentTutorial.active) {
     if (action === 'exit') {

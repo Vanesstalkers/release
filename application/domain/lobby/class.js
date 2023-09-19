@@ -305,7 +305,7 @@
           .toFile(`${outputDirectory}/${i + 1}.png`);
       }
 
-      lib.store.broadcaster.publishData(`user-${userId}`, { avatars: { code: avatarCode, gender: userGender } });
+      await lib.store.broadcaster.publishData(`user-${userId}`, { avatars: { code: avatarCode, gender: userGender } });
 
       if (newDefaultAvatars) {
         const { code: newDefCode, gender: newDefGender } = newDefaultAvatars;

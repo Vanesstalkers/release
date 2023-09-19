@@ -99,7 +99,7 @@
       if (lastItemTime) {
         logs = Object.fromEntries(Object.entries(logs).filter(([{}, { time }]) => time > lastItemTime));
       }
-      this.broadcastData({ logs }, { customChannel: `session-${sessionId}` });
+      await this.broadcastData({ logs }, { customChannel: `session-${sessionId}` });
     }
 
     isSinglePlayer() {
@@ -113,19 +113,14 @@
     getPlayerByUserId(id) {
       return this.getPlayerList().find((player) => player.userId === id);
     }
-    async playerJoin({ userId, userName, userAvatarCode }) {
+    async playerJoin({ userId, userName, avatarCode }) {
       try {
         if (this.status === 'FINISHED') throw new Error('Игра уже завершена.');
 
         const player = this.getFreePlayerSlot();
         if (!player) throw new Error('Свободных мест не осталось');
 
-        player.set({
-          ready: true,
-          userId,
-          userName,
-          avatarCode: userAvatarCode,
-        });
+        player.set({ ready: true, userId, userName, avatarCode });
         this.logs({ msg: `Игрок {{player}} присоединился к игре.`, userId });
 
         this.checkStatus({ cause: 'PLAYER_JOIN' });
@@ -398,7 +393,7 @@
     async removeGame() {
       await db.redis.hdel('games', this.id());
       await this.saveChanges();
-      this.broadcastData({ logs: this.logs() });
+      await this.broadcastData({ logs: this.logs() });
       this.remove();
     }
 

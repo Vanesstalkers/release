@@ -61,9 +61,9 @@
               subscriber: this.#channelName,
             });
           }
-          addSubscriber({ subscriber: subscriberChannel, accessConfig = {} }) {
+          async addSubscriber({ subscriber: subscriberChannel, accessConfig = {} }) {
             this.#channel.subscribers.set(subscriberChannel, { accessConfig });
-            this.broadcastData(this.prepareInitialDataForSubscribers(), { customChannel: subscriberChannel });
+            await this.broadcastData(this.prepareInitialDataForSubscribers(), { customChannel: subscriberChannel });
           }
           deleteSubscriber({ subscriber: subscriberChannel }) {
             this.#channel.subscribers.delete(subscriberChannel);
@@ -74,12 +74,12 @@
           wrapPublishData(data) {
             return { [this.col()]: { [this.id()]: data } };
           }
-          broadcastPrivateData(channelsMap, config = {}) {
+          async broadcastPrivateData(channelsMap, config = {}) {
             for (const [channel, data] of Object.entries(channelsMap)) {
-              this.broadcastData(data, { ...config, customChannel: channel });
+              await this.broadcastData(data, { ...config, customChannel: channel });
             }
           }
-          broadcastData(data, config = {}) {
+          async broadcastData(data, config = {}) {
             const { customChannel } = config;
 
             if (typeof this.broadcastDataBeforeHandler === 'function') this.broadcastDataBeforeHandler(data, config);
@@ -136,7 +136,7 @@
                     publishData = data;
                 }
                 if (!Object.keys(publishData).length) continue;
-                lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
+                await lib.store.broadcaster.publishData(subscriberChannel, this.wrapPublishData(publishData));
               }
             }
 
@@ -293,7 +293,7 @@
           await db.mongo.updateOne(this.#col, { _id: db.mongo.ObjectID(this.#id) }, $update);
         }
       }
-      if (typeof this.broadcastData === 'function') this.broadcastData(changes);
+      if (typeof this.broadcastData === 'function') await this.broadcastData(changes);
 
       this.clearChanges();
     }

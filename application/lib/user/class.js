@@ -1,6 +1,7 @@
 () =>
   class User extends lib.store.class(class {}, { broadcastEnabled: true }) {
     #sessions = new Map();
+    #externalSessions = [];
     constructor({ id } = {}) {
       super({ col: 'user', id });
     }
@@ -76,9 +77,24 @@
     online() {
       return this.#sessions.size > 0;
     }
-    broadcastToSessions({ data, type = 'session/error' } = {}) {
+
+    addExternalSession(sessionChannel) {
+      console.info('addExternalSession', sessionChannel);
+      this.#externalSessions.push(sessionChannel);
+    }
+    async broadcastToSessions({ data, type = 'session/error' } = {}) {
       for (const session of this.sessions()) {
         session.send(type, data);
+      }
+      if (this.#externalSessions.length) {
+        const deadSessions = [];
+        for (const sessionChannel of this.#externalSessions) {
+          const result = await lib.store.broadcaster.publishAction(sessionChannel, 'send', [type, data]);
+          if (result) deadSessions.push(sessionChannel);
+        }
+        if (deadSessions.length) {
+          this.#externalSessions = this.#externalSessions.filter((session) => !deadSessions.includes(session));
+        }
       }
     }
     logout() {

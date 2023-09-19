@@ -10,7 +10,7 @@ async (context, { id: channelUserId, name }) => {
     user.set({ personalChatMap: { [channelUserId]: { name } } });
     await user.saveChanges();
 
-    lib.store.broadcaster.publishData(`user-${channelUserId}`, { personalChatMap: { [userId]: { name: user.name } } });
+    await lib.store.broadcaster.publishData(`user-${channelUserId}`, { personalChatMap: { [userId]: { name: user.name } } });
 
     return { status: 'ok' };
   } catch (err) {

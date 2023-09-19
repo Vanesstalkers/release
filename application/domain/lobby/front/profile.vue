@@ -5,6 +5,7 @@
       <div class="close" v-on:click.stop="closeProfile" />
     </H1>
 
+    <!-- !!! конфиги внешнего вида карт и поля -->
 
     <div class="content">
       <div class="input-form">
